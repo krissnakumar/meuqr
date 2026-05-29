@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, CardContent, CardHeader, CardTitle, Badge, Separator } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import {
   Loader2,
   ArrowLeft,
@@ -111,7 +112,12 @@ export default function BusinessDetailPage() {
 
   async function deleteBusiness() {
     if (!confirm("Tem certeza que deseja excluir este negócio?")) return;
-    await supabase.from("businesses").delete().eq("id", businessId);
+    const { error } = await supabase.from("businesses").delete().eq("id", businessId);
+    if (error) {
+      toast.error("Erro ao excluir negócio");
+      return;
+    }
+    toast.success("Negócio excluído");
     router.push("/dashboard");
   }
 
@@ -437,10 +443,10 @@ export default function BusinessDetailPage() {
 
           <Card>
             <CardContent className="p-4">
-              <Link href={`/dashboard/business/${businessId}/pages/new`}>
+              <Link href={`/dashboard/business/${businessId}/setup`}>
                 <Button variant="default" className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
-                  Nova Página em Branco
+                  Adicionar Página usando Modelo
                 </Button>
               </Link>
             </CardContent>

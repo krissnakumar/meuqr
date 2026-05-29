@@ -22,18 +22,69 @@ export const registerSchema = z
 // ===== Business Schemas =====
 
 export const businessCategorySchema = z.enum([
+  // Food & Beverage
   "restaurant",
+  "pizzeria",
+  "burger_shop",
+  "bakery",
+  "coffee_shop",
+  "acai_sorveteria",
+  "bar_pub",
+  "food_truck",
+  // Construction & Hardware
   "construction_materials",
-  "salon",
+  "hardware_store",
+  "paint_store",
+  "electrical_supplies",
+  "plumbing_supplies",
+  // Retail
+  "furniture_store",
+  "clothing_store",
+  "shoe_store",
+  "cosmetics_store",
+  "supermarket",
+  // Pets
   "pet_shop",
-  "hotel",
-  "real_estate",
-  "event",
-  "clinic",
+  "veterinary",
+  // Beauty & Wellness
+  "salon",
+  "barber_shop",
+  "nail_studio",
+  "spa",
+  "dental_clinic",
+  "medical_clinic",
+  "physiotherapy",
   "gym",
-  "mechanic",
-  "freelancer",
+  // Hospitality
+  "hotel",
+  // Real Estate & Automotive
+  "real_estate",
+  "car_dealership",
+  "auto_repair",
+  "motorcycle_repair",
+  "car_wash",
+  // Events
+  "event",
+  "party_rental",
+  // Education & Community
+  "school",
+  "daycare",
   "church",
+  // Services
+  "freelancer",
+  "photographer",
+  "cleaning_services",
+  "laundry",
+  // Tech & Electronics
+  "electronics_repair",
+  "cellphone_store",
+  // Print & Specialty
+  "print_shop",
+  "florist",
+  "pharmacy",
+  "travel_agency",
+  "delivery_business",
+  // Generic
   "product_shelf",
   "other",
 ]);

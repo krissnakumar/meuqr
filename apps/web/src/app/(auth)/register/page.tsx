@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@meuqr/ui";
 import { QrCode, Eye, EyeOff, Loader2 } from "lucide-react";
 import { signUp } from "@/lib/auth";
+import { useTranslation } from "@/lib/i18n-provider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,17 +20,25 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) router.push("/dashboard");
+      });
+    });
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Senhas não conferem");
+      setError(t("validation.password_mismatch"));
       return;
     }
 
     if (password.length < 6) {
-      setError("Senha deve ter no mínimo 6 caracteres");
+      setError(t("validation.password_min"));
       return;
     }
 
@@ -38,11 +48,13 @@ export default function RegisterPage() {
       await signUp(email, password, fullName);
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || "Erro ao criar conta");
+      setError(err.message || t("auth.register_error"));
     } finally {
       setLoading(false);
     }
-  }  if (success) {
+  }
+
+  if (success) {
     return (
       <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
@@ -53,16 +65,15 @@ export default function RegisterPage() {
                   <QrCode className="w-8 h-8 text-[#31A24C]" />
                 </div>
               </div>
-              <CardTitle>Conta criada!</CardTitle>
+              <CardTitle>{t("auth.register_success_title")}</CardTitle>
               <CardDescription>
-                Enviamos um email de confirmação para <strong>{email}</strong>.
-                Verifique sua caixa de entrada e confirme seu email para acessar o painel.
+                {t("auth.register_success_desc", { email })}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href="/login">
                 <Button variant="default" className="w-full">
-                  Ir para o Login
+                  {t("auth.register_success_btn")}
                 </Button>
               </Link>
             </CardContent>
@@ -84,9 +95,9 @@ export default function RegisterPage() {
 
         <Card>
           <CardHeader className="text-center">
-            <CardTitle>Criar Conta</CardTitle>
+            <CardTitle>{t("auth.register_title")}</CardTitle>
             <CardDescription>
-              Comece grátis em menos de 1 minuto
+              {t("auth.register_subtitle")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -98,11 +109,11 @@ export default function RegisterPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nome completo</Label>
+                <Label htmlFor="fullName">{t("auth.name_label")}</Label>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="Seu nome"
+                  placeholder={t("auth.name_placeholder")}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
@@ -110,11 +121,11 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email_label")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder={t("auth.email_placeholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -122,12 +133,12 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password">{t("auth.password_label")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={t("auth.password_min")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -136,11 +147,11 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                <Label htmlFor="confirmPassword">{t("auth.confirm_password_label")}</Label>
                 <Input
                   id="confirmPassword"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Repita a senha"
+                  placeholder={t("auth.confirm_password_placeholder")}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -156,7 +167,7 @@ export default function RegisterPage() {
                   className="rounded border-gray-300"
                 />
                 <Label htmlFor="showPass" className="text-xs text-gray-500 font-normal cursor-pointer">
-                  Mostrar senhas
+                  {t("auth.show_password")}
                 </Label>
               </div>
 
@@ -164,15 +175,15 @@ export default function RegisterPage() {
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  "Criar Conta Grátis"
+                  t("auth.register_btn")
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm text-gray-500">
-              Já tem conta?{" "}
+              {t("auth.has_account")}{" "}
               <Link href="/login" className="text-[#31A24C] font-medium hover:underline">
-                Entrar
+                {t("auth.login_link")}
               </Link>
             </div>
           </CardContent>

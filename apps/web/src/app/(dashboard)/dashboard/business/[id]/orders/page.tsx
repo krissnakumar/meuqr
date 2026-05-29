@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import {
   Loader2,
   ArrowLeft,
@@ -84,8 +85,21 @@ export default function OrdersPage() {
   }
 
   async function updateStatus(orderId: string, newStatus: string) {
-    await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
+    const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
+    if (error) {
+      toast.error("Erro ao atualizar status");
+      return;
+    }
     setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+    const statusLabels: Record<string, string> = {
+      pending: "Pendente",
+      confirmed: "Confirmado",
+      preparing: "Preparando",
+      ready: "Pronto",
+      delivered: "Entregue",
+      cancelled: "Cancelado",
+    };
+    toast.success(`Status: ${statusLabels[newStatus] || newStatus}`);
   }
 
   const filtered = filter === "all" ? orders : orders.filter((o) => o.status === filter);

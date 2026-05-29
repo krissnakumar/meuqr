@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import {
   Loader2,
   ArrowLeft,
@@ -64,8 +65,13 @@ export default function LeadsPage() {
 
   async function deleteLead(id: string) {
     if (!confirm("Tem certeza que deseja excluir este lead?")) return;
-    await supabase.from("leads").delete().eq("id", id);
+    const { error } = await supabase.from("leads").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir lead");
+      return;
+    }
     setLeads(leads.filter((l) => l.id !== id));
+    toast.success("Lead excluído");
   }
 
   const filtered = leads.filter(

@@ -2,6 +2,18 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+// Security headers applied to all responses
+const SECURITY_HEADERS = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-XSS-Protection": "1; mode=block",
+  "Permissions-Policy":
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+  "Strict-Transport-Security":
+    "max-age=63072000; includeSubDomains; preload",
+};
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -26,6 +38,7 @@ export async function middleware(request: NextRequest) {
     !pathname.startsWith("/favicon") &&
     pathname.split("/").filter(Boolean).length === 1 &&
     !pathname.startsWith("/dashboard") &&
+    !pathname.startsWith("/onboarding") &&
     !pathname.startsWith("/login") &&
     !pathname.startsWith("/register") &&
     !pathname.startsWith("/pricing") &&
@@ -33,7 +46,12 @@ export async function middleware(request: NextRequest) {
     !pathname.startsWith("/q");
 
   if (isPublicRoute || isBusinessPage) {
-    return NextResponse.next();
+    // Apply security headers even to public routes
+    const response = NextResponse.next();
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
   // Protect dashboard routes
@@ -69,6 +87,11 @@ export async function middleware(request: NextRequest) {
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
+
+  // Apply security headers to dashboard routes too
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+    supabaseResponse.headers.set(key, value);
+  });
 
   return supabaseResponse;
 }

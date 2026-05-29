@@ -1,46 +1,113 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
+import { BUSINESS_CATEGORIES } from "@meuqr/shared";
 import {
-  Store,
   ArrowLeft,
   Loader2,
+  UtensilsCrossed,
+  Pizza,
   Utensils,
+  Cookie,
+  Coffee,
+  IceCream,
+  Wine,
+  Truck,
   Building2,
-  Scissors,
+  Wrench,
+  PaintBucket,
+  Zap,
+  Droplet,
+  Sofa,
+  Shirt,
+  Footprints,
+  Sparkles,
+  ShoppingCart,
   Dog,
+  Stethoscope,
+  Scissors,
+  Hand,
+  Flower2,
+  Activity,
+  Dumbbell,
   Hotel,
   Home,
+  Car,
+  Bike,
+  SprayCan,
   Calendar,
-  Stethoscope,
-  Dumbbell,
-  Wrench,
-  Briefcase,
+  PartyPopper,
+  BookOpen,
+  Baby,
   Church,
+  Briefcase,
+  Camera,
+  Monitor,
+  Smartphone,
+  Printer,
+  Pill,
+  Plane,
+  Store,
   Package,
   MoreHorizontal,
+  AlertCircle,
+  Crown,
 } from "lucide-react";
 import Link from "next/link";
+import { useSubscriptionLimits, checkActionLimit } from "@/hooks/useSubscriptionLimits";
+import { toast } from "sonner";
 
-const categories = [
-  { value: "restaurant", label: "Restaurante", icon: Utensils },
-  { value: "construction_materials", label: "Material de Construção", icon: Building2 },
-  { value: "salon", label: "Salão / Barbearia", icon: Scissors },
-  { value: "pet_shop", label: "Pet Shop", icon: Dog },
-  { value: "hotel", label: "Hotel", icon: Hotel },
-  { value: "real_estate", label: "Imobiliária", icon: Home },
-  { value: "event", label: "Evento", icon: Calendar },
-  { value: "clinic", label: "Clínica", icon: Stethoscope },
-  { value: "gym", label: "Academia", icon: Dumbbell },
-  { value: "mechanic", label: "Mecânico", icon: Wrench },
-  { value: "freelancer", label: "Freelancer", icon: Briefcase },
-  { value: "church", label: "Igreja", icon: Church },
-  { value: "product_shelf", label: "Prateleira de Produto", icon: Package },
-  { value: "other", label: "Outro", icon: MoreHorizontal },
-];
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  UtensilsCrossed,
+  Pizza,
+  Sandwich: Utensils,
+  Cookie,
+  Bread: Cookie,
+  Coffee,
+  IceCream,
+  Wine,
+  Truck,
+  Building2,
+  Wrench,
+  PaintBucket,
+  Zap,
+  Droplets: Droplet,
+  Sofa,
+  Shirt,
+  Footprints,
+  Sparkles,
+  ShoppingCart,
+  Dog,
+  Stethoscope,
+  Scissors,
+  Beard: Scissors,
+  Hand,
+  Flower2,
+  Tooth: Activity,
+  Dumbbell,
+  Hotel,
+  Home,
+  Car,
+  Bike,
+  SprayCan,
+  Calendar,
+  PartyPopper,
+  BookOpen,
+  Baby,
+  Church,
+  Briefcase,
+  Camera,
+  Monitor,
+  Smartphone,
+  Printer,
+  Pill,
+  Plane,
+  Package,
+  MoreHorizontal,
+};
 
 export default function NewBusinessPage() {
   const router = useRouter();
@@ -52,6 +119,9 @@ export default function NewBusinessPage() {
   const [whatsapp, setWhatsapp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Subscription limits check
+  const { tier, canCreateBusiness, usage, limits, isLoading: limitsLoading } = useSubscriptionLimits();
 
   function handleNameChange(value: string) {
     setName(value);
@@ -69,6 +139,24 @@ export default function NewBusinessPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // If limits are still loading, wait
+    if (limitsLoading) {
+      setError("Verificando limites do seu plano...");
+      return;
+    }
+
+    // Check plan limit before creating
+    const limitCheck = checkActionLimit(
+      tier,
+      "businesses",
+      usage.businesses
+    );
+    if (!limitCheck.allowed) {
+      setError(limitCheck.message || "Limite de negócios atingido");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -92,9 +180,11 @@ export default function NewBusinessPage() {
 
       if (bizError) throw bizError;
 
+      toast.success("Negócio criado com sucesso!");
       router.push(`/dashboard/business/${business.id}/setup`);
     } catch (err: any) {
       setError(err.message || "Erro ao criar negócio");
+      toast.error("Erro ao criar negócio");
     } finally {
       setLoading(false);
     }
@@ -110,6 +200,27 @@ export default function NewBusinessPage() {
         Voltar
       </Link>
 
+      {/* Plan limit banner */}
+      {!limitsLoading && !canCreateBusiness && (
+        <Card className="mb-6 border-amber-200 bg-amber-50">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-amber-800 text-sm">Limite do plano atingido</p>
+              <p className="text-amber-600 text-xs mt-1">
+                Você já possui {usage.businesses} negócio(s). Faça upgrade para o plano Profissional ou Empresarial para cadastrar mais.
+              </p>
+            </div>
+            <Link href="/dashboard/billing">
+              <Button variant="outline" size="sm" className="border-amber-300 text-amber-700 hover:bg-amber-100">
+                <Crown className="w-3.5 h-3.5 mr-1" />
+                Fazer Upgrade
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
       <h1 className="text-2xl sm:text-3xl font-bold text-[#111827] mb-2">
         Criar Negócio
       </h1>
@@ -119,8 +230,8 @@ export default function NewBusinessPage() {
 
       {step === "category" ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {categories.map((cat) => {
-            const Icon = cat.icon;
+          {BUSINESS_CATEGORIES.map((cat) => {
+            const Icon = CATEGORY_ICONS[cat.icon] || Store;
             const isSelected = category === cat.value;
             return (
               <button

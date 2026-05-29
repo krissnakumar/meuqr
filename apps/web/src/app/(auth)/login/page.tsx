@@ -1,19 +1,48 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@meuqr/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, LanguageSelector } from "@meuqr/ui";
 import { QrCode, Eye, EyeOff, Loader2 } from "lucide-react";
 import { signIn } from "@/lib/auth";
+import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
+import type { Language } from "@meuqr/shared";
+import { getSavedLanguage, saveLanguage } from "@meuqr/shared";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#1877F2] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <I18nProvider>
+        <LoginForm />
+      </I18nProvider>
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t, lang, setLang } = useTranslation();
+
+  useEffect(() => {
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          router.push(searchParams.get("redirect") || "/dashboard");
+        }
+      });
+    });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,9 +51,10 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push("/dashboard");
+      const redirect = searchParams.get("redirect") || "/dashboard";
+      router.push(redirect);
     } catch (err: any) {
-      setError(err.message || "Erro ao fazer login");
+      setError(err.message || t("login_error"));
     } finally {
       setLoading(false);
     }
@@ -33,6 +63,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+        {/* Language selector */}
+        <div className="flex justify-end mb-4">
+          <LanguageSelector
+            currentLang={lang}
+            onLanguageChange={setLang}
+            variant="dropdown"
+            size="sm"
+          />
+        </div>
+
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <div className="w-10 h-10 bg-[#1877F2] rounded-xl flex items-center justify-center">
@@ -43,10 +83,8 @@ export default function LoginPage() {
 
         <Card>
           <CardHeader className="text-center">
-            <CardTitle>Entrar</CardTitle>
-            <CardDescription>
-              Acesse sua conta MeuQR
-            </CardDescription>
+            <CardTitle>{t("login_title")}</CardTitle>
+            <CardDescription>{t("login_subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -57,11 +95,11 @@ export default function LoginPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("email_label")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder={t("email_placeholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -69,12 +107,12 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password">{t("password_label")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Sua senha"
+                    placeholder={t("password_placeholder")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -93,15 +131,15 @@ export default function LoginPage() {
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  "Entrar"
+                  t("login_btn")
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm text-gray-500">
-              Não tem conta?{" "}
+              {t("no_account")}{" "}
               <Link href="/register" className="text-[#31A24C] font-medium hover:underline">
-                Cadastre-se
+                {t("signup_link")}
               </Link>
             </div>
           </CardContent>

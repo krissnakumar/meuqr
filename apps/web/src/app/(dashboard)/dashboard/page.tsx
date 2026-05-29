@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ShieldCheck,
 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n-provider";
 
 interface DashboardData {
   businesses: {
@@ -36,6 +37,7 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
@@ -115,7 +117,7 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-[#1877F2]" />
-        <p className="text-sm font-medium text-gray-500">Carregando informações...</p>
+        <p className="text-sm font-medium text-gray-500">{t("dashboard.loading_info")}</p>
       </div>
     );
   }
@@ -135,13 +137,13 @@ export default function DashboardPage() {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
               <Sparkles className="w-3.5 h-3.5" />
-              Painel de Controle
+              {t("dashboard.title")}
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Olá, <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-50 to-white capitalize">{displayName}</span>! 👋
+              {t("common.welcome")}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-50 to-white capitalize">{displayName}</span>! 👋
             </h1>
             <p className="text-blue-50 text-sm sm:text-base max-w-xl">
-              Gerencie seus QR Codes, consulte as estatísticas em tempo real e amplie a visibilidade do seu negócio.
+              {t("dashboard.subtitle")}
             </p>
           </div>
           
@@ -149,13 +151,13 @@ export default function DashboardPage() {
             <Link href="/dashboard/business/new">
               <Button className="bg-white text-[#1877F2] hover:bg-blue-50 border-0 shadow-lg shadow-black/10 transition-all transform hover:-translate-y-0.5">
                 <Plus className="w-4 h-4 mr-2" />
-                Novo Negócio
+                {t("dashboard.create_business")}
               </Button>
             </Link>
             <Link href="/dashboard/analytics">
               <Button variant="outline" className="bg-white/5 border-white/10 hover:bg-white/10 text-white font-medium">
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Ver Analytics
+                {t("dashboard.analytics")}
               </Button>
             </Link>
           </div>
@@ -168,7 +170,7 @@ export default function DashboardPage() {
         <Card className="border border-slate-100 hover:border-[#1877F2]/20 shadow-sm transition-all hover:shadow-md duration-300 group">
           <CardContent className="p-5 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Negócios</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("dashboard.businesses")}</p>
               <p className="text-3xl font-black text-slate-800 transition-colors group-hover:text-[#1877F2]">
                 {data?.businesses.length || 0}
               </p>
@@ -183,7 +185,7 @@ export default function DashboardPage() {
         <Card className="border border-slate-100 hover:border-emerald-100 shadow-sm transition-all hover:shadow-md duration-300 group">
           <CardContent className="p-5 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">QR Codes</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("dashboard.qrcodes")}</p>
               <p className="text-3xl font-black text-slate-800 transition-colors group-hover:text-emerald-600">
                 {data?.totalQrs || 0}
               </p>
@@ -198,7 +200,7 @@ export default function DashboardPage() {
         <Card className="border border-slate-100 hover:border-blue-100 shadow-sm transition-all hover:shadow-md duration-300 group">
           <CardContent className="p-5 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Visualizações (Scans)</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("dashboard.total_scans")}</p>
               <p className="text-3xl font-black text-slate-800 transition-colors group-hover:text-blue-600">
                 {data?.totalScans || 0}
               </p>
@@ -213,7 +215,7 @@ export default function DashboardPage() {
         <Card className="border border-slate-100 hover:border-violet-100 shadow-sm transition-all hover:shadow-md duration-300 group">
           <CardContent className="p-5 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Interações (Cliques)</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("dashboard.total_clicks")}</p>
               <p className="text-3xl font-black text-slate-800 transition-colors group-hover:text-violet-600">
                 {data?.totalClicks || 0}
               </p>
@@ -234,15 +236,15 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                 <Store className="w-5 h-5 text-[#1877F2]" />
-                Seus Negócios cadastrados
+                {t("dashboard.businesses")}
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">Gerencie os cardápios e páginas de cada estabelecimento.</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t("dashboard.subtitle")}</p>
             </div>
             {data?.businesses && data.businesses.length > 0 && (
               <Link href="/dashboard/business/new">
                 <Button variant="outline" size="sm" className="h-8 text-xs font-semibold border-slate-200 text-[#1877F2] hover:bg-[#1877F2]/10">
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  Adicionar
+                  {t("common.add_page")}
                 </Button>
               </Link>
             )}
@@ -254,14 +256,14 @@ export default function DashboardPage() {
                 <div className="w-20 h-20 bg-[#1877F2]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#1877F2]/20">
                   <Store className="w-10 h-10 text-[#1877F2]" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-2">Primeiro Passo: Cadastre seu Negócio</h3>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">{t('dashboard.empty_title')}</h3>
                 <p className="text-sm text-gray-500 max-w-sm mx-auto mb-8">
-                  Crie sua página inteligente em minutos, personalize suas seções e comece a receber pedidos.
+                  {t('dashboard.empty_desc')}
                 </p>
                 <Link href="/dashboard/business/new">
                   <Button className="bg-[#1877F2] hover:bg-[#166FE5] text-white shadow-md shadow-[#1877F2]/20 px-6 py-5">
                     <Plus className="w-4 h-4 mr-2" />
-                    Começar Agora
+                    {t('dashboard.empty_cta')}
                   </Button>
                 </Link>
               </CardContent>
@@ -297,9 +299,9 @@ export default function DashboardPage() {
                       </h3>
                       
                       <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50 text-xs text-slate-400">
-                        <span>Criado em: {new Date(biz.created_at).toLocaleDateString("pt-BR")}</span>
+                        <span>{t('dashboard.created_at')} {new Date(biz.created_at).toLocaleDateString()}</span>
                         <span className="flex items-center text-[#1877F2] group-hover:translate-x-1 transition-transform duration-300 font-semibold">
-                          Gerenciar página <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                          {t('dashboard.manage_page')} <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                         </span>
                       </div>
                     </CardContent>
@@ -318,7 +320,7 @@ export default function DashboardPage() {
             <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
               <CardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <Zap className="w-4 h-4 text-[#1877F2]" />
-                Ações Rápidas
+                {t('dashboard.quick_actions')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-2.5">
@@ -328,8 +330,8 @@ export default function DashboardPage() {
                     <Plus className="w-4 h-4" />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-xs font-semibold text-slate-700 group-hover:text-[#1877F2] transition-colors">Criar Estabelecimento</p>
-                    <p className="text-[10px] text-gray-400">Gere uma nova vitrine e menu</p>
+                    <p className="text-xs font-semibold text-slate-700 group-hover:text-[#1877F2] transition-colors">{t('dashboard.quick_create')}</p>
+                    <p className="text-[10px] text-gray-400">{t('dashboard.quick_create_desc')}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#1877F2] transition-colors" />
                 </div>
@@ -341,8 +343,8 @@ export default function DashboardPage() {
                     <QrCode className="w-4 h-4" />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-xs font-semibold text-slate-700 group-hover:text-emerald-600 transition-colors">Gerar QR Code</p>
-                    <p className="text-[10px] text-gray-400">Personalize cores e logotipo</p>
+                    <p className="text-xs font-semibold text-slate-700 group-hover:text-emerald-600 transition-colors">{t('dashboard.quick_qr')}</p>
+                    <p className="text-[10px] text-gray-400">{t('dashboard.quick_qr_desc')}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition-colors" />
                 </div>
@@ -354,8 +356,8 @@ export default function DashboardPage() {
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-xs font-semibold text-slate-700 group-hover:text-amber-600 transition-colors">Plano Atual</p>
-                    <p className="text-[10px] text-gray-400">Verifique os limites e atualizações</p>
+                    <p className="text-xs font-semibold text-slate-700 group-hover:text-amber-600 transition-colors">{t('dashboard.quick_plan')}</p>
+                    <p className="text-[10px] text-gray-400">{t('dashboard.quick_plan_desc')}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-amber-600 transition-colors" />
                 </div>
@@ -368,7 +370,7 @@ export default function DashboardPage() {
             <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
               <CardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-rose-500 animate-pulse" />
-                Atividade Recente (Simulado)
+                {t('dashboard.activity_recent')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
@@ -376,24 +378,24 @@ export default function DashboardPage() {
                 <div className="flex items-start gap-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-blue-500 mt-1" />
                   <div className="space-y-0.5">
-                    <p className="text-xs font-medium text-slate-700">QR Code escaneado por cliente</p>
-                    <p className="text-[10px] text-gray-400">1 minuto atrás • São Paulo, BR</p>
+                    <p className="text-xs font-medium text-slate-700">{t('dashboard.activity_scan')}</p>
+                    <p className="text-[10px] text-gray-400">{t('dashboard.activity_ago_1m')} • {t('dashboard.activity_location_sp')}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-purple-500 mt-1" />
                   <div className="space-y-0.5">
-                    <p className="text-xs font-medium text-slate-700">Link do WhatsApp clicado</p>
-                    <p className="text-[10px] text-gray-400">10 minutos atrás • Rio de Janeiro, BR</p>
+                    <p className="text-xs font-medium text-slate-700">{t('dashboard.activity_click')}</p>
+                    <p className="text-[10px] text-gray-400">{t('dashboard.activity_ago_10m')} • {t('dashboard.activity_location_rj')}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1" />
                   <div className="space-y-0.5">
-                    <p className="text-xs font-medium text-slate-700">Novo negócio cadastrado</p>
-                    <p className="text-[10px] text-gray-400">Agora há pouco</p>
+                    <p className="text-xs font-medium text-slate-700">{t('dashboard.activity_new_business')}</p>
+                    <p className="text-[10px] text-gray-400">{t('dashboard.activity_now')}</p>
                   </div>
                 </div>
               </div>

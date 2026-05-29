@@ -1,18 +1,71 @@
 // ===== Enums =====
 
 export type BusinessCategory =
+  // Food & Beverage
   | "restaurant"
+  | "pizzeria"
+  | "burger_shop"
+  | "bakery"
+  | "coffee_shop"
+  | "acai_sorveteria"
+  | "bar_pub"
+  | "food_truck"
+  // Construction & Hardware
   | "construction_materials"
-  | "salon"
+  | "hardware_store"
+  | "paint_store"
+  | "electrical_supplies"
+  | "plumbing_supplies"
+  // Retail
+  | "furniture_store"
+  | "clothing_store"
+  | "shoe_store"
+  | "cosmetics_store"
+  | "supermarket"
+  // Pets
   | "pet_shop"
-  | "hotel"
-  | "real_estate"
-  | "event"
-  | "clinic"
+  | "veterinary"
+  // Beauty & Wellness
+  | "salon"
+  | "barber_shop"
+  | "nail_studio"
+  | "spa"
+  | "dental_clinic"
+  | "medical_clinic"
+  | "physiotherapy"
   | "gym"
-  | "mechanic"
-  | "freelancer"
+  // Hospitality
+  | "hotel"
+  // Real Estate & Automotive
+  | "real_estate"
+  | "car_dealership"
+  | "auto_repair"
+  | "motorcycle_repair"
+  | "car_wash"
+  // Events
+  | "event"
+  | "party_rental"
+  // Education & Community
+  | "school"
+  | "daycare"
   | "church"
+  // Services
+  | "freelancer"
+  | "photographer"
+  | "cleaning_services"
+  | "laundry"
+  // Tech & Electronics
+  | "electronics_repair"
+  | "cellphone_store"
+  // Print & Specialty
+  | "print_shop"
+  | "florist"
+  | "pharmacy"
+  | "travel_agency"
+  | "delivery_business"
+  | "clinic"
+  | "mechanic"
+  // Generic / Other
   | "product_shelf"
   | "other";
 
@@ -99,6 +152,48 @@ export interface TemplateItem {
   image_url: string | null;
   sort_order: number;
   created_at: string;
+}
+
+// ===== Business Template System (v2) =====
+
+import type { TranslatedText } from "./i18n/types";
+
+export type FormType = "lead" | "quote" | "order" | "booking" | "catalog" | "menu";
+
+/**
+ * A user-facing string that can be either:
+ * - A plain string (treated as default language, pt-BR)
+ * - A TranslatedText object with pt-BR, en, es translations
+ */
+export type LocalizedString = string | TranslatedText;
+
+export interface BusinessTemplateItem {
+  name: LocalizedString;
+  description?: LocalizedString;
+  price?: number;
+  unit?: string;
+  whatsappMessage?: LocalizedString;
+  imagePlaceholder?: string;
+  isFeatured?: boolean;
+}
+
+export interface BusinessTemplateSection {
+  title: LocalizedString;
+  description?: LocalizedString;
+  sectionType?: string;
+  items: BusinessTemplateItem[];
+}
+
+export interface BusinessTemplate {
+  id: string;
+  businessType: BusinessCategory;
+  name: LocalizedString;
+  description: LocalizedString;
+  pageTitle: LocalizedString;
+  formType: FormType;
+  whatsappCta: LocalizedString;
+  qrUseCase: LocalizedString;
+  sections: BusinessTemplateSection[];
 }
 
 export interface Page {

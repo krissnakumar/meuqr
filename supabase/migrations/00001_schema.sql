@@ -368,8 +368,35 @@ CREATE POLICY "Staff can view assigned businesses"
   );
 
 -- 3.3 Business Members: owners/admins can manage, staff can view
-CREATE POLICY "Owners can manage members"
-  ON business_members FOR ALL
+CREATE POLICY "Owners can insert members"
+  ON business_members FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM businesses
+      WHERE businesses.id = business_members.business_id
+      AND businesses.owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Owners can update members"
+  ON business_members FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM businesses
+      WHERE businesses.id = business_members.business_id
+      AND businesses.owner_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM businesses
+      WHERE businesses.id = business_members.business_id
+      AND businesses.owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Owners can delete members"
+  ON business_members FOR DELETE
   USING (
     EXISTS (
       SELECT 1 FROM businesses
@@ -380,7 +407,7 @@ CREATE POLICY "Owners can manage members"
 
 CREATE POLICY "Members can view own memberships"
   ON business_members FOR SELECT
-  USING (user_id = auth.uid());
+  USING (auth.uid() IS NOT NULL);
 
 -- 3.4 Templates: public read
 CREATE POLICY "Anyone can read templates"
@@ -853,5 +880,6 @@ INSERT INTO templates (id, name, slug, category, description) VALUES
   ('a0000001-0000-0000-0000-000000000010', 'Academia', 'academia', 'gym', 'Planos, horários e agenda de aulas'),
   ('a0000001-0000-0000-0000-000000000011', 'Mecânico', 'mecanico', 'mechanic', 'Serviços automotivos e orçamento online'),
   ('a0000001-0000-0000-0000-000000000012', 'Freelancer', 'freelancer', 'freelancer', 'Portfólio profissional e orçamento rápido'),
-  ('a0000001-0000-0000-0000-000000000013', 'Igreja', 'igreja', 'church', 'Programação, eventos e doações')
+  ('a0000001-0000-0000-0000-000000000013', 'Igreja', 'igreja', 'church', 'Programação, eventos e doações'),
+  ('a0000001-0000-0000-0000-000000000014', 'Página Genérica', 'pagina-generica', 'other', 'Página versátil para qualquer tipo de negócio')
 ON CONFLICT (id) DO NOTHING;

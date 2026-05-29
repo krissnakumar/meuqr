@@ -16,6 +16,21 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+async function trackClick(clickType: string, pageId?: string) {
+  try {
+    await fetch("/api/track/click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clickType,
+        pageId: pageId || undefined,
+      }),
+    });
+  } catch {
+    // Silent fail for tracking
+  }
+}
+
 interface BusinessData {
   id: string;
   name: string;
@@ -131,6 +146,7 @@ export function PublicBusinessPageClient({
 
   function handleWhatsApp() {
     if (!business.whatsapp) return;
+    trackClick("whatsapp", page.id);
     const text = `Olá! Vim pelo MeuQR e gostaria de mais informações.`;
     window.open(
       `https://wa.me/${business.whatsapp}?text=${encodeURIComponent(text)}`,
@@ -144,6 +160,10 @@ export function PublicBusinessPageClient({
       ? `Olá! Gostaria de pedir: ${extraText}`
       : `Olá! Vim pelo MeuQR e gostaria de mais informações.`;
     return `https://wa.me/${business.whatsapp}?text=${encodeURIComponent(msg)}`;
+  }
+
+  function handleWhatsAppLinkClick() {
+    trackClick("whatsapp", page.id);
   }
 
   return (
@@ -194,6 +214,7 @@ export function PublicBusinessPageClient({
               href={getWhatsAppLink()}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleWhatsAppLinkClick}
               className="flex-1 flex items-center justify-center gap-2 bg-[#00C853] text-white rounded-xl py-3 font-medium text-sm hover:bg-[#00B34A] transition-colors shadow-sm"
             >
               <MessageCircle className="w-5 h-5" />
@@ -380,6 +401,7 @@ export function PublicBusinessPageClient({
                             )}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={handleWhatsAppLinkClick}
                             className="mt-1 inline-flex items-center gap-1 text-xs text-[#00C853] font-medium"
                           >
                             <MessageCircle className="w-3 h-3" />
@@ -403,6 +425,7 @@ export function PublicBusinessPageClient({
             href={getWhatsAppLink()}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={handleWhatsAppLinkClick}
             className="flex items-center justify-center gap-2 bg-[#00C853] text-white rounded-xl py-3.5 font-medium text-sm hover:bg-[#00B34A] transition-colors shadow-sm"
           >
             <MessageCircle className="w-5 h-5" />

@@ -80,17 +80,6 @@ export default function BusinessAnalyticsPage() {
         .select("*", { count: "exact", head: true })
         .eq("business_id", businessId);
 
-      let dateFilter = {};
-      if (period === "7d") {
-        const d = new Date();
-        d.setDate(d.getDate() - 7);
-        dateFilter = { gte: ["created_at", d.toISOString()] };
-      } else if (period === "30d") {
-        const d = new Date();
-        d.setDate(d.getDate() - 30);
-        dateFilter = { gte: ["created_at", d.toISOString()] };
-      }
-
       setBusiness(biz);
 
       if (!qrCodes?.length) {

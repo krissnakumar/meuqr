@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { checkRateLimit, getClientIp, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  // Rate limit check
+  const ip = getClientIp(request);
+  const rateLimit = checkRateLimit(`public-page:${ip}`, RATE_LIMIT_CONFIGS.publicData);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Muitas requisições. Tente novamente mais tarde." },
+      { status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)),
+          "X-RateLimit-Limit": String(rateLimit.limit),
+          "X-RateLimit-Remaining": "0",
+        }
+      }
+    );
+  }
+
   const slug = request.nextUrl.searchParams.get("slug");
   const shortCode = request.nextUrl.searchParams.get("shortCode");
 

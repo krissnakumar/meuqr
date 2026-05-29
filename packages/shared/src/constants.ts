@@ -9,21 +9,74 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000
 // ===== Business Categories =====
 
 export const BUSINESS_CATEGORIES = [
-  { value: "restaurant", label: "Restaurante", icon: "Utensils" },
+  // Food & Beverage
+  { value: "restaurant", label: "Restaurante / Lanchonete", icon: "UtensilsCrossed" },
+  { value: "pizzeria", label: "Pizzaria", icon: "Pizza" },
+  { value: "burger_shop", label: "Hamburgueria", icon: "Sandwich" },
+  { value: "bakery", label: "Padaria / Confeitaria", icon: "Bread" },
+  { value: "coffee_shop", label: "Cafeteria", icon: "Coffee" },
+  { value: "acai_sorveteria", label: "Açaí / Sorveteria", icon: "IceCream" },
+  { value: "bar_pub", label: "Bar / Pub", icon: "Wine" },
+  { value: "food_truck", label: "Food Truck", icon: "Truck" },
+  // Construction & Hardware
   { value: "construction_materials", label: "Material de Construção", icon: "Building2" },
-  { value: "salon", label: "Salão / Barbearia", icon: "Scissors" },
+  { value: "hardware_store", label: "Loja de Ferragens", icon: "Wrench" },
+  { value: "paint_store", label: "Loja de Tintas", icon: "PaintBucket" },
+  { value: "electrical_supplies", label: "Materiais Elétricos", icon: "Zap" },
+  { value: "plumbing_supplies", label: "Materiais Hidráulicos", icon: "Droplets" },
+  // Retail
+  { value: "furniture_store", label: "Loja de Móveis", icon: "Sofa" },
+  { value: "clothing_store", label: "Loja de Roupas", icon: "Shirt" },
+  { value: "shoe_store", label: "Loja de Calçados", icon: "Footprints" },
+  { value: "cosmetics_store", label: "Loja de Cosméticos", icon: "Sparkles" },
+  { value: "supermarket", label: "Supermercado / Mercearia", icon: "ShoppingCart" },
+  // Pets
   { value: "pet_shop", label: "Pet Shop", icon: "Dog" },
-  { value: "hotel", label: "Hotel", icon: "Hotel" },
+  { value: "veterinary", label: "Clínica Veterinária", icon: "Stethoscope" },
+  // Beauty & Wellness
+  { value: "salon", label: "Salão de Beleza", icon: "Scissors" },
+  { value: "barber_shop", label: "Barbearia", icon: "Beard" },
+  { value: "nail_studio", label: "Estúdio de Unhas", icon: "Hand" },
+  { value: "spa", label: "Spa / Massagem", icon: "Flower2" },
+  { value: "dental_clinic", label: "Clínica Odontológica", icon: "Tooth" },
+  { value: "medical_clinic", label: "Clínica Médica", icon: "Stethoscope" },
+  { value: "physiotherapy", label: "Fisioterapia", icon: "Activity" },
+  { value: "gym", label: "Academia / Personal", icon: "Dumbbell" },
+  // Hospitality
+  { value: "hotel", label: "Hotel / Pousada", icon: "Hotel" },
+  // Real Estate & Automotive
   { value: "real_estate", label: "Imobiliária", icon: "Home" },
-  { value: "event", label: "Evento", icon: "Calendar" },
-  { value: "clinic", label: "Clínica", icon: "Stethoscope" },
-  { value: "gym", label: "Academia", icon: "Dumbbell" },
-  { value: "mechanic", label: "Mecânico", icon: "Wrench" },
-  { value: "freelancer", label: "Freelancer", icon: "Briefcase" },
-  { value: "church", label: "Igreja", icon: "Church" },
+  { value: "car_dealership", label: "Concessionária", icon: "Car" },
+  { value: "auto_repair", label: "Oficina Mecânica", icon: "Wrench" },
+  { value: "motorcycle_repair", label: "Oficina de Motos", icon: "Bike" },
+  { value: "car_wash", label: "Lava Rápido", icon: "SprayCan" },
+  // Events
+  { value: "event", label: "Organizador de Eventos", icon: "Calendar" },
+  { value: "party_rental", label: "Aluguel para Festas", icon: "PartyPopper" },
+  // Education & Community
+  { value: "school", label: "Escola / Curso", icon: "BookOpen" },
+  { value: "daycare", label: "Creche", icon: "Baby" },
+  { value: "church", label: "Igreja / Grupo", icon: "Church" },
+  // Services
+  { value: "freelancer", label: "Freelancer / Profissional", icon: "Briefcase" },
+  { value: "photographer", label: "Fotógrafo", icon: "Camera" },
+  { value: "cleaning_services", label: "Serviços de Limpeza", icon: "SprayCan" },
+  { value: "laundry", label: "Lavanderia", icon: "Shirt" },
+  // Tech & Electronics
+  { value: "electronics_repair", label: "Assistência Técnica", icon: "Monitor" },
+  { value: "cellphone_store", label: "Loja de Celulares", icon: "Smartphone" },
+  // Print & Specialty
+  { value: "print_shop", label: "Gráfica / Impressão", icon: "Printer" },
+  { value: "florist", label: "Floricultura", icon: "Flower2" },
+  { value: "pharmacy", label: "Farmácia / Drogaria", icon: "Pill" },
+  { value: "travel_agency", label: "Agência de Viagens", icon: "Plane" },
+  { value: "delivery_business", label: "Delivery", icon: "Truck" },
+  // Generic
   { value: "product_shelf", label: "Prateleira de Produto", icon: "Package" },
   { value: "other", label: "Outro", icon: "MoreHorizontal" },
 ] as const;
+
+export type BusinessCategoryInfo = (typeof BUSINESS_CATEGORIES)[number];
 
 // ===== Subscription Plans =====
 

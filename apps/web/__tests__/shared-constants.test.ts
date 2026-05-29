@@ -35,7 +35,7 @@ describe("BUSINESS_CATEGORIES", () => {
   it("should include restaurant category", () => {
     const restaurant = BUSINESS_CATEGORIES.find((c) => c.value === "restaurant");
     expect(restaurant).toBeDefined();
-    expect(restaurant!.label).toBe("Restaurante");
+    expect(restaurant!.label).toBe("Restaurante / Lanchonete");
   });
 
   it("should have unique values", () => {
@@ -90,7 +90,7 @@ describe("PLANS", () => {
 
 describe("QR_DEFAULTS", () => {
   it("should have sensible defaults", () => {
-    expect(QR_DEFAULTS.foregroundColor).toBe("#111827");
+    expect(QR_DEFAULTS.foregroundColor).toBe("#1877F2");
     expect(QR_DEFAULTS.backgroundColor).toBe("#FFFFFF");
     expect(QR_DEFAULTS.errorCorrectionLevel).toBe("M");
     expect(QR_DEFAULTS.margin).toBe(10);

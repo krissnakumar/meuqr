@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { PLANS } from "@meuqr/shared";
+import { useTranslation } from "@/lib/i18n-provider";
 import {
   Loader2,
   CheckCircle2,
-  CreditCard,
   ArrowRight,
 } from "lucide-react";
-import Link from "next/link";
 
 export default function BillingPage() {
+  const { t } = useTranslation();
   const [currentTier, setCurrentTier] = useState<string>("free");
   const [loading, setLoading] = useState(true);
 
@@ -56,14 +56,20 @@ export default function BillingPage() {
     { key: "business", ...PLANS.business },
   ];
 
+  const tierLabels: Record<string, string> = {
+    free: t('pricing.free_name'),
+    pro: 'Pro',
+    business: 'Business',
+  };
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#111827]">
-          Assinatura
+          {t('dashboard.subscription')}
         </h1>
         <p className="text-gray-500 mt-1">
-          Gerencie seu plano e forma de pagamento
+          {t('pricing.subtitle')}
         </p>
       </div>
 
@@ -71,14 +77,9 @@ export default function BillingPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Plano Atual</CardTitle>
+              <CardTitle>{t('dashboard.current_plan')}</CardTitle>
               <CardDescription>
-                Você está no plano{" "}
-                {currentTier === "free"
-                  ? "Grátis"
-                  : currentTier === "pro"
-                  ? "Profissional"
-                  : "Empresarial"}
+                {t('pricing.free_name')}: {tierLabels[currentTier]}
               </CardDescription>
             </div>
             <Badge
@@ -91,11 +92,7 @@ export default function BillingPage() {
               }
               className="text-sm px-4 py-1"
             >
-              {currentTier === "free"
-                ? "Grátis"
-                : currentTier === "pro"
-                ? "Pro"
-                : "Business"}
+              {tierLabels[currentTier]}
             </Badge>
           </div>
         </CardHeader>
@@ -104,6 +101,7 @@ export default function BillingPage() {
       <div className="grid md:grid-cols-3 gap-6">
         {plans.map((plan) => {
           const isCurrent = plan.key === currentTier;
+          const tierKey = `pricing.${plan.key}_` as const;
           return (
             <Card
               key={plan.key}
@@ -116,7 +114,7 @@ export default function BillingPage() {
                   variant="accent"
                   className="absolute -top-2.5 left-1/2 -translate-x-1/2"
                 >
-                  Plano Atual
+                  {t('pricing.popular_badge')}
                 </Badge>
               )}
               <CardHeader>
@@ -124,11 +122,11 @@ export default function BillingPage() {
                 <div className="mt-2">
                   <span className="text-3xl font-bold">
                     {plan.price_monthly === 0
-                      ? "Grátis"
+                      ? t('common.free')
                       : `R$ ${plan.price_monthly.toFixed(2)}`}
                   </span>
                   {plan.price_monthly > 0 && (
-                    <span className="text-gray-400 text-sm">/mês</span>
+                    <span className="text-gray-400 text-sm">{t('pricing.month')}</span>
                   )}
                 </div>
               </CardHeader>
@@ -137,20 +135,20 @@ export default function BillingPage() {
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="w-4 h-4 text-[#00C853]" />
                     {plan.max_businesses === -1
-                      ? "Negócios ilimitados"
-                      : `${plan.max_businesses} negócio(s)`}
+                      ? t('pricing.feature_unlimited_businesses')
+                      : `1 ${t('pricing.feature_1_business')}`}
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="w-4 h-4 text-[#00C853]" />
                     {plan.max_qrs === -1
-                      ? "QR ilimitados"
-                      : `${plan.max_qrs} QR code`}
+                      ? t('pricing.feature_unlimited_qrs')
+                      : `1 ${t('pricing.feature_1_qr')}`}
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="w-4 h-4 text-[#00C853]" />
                     {plan.max_items === -1
-                      ? "Itens ilimitados"
-                      : `${plan.max_items} itens`}
+                      ? t('pricing.feature_unlimited_items')
+                      : `20 ${t('pricing.feature_20_items')}`}
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2
@@ -158,7 +156,7 @@ export default function BillingPage() {
                         plan.custom_qr ? "text-[#00C853]" : "text-gray-300"
                       }`}
                     />
-                    QR personalizado
+                    {plan.custom_qr ? t('pricing.feature_custom_qr') : t('pricing.feature_basic_qr')}
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2
@@ -166,7 +164,7 @@ export default function BillingPage() {
                         plan.analytics ? "text-[#00C853]" : "text-gray-300"
                       }`}
                     />
-                    Analytics
+                    {plan.analytics ? t('pricing.feature_full_analytics') : t('pricing.feature_basic_analytics')}
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2
@@ -174,7 +172,7 @@ export default function BillingPage() {
                         plan.staff_members ? "text-[#00C853]" : "text-gray-300"
                       }`}
                     />
-                    Equipe multi-usuário
+                    {t('pricing.feature_staff')}
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2
@@ -182,13 +180,13 @@ export default function BillingPage() {
                         plan.api_access ? "text-[#00C853]" : "text-gray-300"
                       }`}
                     />
-                    API access
+                    {t('pricing.feature_api')}
                   </li>
                 </ul>
 
                 {!isCurrent && plan.key !== "free" && (
                   <Button variant="default" className="w-full">
-                    Fazer Upgrade
+                    {t('business.upgrade')}
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 )}

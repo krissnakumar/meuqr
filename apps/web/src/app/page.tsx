@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@meuqr/ui";
+import { useTranslation } from "@/lib/i18n-provider";
 import {
   QrCode,
   Smartphone,
@@ -20,85 +21,103 @@ import {
   Calendar,
   Stethoscope,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 const features = [
   {
     icon: QrCode,
-    title: "QR Code Personalizado",
-    description: "Gere QR codes estilizados com sua logo e cores da marca.",
+    titleKey: "feature_qr_title",
+    descKey: "feature_qr_desc",
   },
   {
     icon: Smartphone,
-    title: "Página Mobile-First",
-    description: "Página otimizada para celular que carrega em segundos.",
+    titleKey: "feature_mobile_title",
+    descKey: "feature_mobile_desc",
   },
   {
     icon: Store,
-    title: "Catálogo Digital",
-    description: "Mostre seus produtos e serviços com fotos, preços e descrições.",
+    titleKey: "feature_catalog_title",
+    descKey: "feature_catalog_desc",
   },
   {
     icon: BarChart3,
-    title: "Analytics em Tempo Real",
-    description: "Saiba quantas pessoas escanearam e o que mais foi visto.",
+    titleKey: "feature_analytics_title",
+    descKey: "feature_analytics_desc",
   },
 ];
 
 const categories = [
-  { icon: Utensils, name: "Restaurantes", desc: "Cardápio digital" },
-  { icon: Building2, name: "Construção", desc: "Catálogo de materiais" },
-  { icon: Scissors, name: "Salão", desc: "Serviços e agenda" },
-  { icon: Dog, name: "Pet Shop", desc: "Produtos e serviços" },
-  { icon: Hotel, name: "Hotel", desc: "Guia do hóspede" },
-  { icon: Home, name: "Imobiliária", desc: "Vitrine de imóveis" },
-  { icon: Calendar, name: "Eventos", desc: "Página interativa" },
-  { icon: Stethoscope, name: "Clínica", desc: "Agendamento online" },
+  { icon: Utensils, nameKey: "category_restaurants", descKey: "category_digital_menu" },
+  { icon: Building2, nameKey: "category_construction", descKey: "category_materials_catalog" },
+  { icon: Scissors, nameKey: "category_salon", descKey: "category_services_schedule" },
+  { icon: Dog, nameKey: "category_petshop", descKey: "category_products_services" },
+  { icon: Hotel, nameKey: "category_hotel", descKey: "category_guest_guide" },
+  { icon: Home, nameKey: "category_realestate", descKey: "category_property_showcase" },
+  { icon: Calendar, nameKey: "category_events", descKey: "category_interactive_page" },
+  { icon: Stethoscope, nameKey: "category_clinic", descKey: "category_online_booking" },
 ];
 
 const plans = [
   {
-    name: "Grátis",
+    nameKey: "pricing.free_name",
     price: "R$ 0",
-    period: "/mês",
-    features: ["1 negócio", "1 QR Code", "20 itens", "QR básico"],
-    cta: "Começar grátis",
+    periodKey: "pricing.month",
+    featuresKey: ["free_feature_1", "free_feature_2", "free_feature_3", "free_feature_4"],
+    ctaKey: "pricing.free_cta",
     popular: false,
   },
   {
-    name: "Profissional",
+    nameKey: "pricing.pro_name",
     price: "R$ 29,90",
-    period: "/mês",
-    features: [
-      "3 negócios",
-      "QR ilimitados",
-      "500 itens",
-      "QR personalizado",
-      "Analytics completos",
-    ],
-    cta: "Assinar Pro",
+    periodKey: "pricing.month",
+    featuresKey: ["pro_feature_1", "pro_feature_2", "pro_feature_3", "pro_feature_4", "pro_feature_5"],
+    ctaKey: "pricing.pro_cta",
     popular: true,
   },
   {
-    name: "Empresarial",
+    nameKey: "pricing.biz_name",
     price: "R$ 79,90",
-    period: "/mês",
-    features: [
-      "Negócios ilimitados",
-      "QR ilimitados",
-      "Itens ilimitados",
-      "QR personalizado",
-      "Analytics avançado",
-      "Equipe multi-usuário",
-      "API access",
-    ],
-    cta: "Falar com vendas",
+    periodKey: "pricing.month",
+    featuresKey: ["biz_feature_1", "biz_feature_2", "biz_feature_3", "biz_feature_4", "biz_feature_5", "biz_feature_6", "biz_feature_7"],
+    ctaKey: "pricing.biz_cta",
     popular: false,
   },
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        router.push("/dashboard");
+      }
+    });
+  }, [router]);
+
+  const featureItems = features.map((f) => ({
+    ...f,
+    title: t(f.titleKey),
+    description: t(f.descKey),
+  }));
+
+  const categoryItems = categories.map((c) => ({
+    ...c,
+    name: t(c.nameKey),
+    desc: t(c.descKey),
+  }));
+
+  const planItems = plans.map((p) => ({
+    ...p,
+    name: t(p.nameKey),
+    period: t(p.periodKey),
+    cta: t(p.ctaKey),
+    features: p.featuresKey.map((fk) => t(fk)),
+  }));
 
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
@@ -115,17 +134,17 @@ export default function LandingPage() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
             <Link href="#funcionalidades" className="text-sm text-gray-600 hover:text-[#1877F2] transition-colors">
-              Funcionalidades
+              {t("common.footer_features")}
             </Link>
             <Link href="#planos" className="text-sm text-gray-600 hover:text-[#1877F2] transition-colors">
-              Planos
+              {t("common.footer_plans")}
             </Link>
             <Link href="/login" className="text-sm text-gray-600 hover:text-[#1877F2] transition-colors">
-              Entrar
+              {t("auth.login_link")}
             </Link>
             <Link href="/register">
               <Button variant="default" size="sm">
-                Criar Conta Grátis
+                {t("auth.register_btn")}
               </Button>
             </Link>
           </div>
@@ -151,25 +170,25 @@ export default function LandingPage() {
               className="block text-sm text-gray-600 py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Funcionalidades
+              {t("common.footer_features")}
             </Link>
             <Link
               href="#planos"
               className="block text-sm text-gray-600 py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Planos
+              {t("common.footer_plans")}
             </Link>
             <Link
               href="/login"
               className="block text-sm text-gray-600 py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Entrar
+              {t("auth.login_link")}
             </Link>
             <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="default" className="w-full">
-                Criar Conta Grátis
+                {t("auth.register_btn")}
               </Button>
             </Link>
           </div>
@@ -181,28 +200,27 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#31A24C]/10 rounded-full text-[#31A24C] text-sm font-medium mb-8 animate-fade-in border border-[#31A24C]/20">
             <CheckCircle2 className="w-4 h-4" />
-            Mais de 1000 negócios cadastrados
+            {t("common.hero_badge")}
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#050505] tracking-tight leading-tight mb-6 animate-fade-in-up">
-            Sua página inteligente
+            {t("common.hero_title_line1")}
             <br />
-            com{" "}
-            <span className="text-[#1877F2]">QR Code</span>
+            {t("common.hero_title_with")}{" "}
+            <span className="text-[#1877F2]">{t("common.hero_qr")}</span>
           </h1>
           <p className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto mb-10 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            Crie páginas incríveis para seu negócio em minutos. Cardápios,
-            catálogos, serviços e muito mais. Tudo com um QR code estilizado.
+            {t("common.hero_subtitle")}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
             <Link href="/register">
               <Button variant="default" size="xl" className="w-full sm:w-auto">
-                Criar Conta Grátis
+                {t("auth.register_btn")}
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
             <Link href="#funcionalidades">
               <Button variant="outline" size="xl" className="w-full sm:w-auto">
-                Ver Funcionalidades
+                {t("common.hero_see_features")}
               </Button>
             </Link>
           </div>
@@ -213,13 +231,13 @@ export default function LandingPage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-y border-[#E4E6EB]">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-[#050505] text-center mb-4">
-            Para todo tipo de negócio
+            {t("common.for_every_business")}
           </h2>
           <p className="text-gray-500 text-center mb-12 max-w-2xl mx-auto">
-            Restaurantes, lojas, salões, clínicas, eventos e muito mais.
+            {t("common.for_every_business_desc")}
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories.map((cat) => (
+            {categoryItems.map((cat) => (
               <div
                 key={cat.name}
                 className="flex items-center gap-3 p-4 rounded-xl border border-[#E4E6EB] hover:border-[#1877F2]/30 hover:shadow-sm transition-all cursor-default group"
@@ -239,13 +257,13 @@ export default function LandingPage() {
       <section id="funcionalidades" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-[#050505] text-center mb-4">
-            Tudo que você precisa
+            {t("common.all_you_need")}
           </h2>
           <p className="text-gray-500 text-center mb-12 max-w-2xl mx-auto">
-            Ferramentas completas para digitalizar seu negócio.
+            {t("common.all_you_need_desc")}
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feat) => (
+            {featureItems.map((feat) => (
               <div
                 key={feat.title}
                 className="p-6 rounded-xl bg-white border border-[#E4E6EB] hover:shadow-lg hover:border-[#1877F2]/20 transition-all group"
@@ -267,13 +285,13 @@ export default function LandingPage() {
       <section id="planos" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-y border-[#E4E6EB]">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-[#050505] text-center mb-4">
-            Planos simples e transparentes
+            {t("pricing.title")}
           </h2>
           <p className="text-gray-500 text-center mb-12 max-w-2xl mx-auto">
-            Comece grátis e expanda quando precisar.
+            {t("pricing.subtitle")}
           </p>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {plans.map((plan) => (
+            {planItems.map((plan) => (
               <div
                 key={plan.name}
                 className={`relative rounded-2xl p-8 ${
@@ -284,7 +302,7 @@ export default function LandingPage() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#31A24C] text-white text-xs font-semibold rounded-full">
-                    MAIS POPULAR
+                    {t("pricing.popular_badge")}
                   </div>
                 )}
                 <h3 className={`text-xl font-bold mb-2 ${plan.popular ? "text-white" : "text-[#050505]"}`}>
@@ -308,7 +326,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href={plan.name === "Grátis" ? "/register" : "#"}>
+                <Link href="/register">
                   <Button
                     variant={plan.popular ? "secondary" : "outline"}
                     className="w-full"
@@ -327,14 +345,14 @@ export default function LandingPage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#050505] tracking-tight mb-6">
-            Pronto para começar?
+            {t("pricing.cta_title")}
           </h2>
           <p className="text-lg text-gray-500 mb-8">
-            Crie sua conta grátis em menos de 1 minuto. Sem cartão de crédito.
+            {t("pricing.cta_desc")}
           </p>
           <Link href="/register">
             <Button variant="default" size="xl">
-              Criar Conta Grátis
+              {t("auth.register_btn")}
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
@@ -352,18 +370,18 @@ export default function LandingPage() {
               <span className="text-xl font-bold">MeuQR</span>
             </div>
             <p className="text-sm text-gray-400">
-              Páginas inteligentes com QR Code para seu negócio.
+              {t("common.footer_tagline")}
             </p>
           </div>
           <div>
-            <h4 className="font-semibold mb-4">Produto</h4>
+            <h4 className="font-semibold mb-4">{t("common.footer_product")}</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</Link></li>
-              <li><Link href="#planos" className="hover:text-white transition-colors">Planos</Link></li>
+              <li><Link href="#funcionalidades" className="hover:text-white transition-colors">{t("common.footer_features")}</Link></li>
+              <li><Link href="#planos" className="hover:text-white transition-colors">{t("common.footer_plans")}</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold mb-4">Contato</h4>
+            <h4 className="font-semibold mb-4">{t("common.footer_contact")}</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li>contato@meuqr.com.br</li>
               <li>WhatsApp: (11) 99999-8888</li>
@@ -371,7 +389,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-          © 2026 MeuQR. Todos os direitos reservados.
+          {t("common.footer_rights")}
         </div>
       </footer>
     </div>

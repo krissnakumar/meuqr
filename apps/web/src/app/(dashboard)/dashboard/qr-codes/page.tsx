@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button, Card, CardContent, Badge } from "@meuqr/ui";
+import { Button, Card, CardContent, Badge, Input, Label } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import {
   QrCode,
   Loader2,
@@ -12,13 +13,14 @@ import {
   Edit3,
   CheckCircle2,
   XCircle,
-
+  Palette,
 } from "lucide-react";
 
 interface QRWithBusiness {
   id: string;
   short_code: string;
   title: string | null;
+  destination_url: string | null;
   is_active: boolean;
   scan_count: number;
   created_at: string;
@@ -31,6 +33,12 @@ export default function AllQRCodesPage() {
   const [qrCodes, setQrCodes] = useState<QRWithBusiness[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  // Editing state
+  const [editingQr, setEditingQr] = useState<QRWithBusiness | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDestinationUrl, setEditDestinationUrl] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadQRCodes();
@@ -68,6 +76,7 @@ export default function AllQRCodesPage() {
           id: qr.id,
           short_code: qr.short_code,
           title: qr.title,
+          destination_url: qr.destination_url,
           is_active: qr.is_active,
           scan_count: qr.scan_count,
           created_at: qr.created_at,
@@ -86,9 +95,61 @@ export default function AllQRCodesPage() {
   }
 
   async function toggleActive(qrId: string, current: boolean) {
-    await supabase.from("qr_codes").update({ is_active: !current }).eq("id", qrId);
+    const { error } = await supabase
+      .from("qr_codes")
+      .update({ is_active: !current })
+      .eq("id", qrId);
+
+    if (error) {
+      toast.error("Erro ao alterar status: " + error.message);
+      return;
+    }
+
     setQrCodes(qrCodes.map((qr) => (qr.id === qrId ? { ...qr, is_active: !current } : qr)));
+    toast.success(current ? "QR Code desativado!" : "QR Code ativado!");
   }
+
+  const startEdit = (qr: QRWithBusiness) => {
+    setEditingQr(qr);
+    setEditTitle(qr.title || "");
+    setEditDestinationUrl(qr.destination_url || "");
+  };
+
+  const handleSaveDetails = async () => {
+    if (!editingQr) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("qr_codes")
+        .update({
+          title: editTitle || null,
+          destination_url: editDestinationUrl || null,
+        })
+        .eq("id", editingQr.id);
+
+      if (error) {
+        toast.error("Erro ao atualizar QR code: " + error.message);
+        return;
+      }
+
+      // Update local state
+      setQrCodes(
+        qrCodes.map((qr) =>
+          qr.id === editingQr.id
+            ? { ...qr, title: editTitle || null, destination_url: editDestinationUrl || null }
+            : qr
+        )
+      );
+
+      toast.success("Detalhes do QR Code atualizados!");
+      setEditingQr(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro interno. Tente novamente.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const filtered = qrCodes.filter(
     (qr) =>
@@ -144,7 +205,7 @@ export default function AllQRCodesPage() {
           {filtered.map((qr) => (
             <div
               key={qr.id}
-              className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all group"
+              className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all group animate-fade-in"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
@@ -179,7 +240,7 @@ export default function AllQRCodesPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => toggleActive(qr.id, qr.is_active)}
-                  className="p-2 text-gray-400 hover:text-[#111827] transition-colors"
+                  className="p-2 text-gray-400 hover:text-[#111827] transition-colors cursor-pointer"
                   title={qr.is_active ? "Desativar" : "Ativar"}
                 >
                   {qr.is_active ? (
@@ -188,19 +249,101 @@ export default function AllQRCodesPage() {
                     <XCircle className="w-4 h-4 text-gray-300" />
                   )}
                 </button>
-                <Link href={`/dashboard/business/${qr.business_id}/qr/${qr.id}`}>
-                  <Button variant="ghost" size="icon">
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
-                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => startEdit(qr)}
+                  title="Editar detalhes"
+                  className="cursor-pointer"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </Button>
                 <Link href={`/q/${qr.short_code}`} target="_blank">
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="cursor-pointer">
                     <ExternalLink className="w-4 h-4" />
                   </Button>
                 </Link>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Glassmorphic Edit details Modal */}
+      {editingQr && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in p-4">
+          <Card className="w-full max-w-md animate-scale-up shadow-2xl bg-white border border-gray-100 overflow-hidden">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <QrCode className="w-4 h-4" />
+                </div>
+                <h2 className="text-xl font-bold text-[#111827]">Editar QR Code</h2>
+              </div>
+              <p className="text-xs text-gray-400">
+                Atualize o título identificador e a URL de destino para onde o QR Code aponta.
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="editTitle">Título do QR Code</Label>
+                <Input
+                  id="editTitle"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Ex: Cardápio Principal, Mesa 5..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editUrl">URL de Destino / Link</Label>
+                <Input
+                  id="editUrl"
+                  value={editDestinationUrl}
+                  onChange={(e) => setEditDestinationUrl(e.target.value)}
+                  placeholder="Ex: https://meuqr.com.br/restaurante..."
+                />
+                <p className="text-[10px] text-gray-400 leading-normal">
+                  Insira o link para redirecionar o cliente quando escanear este QR Code.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-4">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditingQr(null)}
+                    className="flex-1 py-4 cursor-pointer"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSaveDetails}
+                    className="flex-1 bg-[#111827] hover:bg-black text-white py-4 cursor-pointer"
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Salvar Detalhes"
+                    )}
+                  </Button>
+                </div>
+
+                <Link
+                  href={`/dashboard/business/${editingQr.business_id}/qr/${editingQr.id}`}
+                  className="w-full"
+                >
+                  <Button
+                    variant="outline"
+                    className="w-full border-indigo-200 text-indigo-600 hover:bg-indigo-50/50 py-4 mt-2 flex items-center justify-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <Palette className="w-4 h-4" />
+                    Personalizar Cores e Design 🎨
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
         </div>
       )}
     </div>

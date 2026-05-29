@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import {
   Loader2,
   ArrowLeft,
@@ -105,14 +106,15 @@ export default function MembersPage() {
 
       if (error) {
         if (error.code === "23505") {
-          alert("Este usuário já é membro deste negócio.");
+          toast.error("Este usuário já é membro deste negócio.");
         } else {
-          alert("Erro ao convidar membro.");
+          toast.error("Erro ao convidar membro.");
         }
         return;
       }
 
       setInviteEmail("");
+      toast.success("Membro convidado!");
       loadData();
     } catch (err) {
       console.error(err);
@@ -123,13 +125,23 @@ export default function MembersPage() {
 
   async function removeMember(memberId: string) {
     if (!confirm("Tem certeza que deseja remover este membro?")) return;
-    await supabase.from("business_members").delete().eq("id", memberId);
+    const { error } = await supabase.from("business_members").delete().eq("id", memberId);
+    if (error) {
+      toast.error("Erro ao remover membro");
+      return;
+    }
     setMembers(members.filter((m) => m.id !== memberId));
+    toast.success("Membro removido");
   }
 
   async function changeRole(memberId: string, newRole: string) {
-    await supabase.from("business_members").update({ role: newRole }).eq("id", memberId);
+    const { error } = await supabase.from("business_members").update({ role: newRole }).eq("id", memberId);
+    if (error) {
+      toast.error("Erro ao alterar cargo");
+      return;
+    }
     setMembers(members.map((m) => (m.id === memberId ? { ...m, role: newRole } : m)));
+    toast.success("Cargo atualizado");
   }
 
   const roleConfig: Record<string, { label: string; icon: any; color: string }> = {

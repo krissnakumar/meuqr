@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Separator, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import {
   Loader2,
   ArrowLeft,
@@ -72,7 +73,10 @@ export default function PageEditorPage() {
   }
 
   async function addSection() {
-    if (!newSectionName.trim()) return;
+    if (!newSectionName.trim()) {
+      toast.error("Digite um nome para a seção");
+      return;
+    }
     const slug = newSectionName
       .toLowerCase()
       .normalize("NFD")
@@ -91,15 +95,26 @@ export default function PageEditorPage() {
       .select()
       .single();
 
-    if (!error && data) {
+    if (error) {
+      toast.error("Erro ao criar seção");
+      return;
+    }
+    if (data) {
       setSections([...sections, { ...data, items: [] }]);
       setNewSectionName("");
+      toast.success("Seção criada");
     }
   }
 
   async function deleteSection(sectionId: string) {
-    await supabase.from("sections").delete().eq("id", sectionId);
+    if (!confirm("Excluir esta seção e todos os itens?")) return;
+    const { error } = await supabase.from("sections").delete().eq("id", sectionId);
+    if (error) {
+      toast.error("Erro ao excluir seção");
+      return;
+    }
     setSections(sections.filter((s) => s.id !== sectionId));
+    toast.success("Seção excluída");
   }
 
   async function toggleSectionVisibility(section: SectionWithItems) {
@@ -139,6 +154,7 @@ export default function PageEditorPage() {
   }
 
   async function deleteItem(itemId: string, sectionId: string) {
+    if (!confirm("Excluir este item?")) return;
     await supabase.from("items").delete().eq("id", itemId);
     setSections(
       sections.map((s) =>
@@ -147,6 +163,7 @@ export default function PageEditorPage() {
           : s
       )
     );
+    toast.success("Item excluído");
   }
 
   async function updateItemPrice(itemId: string, price: string) {
@@ -164,11 +181,18 @@ export default function PageEditorPage() {
 
   async function togglePublish() {
     setSaving(true);
-    await supabase
+    const wasPublished = page.is_published;
+    const { error } = await supabase
       .from("pages")
-      .update({ is_published: !page.is_published })
+      .update({ is_published: !wasPublished })
       .eq("id", pageId);
-    setPage({ ...page, is_published: !page.is_published });
+    if (error) {
+      toast.error("Erro ao publicar");
+      setSaving(false);
+      return;
+    }
+    setPage({ ...page, is_published: !wasPublished });
+    toast.success(wasPublished ? "Página despublicada" : "Página publicada!");
     setSaving(false);
   }
 

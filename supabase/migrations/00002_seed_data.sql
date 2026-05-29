@@ -79,6 +79,126 @@ UNION ALL
 SELECT id, 'Recepção WhatsApp', 'recepcao-whatsapp', 4 FROM templates WHERE slug = 'hotel';
 
 -- ============================================
+-- Template Items for Construction Materials
+-- ============================================
+INSERT INTO template_items (section_id, name, description, price, sort_order)
+SELECT ts.id, 'Cimento CP II 50kg', 'Cimento Portland CP II-E 32', 29.90, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'cimento'
+UNION ALL
+SELECT ts.id, 'Cimento CP IV 50kg', 'Cimento Pozolânico', 27.90, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'cimento'
+UNION ALL
+SELECT ts.id, 'Areia Média m³', 'Areia lavada média', 85.00, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'areia-pedra'
+UNION ALL
+SELECT ts.id, 'Brita 1 m³', 'Pedra britada nº 1', 95.00, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'areia-pedra'
+UNION ALL
+SELECT ts.id, 'Tijolo Baiano', 'Tijolo cerâmico 8 furos', 1.20, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'tijolos-blocos'
+UNION ALL
+SELECT ts.id, 'Bloco de Concreto', 'Bloco estrutural 14x19x39', 3.50, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'tijolos-blocos'
+UNION ALL
+SELECT ts.id, 'Tinta Acrílica 18L', 'Branco neve', 189.90, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'tintas'
+UNION ALL
+SELECT ts.id, 'Esmalte Sintético', 'Brilhante 3.6L', 89.90, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'tintas'
+UNION ALL
+SELECT ts.id, 'Fio 2.5mm 100m', 'Cabo elétrico 2.5mm²', 149.90, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'eletrica'
+UNION ALL
+SELECT ts.id, 'Disjuntor 16A', 'Disjuntor monopolizar 16A', 12.90, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'material-construcao' AND ts.slug = 'eletrica';
+
+-- ============================================
+-- Template Items for Salon
+-- ============================================
+INSERT INTO template_items (section_id, name, description, price, sort_order)
+SELECT ts.id, 'Corte Masculino', 'Corte com tesoura e máquina', 35.00, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'salao-barbearia' AND ts.slug = 'servicos'
+UNION ALL
+SELECT ts.id, 'Barba', 'Aparação e modelagem', 25.00, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'salao-barbearia' AND ts.slug = 'servicos'
+UNION ALL
+SELECT ts.id, 'Escova', 'Escova modeladora', 45.00, 2
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'salao-barbearia' AND ts.slug = 'servicos'
+UNION ALL
+SELECT ts.id, 'Hidratação', 'Hidratação capilar completa', 55.00, 3
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'salao-barbearia' AND ts.slug = 'servicos'
+UNION ALL
+SELECT ts.id, 'Manicure', 'Mãos completas', 30.00, 4
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'salao-barbearia' AND ts.slug = 'servicos'
+UNION ALL
+SELECT ts.id, 'Pedicure', 'Pés completos', 35.00, 5
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'salao-barbearia' AND ts.slug = 'servicos';
+
+-- ============================================
+-- Template Items for Hotel
+-- ============================================
+INSERT INTO template_items (section_id, name, description, price, sort_order)
+SELECT ts.id, 'Café da Manhã', 'Servido das 6h às 10h no restaurante', 0, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'guia-quarto'
+UNION ALL
+SELECT ts.id, 'Limpeza do Quarto', 'Serviço diário de arrumação', 0, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'guia-quarto'
+UNION ALL
+SELECT ts.id, 'Toalhas Extras', 'Solicite toalhas adicionais', 0, 2
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'guia-quarto'
+UNION ALL
+SELECT ts.id, 'Check-out', 'Horário: até 12h', 0, 3
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'guia-quarto'
+UNION ALL
+SELECT ts.id, 'Late Check-out', 'Disponível mediante disponibilidade', 50.00, 4
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'guia-quarto'
+UNION ALL
+SELECT ts.id, 'Rede: Hotel Guest', 'Senha disponível na recepção', 0, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'wifi'
+UNION ALL
+SELECT ts.id, 'Água Mineral', null, 5.00, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'room-service'
+UNION ALL
+SELECT ts.id, 'Refrigerante', null, 8.00, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'room-service'
+UNION ALL
+SELECT ts.id, 'Sanduíche Natural', null, 25.00, 2
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'room-service'
+UNION ALL
+SELECT ts.id, 'Não fumar nos quartos', 'Multa aplicável', 0, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'regras'
+UNION ALL
+SELECT ts.id, 'Silêncio após 22h', 'Respeite o sossego dos hóspedes', 0, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'hotel' AND ts.slug = 'regras';
+
+-- ============================================
 -- Pet Shop template sections
 -- ============================================
 INSERT INTO template_sections (template_id, name, slug, sort_order)
@@ -175,6 +295,42 @@ UNION ALL
 SELECT id, 'Como Usar', 'como-usar', 2 FROM templates WHERE slug = 'prateleira-produto'
 UNION ALL
 SELECT id, 'Fale com o Vendedor', 'fale-vendedor', 3 FROM templates WHERE slug = 'prateleira-produto';
+
+-- ============================================
+-- Generic Page template sections
+-- ============================================
+INSERT INTO template_sections (template_id, name, slug, sort_order)
+SELECT id, 'Serviços', 'servicos', 0 FROM templates WHERE slug = 'pagina-generica'
+UNION ALL
+SELECT id, 'Sobre Nós', 'sobre-nos', 1 FROM templates WHERE slug = 'pagina-generica'
+UNION ALL
+SELECT id, 'Galeria', 'galeria', 2 FROM templates WHERE slug = 'pagina-generica'
+UNION ALL
+SELECT id, 'Contato WhatsApp', 'contato-whatsapp', 3 FROM templates WHERE slug = 'pagina-generica';
+
+-- ============================================
+-- Template Items for Generic Page
+-- ============================================
+INSERT INTO template_items (section_id, name, description, price, sort_order)
+SELECT ts.id, 'Serviço 1', 'Descrição do serviço 1', 0, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'pagina-generica' AND ts.slug = 'servicos'
+UNION ALL
+SELECT ts.id, 'Serviço 2', 'Descrição do serviço 2', 0, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'pagina-generica' AND ts.slug = 'servicos'
+UNION ALL
+SELECT ts.id, 'Serviço 3', 'Descrição do serviço 3', 0, 2
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'pagina-generica' AND ts.slug = 'servicos'
+UNION ALL
+SELECT ts.id, 'Nossa História', 'Conheça nossa trajetória', 0, 0
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'pagina-generica' AND ts.slug = 'sobre-nos'
+UNION ALL
+SELECT ts.id, 'Missão e Valores', 'Nossos princípios', 0, 1
+FROM template_sections ts JOIN templates t ON t.id = ts.template_id
+WHERE t.slug = 'pagina-generica' AND ts.slug = 'sobre-nos';
 
 -- ============================================
 -- Template Items for Pet Shop

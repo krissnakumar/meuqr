@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
-import { TEMPLATES } from "@meuqr/shared";
+import { getAllBusinessTemplates, type BusinessTemplate, resolveText, type LocalizedString } from "@meuqr/shared";
 import {
   Loader2,
   CheckCircle2,
@@ -53,15 +53,37 @@ export default function BusinessSetupPage() {
     }
   }
 
-  const recommendedTemplates = TEMPLATES.filter(
-    (t) => t.category === business?.category
+  // Helper to resolve LocalizedString to string (default: pt-BR)
+  function rt(text: LocalizedString): string {
+    return resolveText(text, "pt-BR");
+  }
+
+  const allTemplates = getAllBusinessTemplates();
+
+  const recommendedTemplates = allTemplates.filter(
+    (t) => t.businessType === business?.category
   );
 
-  const otherTemplates = TEMPLATES.filter(
-    (t) => t.category !== business?.category
+  const otherTemplates = allTemplates.filter(
+    (t) => t.businessType !== business?.category
   );
 
-  async function cloneTemplate(template: (typeof TEMPLATES)[0]) {
+  function templateSlug(template: BusinessTemplate): string {
+    return template.id.replace(/^tmpl-\d+-/, "");
+  }
+
+  function sectionSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  async function cloneTemplate(template: BusinessTemplate) {
     setCloning(true);
     try {
       // 1. Create the page
@@ -69,11 +91,11 @@ export default function BusinessSetupPage() {
         .from("pages")
         .insert({
           business_id: businessId,
-          title: template.name,
-          slug: template.slug,
+          title: rt(template.pageTitle || template.name),
+          slug: templateSlug(template),
           is_published: true,
-          seo_title: `${business?.name} - ${template.name}`,
-          seo_description: template.description,
+          seo_title: `${business?.name} - ${rt(template.name)}`,
+          seo_description: rt(template.description),
         })
         .select()
         .single();
@@ -88,8 +110,8 @@ export default function BusinessSetupPage() {
           .from("sections")
           .insert({
             page_id: page.id,
-            name: section.name,
-            slug: section.slug,
+            name: rt(section.title),
+            slug: sectionSlug(rt(section.title)),
             section_type: section.sectionType || null,
             sort_order: i,
           })
@@ -122,7 +144,7 @@ export default function BusinessSetupPage() {
         business_id: businessId,
         page_id: page.id,
         short_code: shortCode,
-        title: `${business?.name} - ${template.name}`,
+        title: `${business?.name} - ${rt(template.name)}`,
       });
 
       setStep("done");
@@ -202,7 +224,7 @@ export default function BusinessSetupPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   {recommendedTemplates.map((template) => (
                     <Card
-                      key={template.slug}
+                      key={template.id}
                       className="hover:shadow-lg transition-all cursor-pointer group border-2 border-[#00C853]/30 hover:border-[#00C853]/60 bg-[#00C853]/5"
                     >
                       <CardContent className="p-6">
@@ -213,7 +235,7 @@ export default function BusinessSetupPage() {
                             </div>
                             <div>
                               <h3 className="font-bold text-[#111827]">
-                                {template.name}
+                                {rt(template.name)}
                               </h3>
                               <p className="text-xs text-gray-400">
                                 {template.sections.length} seções
@@ -224,17 +246,17 @@ export default function BusinessSetupPage() {
                         </div>
 
                         <p className="text-sm text-gray-500 mb-4">
-                          {template.description}
+                          {rt(template.description)}
                         </p>
 
                         <div className="space-y-1 mb-4">
-                          {template.sections.slice(0, 3).map((sec) => (
+                          {template.sections.slice(0, 3).map((sec, i) => (
                             <div
-                              key={sec.slug}
+                              key={rt(sec.title) + i}
                               className="text-xs text-gray-400 flex items-center gap-2"
                             >
                               <div className="w-1.5 h-1.5 rounded-full bg-[#00C853]/40" />
-                              {sec.name}
+                              {rt(sec.title)}
                               {sec.items.length > 0 && (
                                 <span className="text-gray-300">
                                   ({sec.items.length} itens)
@@ -278,7 +300,7 @@ export default function BusinessSetupPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 {otherTemplates.map((template) => (
                   <Card
-                    key={template.slug}
+                    key={template.id}
                     className="hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-gray-300"
                   >
                     <CardContent className="p-6">
@@ -288,7 +310,7 @@ export default function BusinessSetupPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-[#111827]">
-                            {template.name}
+                            {rt(template.name)}
                           </h3>
                           <p className="text-xs text-gray-400">
                             {template.sections.length} seções
@@ -297,17 +319,16 @@ export default function BusinessSetupPage() {
                       </div>
 
                       <p className="text-sm text-gray-500 mb-4">
-                        {template.description}
+                        {rt(template.description)}
                       </p>
 
-                      <div className="space-y-1 mb-4">
-                        {template.sections.slice(0, 3).map((sec) => (
-                          <div
-                            key={sec.slug}
-                            className="text-xs text-gray-400 flex items-center gap-2"
-                          >
-                            <div className="w-1 h-1 rounded-full bg-gray-300" />
-                            {sec.name}
+                      <div className="space-y-1 mb-4">                          {template.sections.slice(0, 3).map((sec, i) => (
+                            <div
+                              key={rt(sec.title) + i}
+                              className="text-xs text-gray-400 flex items-center gap-2"
+                            >
+                              <div className="w-1 h-1 rounded-full bg-gray-300" />
+                              {rt(sec.title)}
                             {sec.items.length > 0 && (
                               <span className="text-gray-300">
                                 ({sec.items.length} itens)
