@@ -1,0 +1,23 @@
+{
+  "name": "meuqr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MeuQR - Smart QR Pages for Brazilian Businesses",
+  "scripts": {
+    "dev": "pnpm --filter @meuqr/web dev",
+    "build": "pnpm --filter @meuqr/web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r clean",
+    "test": "pnpm --filter @meuqr/web test",
+    "db:migrate": "pnpm --filter @meuqr/supabase db:migrate",
+    "db:seed": "pnpm --filter @meuqr/supabase db:seed",
+    "mobile:start": "pnpm --filter @meuqr/mobile start",
+    "mobile:ios": "pnpm --filter @meuqr/mobile ios",
+    "mobile:android": "pnpm --filter @meuqr/mobile android"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=11.0.0"
+  }
+}

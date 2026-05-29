@@ -1,0 +1,590 @@
+import { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { supabase } from "../../src/lib/supabase";
+import { useRouter } from "expo-router";
+import { ArrowLeft, Store, Check, ChevronRight } from "lucide-react-native";
+
+const CATEGORIES = [
+  { value: "restaurant", label: "Restaurante", emoji: "🍽️" },
+  { value: "construction_materials", label: "Material de Construção", emoji: "🔨" },
+  { value: "salon", label: "Salão / Barbearia", emoji: "💇" },
+  { value: "pet_shop", label: "Pet Shop", emoji: "🐾" },
+  { value: "hotel", label: "Hotel", emoji: "🏨" },
+  { value: "real_estate", label: "Imobiliária", emoji: "🏠" },
+  { value: "event", label: "Evento", emoji: "🎉" },
+  { value: "clinic", label: "Clínica", emoji: "🏥" },
+  { value: "gym", label: "Academia", emoji: "💪" },
+  { value: "mechanic", label: "Mecânico", emoji: "🔧" },
+  { value: "freelancer", label: "Freelancer", emoji: "💼" },
+  { value: "church", label: "Igreja", emoji: "⛪" },
+  { value: "product_shelf", label: "Prateleira de Produto", emoji: "📦" },
+  { value: "other", label: "Outro", emoji: "📋" },
+];
+
+type Step = "category" | "info" | "confirm";
+
+export default function NewBusinessScreen() {
+  const router = useRouter();
+  const [step, setStep] = useState<Step>("category");
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function handleNameChange(value: string) {
+    setName(value);
+    setSlug(
+      value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s]/g, "")
+        .replace(/\s+/g, "-")
+        .slice(0, 50)
+    );
+  }
+
+  function selectCategory(value: string) {
+    setCategory(value);
+    setStep("info");
+  }
+
+  async function handleCreate() {
+    if (!name || !category) {
+      Alert.alert("Erro", "Preencha o nome e selecione uma categoria");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: business, error } = await supabase
+        .from("businesses")
+        .insert({
+          owner_id: user.id,
+          name,
+          slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
+          category,
+          description: description || null,
+          whatsapp: whatsapp || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      Alert.alert("Sucesso!", "Negócio criado com sucesso!", [
+        {
+          text: "Ver Negócio",
+          onPress: () => router.push(`/business/${business.id}`),
+        },
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    } catch (error: any) {
+      Alert.alert("Erro", error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderStepIndicator() {
+    const steps: { key: Step; label: string }[] = [
+      { key: "category", label: "Categoria" },
+      { key: "info", label: "Informações" },
+      { key: "confirm", label: "Confirmar" },
+    ];
+
+    const currentIndex = steps.findIndex((s) => s.key === step);
+
+    return (
+      <View style={styles.stepIndicator}>
+        {steps.map((s, idx) => (
+          <View key={s.key} style={styles.stepRow}>
+            <View
+              style={[
+                styles.stepDot,
+                idx <= currentIndex && styles.stepDotActive,
+                idx < currentIndex && styles.stepDotCompleted,
+              ]}
+            >
+              {idx < currentIndex ? (
+                <Check size={14} color="#FFFFFF" />
+              ) : (
+                <Text
+                  style={[
+                    styles.stepNumber,
+                    idx <= currentIndex && styles.stepNumberActive,
+                  ]}
+                >
+                  {idx + 1}
+                </Text>
+              )}
+            </View>
+            <Text
+              style={[
+                styles.stepLabel,
+                idx <= currentIndex && styles.stepLabelActive,
+              ]}
+            >
+              {s.label}
+            </Text>
+            {idx < steps.length - 1 && (
+              <View
+                style={[
+                  styles.stepLine,
+                  idx < currentIndex && styles.stepLineActive,
+                ]}
+              />
+            )}
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => {
+            if (step === "info") setStep("category");
+            else if (step === "confirm") setStep("info");
+            else router.back();
+          }}
+        >
+          <ArrowLeft size={20} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Criar Negócio</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      {renderStepIndicator()}
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Step 1: Category Selection */}
+        {step === "category" && (
+          <View>
+            <Text style={styles.stepTitle}>Escolha a Categoria</Text>
+            <Text style={styles.stepSubtitle}>
+              Selecione o tipo de negócio para começar
+            </Text>
+            <View style={styles.categoryGrid}>
+              {CATEGORIES.map((cat) => (
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[
+                    styles.categoryCard,
+                    category === cat.value && styles.categoryCardActive,
+                  ]}
+                  onPress={() => selectCategory(cat.value)}
+                >
+                  <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                  <Text
+                    style={[
+                      styles.categoryLabel,
+                      category === cat.value && styles.categoryLabelActive,
+                    ]}
+                  >
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Step 2: Business Info */}
+        {step === "info" && (
+          <View>
+            <Text style={styles.stepTitle}>Informações do Negócio</Text>
+            <Text style={styles.stepSubtitle}>
+              Preencha os dados básicos do seu negócio
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Nome do negócio *</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={handleNameChange}
+                placeholder="Ex: Restaurante do João"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Link personalizado</Text>
+              <View style={styles.slugRow}>
+                <Text style={styles.slugPrefix}>meuqr.com.br/</Text>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  value={slug}
+                  onChangeText={(t) =>
+                    setSlug(
+                      t.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50)
+                    )
+                  }
+                  placeholder="meu-negocio"
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Descrição</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Fale sobre seu negócio..."
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>WhatsApp (com DDD)</Text>
+              <TextInput
+                style={styles.input}
+                value={whatsapp}
+                onChangeText={setWhatsapp}
+                placeholder="Ex: 5511999998888"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.nextButton, !name && { opacity: 0.5 }]}
+              onPress={() => {
+                if (!name) {
+                  Alert.alert("Atenção", "Digite o nome do negócio");
+                  return;
+                }
+                setStep("confirm");
+              }}
+            >
+              <Text style={styles.nextButtonText}>Continuar</Text>
+              <ChevronRight size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Step 3: Confirm */}
+        {step === "confirm" && (
+          <View>
+            <Text style={styles.stepTitle}>Confirmar Dados</Text>
+            <Text style={styles.stepSubtitle}>
+              Revise as informações antes de criar
+            </Text>
+
+            <View style={styles.confirmCard}>
+              <View style={styles.confirmRow}>
+                <Text style={styles.confirmLabel}>Nome</Text>
+                <Text style={styles.confirmValue}>{name}</Text>
+              </View>
+              <View style={styles.confirmRow}>
+                <Text style={styles.confirmLabel}>Categoria</Text>
+                <Text style={styles.confirmValue}>
+                  {CATEGORIES.find((c) => c.value === category)?.label}
+                </Text>
+              </View>
+              <View style={styles.confirmRow}>
+                <Text style={styles.confirmLabel}>Link</Text>
+                <Text style={[styles.confirmValue, { color: "#00C853" }]}>
+                  /{slug}
+                </Text>
+              </View>
+              {description ? (
+                <View style={styles.confirmRow}>
+                  <Text style={styles.confirmLabel}>Descrição</Text>
+                  <Text style={styles.confirmValue} numberOfLines={2}>
+                    {description}
+                  </Text>
+                </View>
+              ) : null}
+              {whatsapp ? (
+                <View style={styles.confirmRow}>
+                  <Text style={styles.confirmLabel}>WhatsApp</Text>
+                  <Text style={styles.confirmValue}>{whatsapp}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setStep("info")}
+              >
+                <Text style={styles.editButtonText}>Editar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.createButton, loading && { opacity: 0.7 }]}
+                onPress={handleCreate}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.createButtonText}>Criar Negócio</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  stepIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+    gap: 0,
+  },
+  stepRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  stepDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stepDotActive: {
+    backgroundColor: "#111827",
+  },
+  stepDotCompleted: {
+    backgroundColor: "#00C853",
+  },
+  stepNumber: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#9CA3AF",
+  },
+  stepNumberActive: {
+    color: "#FFFFFF",
+  },
+  stepLabel: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginLeft: 6,
+    fontWeight: "500",
+  },
+  stepLabelActive: {
+    color: "#111827",
+    fontWeight: "600",
+  },
+  stepLine: {
+    width: 24,
+    height: 2,
+    backgroundColor: "#E5E7EB",
+    marginHorizontal: 8,
+  },
+  stepLineActive: {
+    backgroundColor: "#00C853",
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  stepTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 6,
+  },
+  stepSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 20,
+  },
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  categoryCard: {
+    width: "47%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 2,
+    borderColor: "#F3F4F6",
+  },
+  categoryCardActive: {
+    borderColor: "#00C853",
+    backgroundColor: "#F0FDF4",
+  },
+  categoryEmoji: {
+    fontSize: 32,
+  },
+  categoryLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#111827",
+    textAlign: "center",
+  },
+  categoryLabelActive: {
+    color: "#00C853",
+    fontWeight: "600",
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#111827",
+    marginBottom: 8,
+  },
+  input: {
+    height: 48,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#111827",
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: "top",
+    paddingTop: 12,
+  },
+  slugRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  slugPrefix: {
+    fontSize: 14,
+    color: "#9CA3AF",
+  },
+  nextButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 52,
+    backgroundColor: "#111827",
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  nextButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  confirmCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    gap: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  confirmRow: {},
+  confirmLabel: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    fontWeight: "500",
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  confirmValue: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#111827",
+  },
+  confirmButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 24,
+  },
+  editButton: {
+    flex: 1,
+    height: 52,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+  },
+  editButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  createButton: {
+    flex: 2,
+    height: 52,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    backgroundColor: "#00C853",
+  },
+  createButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});

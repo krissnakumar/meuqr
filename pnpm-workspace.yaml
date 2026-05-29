@@ -1,0 +1,8 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'supabase/functions/*'
+allowBuilds:
+  '@sentry/cli': true
+  msgpackr-extract: true
+  sharp: true
