@@ -3,15 +3,24 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Button, Card, CardContent, Input, Label } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardContent } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
-import { Loader2, ArrowLeft, QrCode, Plus, ExternalLink } from "lucide-react";
+import { Loader2, ArrowLeft, QrCode, Plus, ExternalLink, Scan } from "lucide-react";
+
+interface QRCode {
+  id: string;
+  short_code: string;
+  title: string | null;
+  scan_count: number;
+  created_at: string;
+  page_id: string | null;
+}
 
 export default function BusinessQRListPage() {
   const params = useParams();
   const businessId = params.id as string;
 
-  const [qrCodes, setQrCodes] = useState<any[]>([]);
+  const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,67 +45,83 @@ export default function BusinessQRListPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+        <p className="text-sm font-medium text-gray-500">Carregando QR codes...</p>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-8 animate-fade-in-up">
+      {/* Back */}
       <Link
         href={`/dashboard/business/${businessId}`}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#111827] mb-6"
+        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Voltar
       </Link>
 
-      <h1 className="text-2xl font-bold text-[#111827] mb-2">QR Codes</h1>
-      <p className="text-gray-500 mb-8">
-        {qrCodes.length} QR code(s) gerados
-      </p>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+          <QrCode className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">QR Codes</h1>
+          <p className="text-sm text-gray-400">{qrCodes.length} QR code(s) gerados</p>
+        </div>
+      </div>
 
       {qrCodes.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <QrCode className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-[#111827] mb-2">
-              Nenhum QR code ainda
-            </h3>
-            <p className="text-sm text-gray-500">
-              Crie uma página primeiro para gerar um QR code automaticamente.
-            </p>
-          </CardContent>
-        </Card>
+        <GlassCard>
+          <GlassCardContent className="py-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4">
+              <QrCode className="w-8 h-8 text-slate-300" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-700 mb-2">Nenhum QR code ainda</h3>
+            <p className="text-sm text-gray-400">Crie uma página primeiro para gerar um QR code automaticamente.</p>
+          </GlassCardContent>
+        </GlassCard>
       ) : (
         <div className="space-y-3">
           {qrCodes.map((qr) => (
-            <div
-              key={qr.id}
-              className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#111827]/5 flex items-center justify-center">
-                  <QrCode className="w-5 h-5 text-[#111827]" />
+            <GlassCard key={qr.id} className="group-hover:shadow-md transition-all">
+              <GlassCardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 flex items-center justify-center">
+                      <QrCode className="w-6 h-6 text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-800">
+                        {qr.title || qr.short_code}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
+                        <span className="font-mono">/q/{qr.short_code}</span>
+                        <span className="flex items-center gap-1">
+                          <Scan className="w-3 h-3" />
+                          {qr.scan_count} scans
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link href={`/dashboard/business/${businessId}/qr/${qr.id}`}>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                        Personalizar
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-[#111827]">
-                    {qr.title || qr.short_code}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    /q/{qr.short_code} · {qr.scan_count} scans
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Link href={`/dashboard/business/${businessId}/qr/${qr.id}`}>
-                  <Button variant="default" size="sm">
-                    Personalizar
-                  </Button>
-                </Link>
-              </div>
-            </div>
+              </GlassCardContent>
+            </GlassCard>
           ))}
         </div>
       )}

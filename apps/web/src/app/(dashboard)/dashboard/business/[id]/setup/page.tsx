@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { getAllBusinessTemplates, type BusinessTemplate, resolveText, type LocalizedString } from "@meuqr/shared";
 import {
@@ -13,6 +13,7 @@ import {
   QrCode,
   Store,
   Layout,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -53,7 +54,6 @@ export default function BusinessSetupPage() {
     }
   }
 
-  // Helper to resolve LocalizedString to string (default: pt-BR or business preference)
   function rt(text: LocalizedString): string {
     const lang = business?.default_language || "pt-BR";
     return resolveText(text, lang as any);
@@ -87,7 +87,6 @@ export default function BusinessSetupPage() {
   async function cloneTemplate(template: BusinessTemplate) {
     setCloning(true);
     try {
-      // 1. Create the page
       const { data: page, error: pageError } = await supabase
         .from("pages")
         .insert({
@@ -103,7 +102,6 @@ export default function BusinessSetupPage() {
 
       if (pageError) throw pageError;
 
-      // 2. Create sections and items for each section
       for (let i = 0; i < template.sections.length; i++) {
         const section = template.sections[i];
 
@@ -121,7 +119,6 @@ export default function BusinessSetupPage() {
 
         if (secError) throw secError;
 
-        // 3. Create items for this section
         if (section.items.length > 0) {
           const itemsToInsert = section.items.map((item, idx) => ({
             section_id: newSection.id,
@@ -139,7 +136,6 @@ export default function BusinessSetupPage() {
         }
       }
 
-      // 4. Generate a QR code for this page
       const shortCode = generateShortCode();
       await supabase.from("qr_codes").insert({
         business_id: businessId,
@@ -168,74 +164,85 @@ export default function BusinessSetupPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+        <p className="text-sm font-medium text-gray-500">Carregando configuração...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
+      {/* Back */}
       <Link
         href={`/dashboard/business/${businessId}`}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#111827] mb-6"
+        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Voltar
       </Link>
 
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-[#111827]/5 flex items-center justify-center">
-          <Store className="w-6 h-6 text-[#111827]" />
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+          <Store className="w-7 h-7 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-[#111827]">{business?.name}</h1>
-          <p className="text-sm text-gray-500">Configuração inicial</p>
+          <h1 className="text-2xl font-bold text-slate-800">{business?.name}</h1>
+          <p className="text-sm text-gray-400 flex items-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+            Configuração inicial
+          </p>
         </div>
       </div>
 
       {step === "templates" && (
         <>
-          <h2 className="text-lg font-semibold text-[#111827] mb-4">
+          <h2 className="text-lg font-bold text-slate-700">
             Escolha um modelo para sua página
           </h2>
 
           {pages.length > 0 && (
-            <Card className="mb-6 border-[#00C853]/30 bg-[#00C853]/5">
-              <CardContent className="p-4 flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#00C853]" />
-                <p className="text-sm text-gray-700">
+            <GlassCard className="bg-gradient-to-br from-indigo-50/30 to-indigo-50/10 border-indigo-100/30">
+              <GlassCardContent className="p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-5 h-5 text-indigo-600" />
+                </div>
+                <p className="text-sm text-slate-700 flex-1">
                   Você já tem {pages.length} página(s) criada(s).
                 </p>
                 <Link href={`/dashboard/business/${businessId}`}>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="outline" size="sm" className="border-slate-200 hover:border-indigo-200">
                     Ver páginas
                   </Button>
                 </Link>
-              </CardContent>
-            </Card>
+              </GlassCardContent>
+            </GlassCard>
           )}
 
           <div className="space-y-8">
+            {/* Recommended */}
             {recommendedTemplates.length > 0 && (
               <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
                   Recomendado para seu negócio
                 </h3>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {recommendedTemplates.map((template) => (
-                    <Card
+                    <GlassCard
                       key={template.id}
-                      className="hover:shadow-lg transition-all cursor-pointer group border-2 border-[#00C853]/30 hover:border-[#00C853]/60 bg-[#00C853]/5"
+                      className="border-indigo-200/50 bg-gradient-to-br from-indigo-50/20 to-indigo-50/5 group-hover:shadow-xl transition-all relative overflow-hidden"
                     >
-                      <CardContent className="p-6">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-indigo-400" />
+                      <GlassCardContent className="p-6 pt-7">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-[#00C853]/15 flex items-center justify-center">
-                              <Layout className="w-5 h-5 text-[#00C853]" />
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center">
+                              <Layout className="w-5 h-5 text-indigo-600" />
                             </div>
                             <div>
-                              <h3 className="font-bold text-[#111827]">
+                              <h3 className="font-bold text-slate-800">
                                 {rt(template.name)}
                               </h3>
                               <p className="text-xs text-gray-400">
@@ -243,7 +250,7 @@ export default function BusinessSetupPage() {
                               </p>
                             </div>
                           </div>
-                          <Badge variant="accent" className="bg-[#00C853] text-white">Recomendado</Badge>
+                          <Badge variant="indigo">Recomendado</Badge>
                         </div>
 
                         <p className="text-sm text-gray-500 mb-4">
@@ -252,16 +259,11 @@ export default function BusinessSetupPage() {
 
                         <div className="space-y-1 mb-4">
                           {template.sections.slice(0, 3).map((sec, i) => (
-                            <div
-                              key={rt(sec.title) + i}
-                              className="text-xs text-gray-400 flex items-center gap-2"
-                            >
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#00C853]/40" />
+                            <div key={rt(sec.title) + i} className="text-xs text-gray-400 flex items-center gap-2">
+                              <div className="w-1.5 h-1.5 rounded-full bg-indigo-400/40" />
                               {rt(sec.title)}
                               {sec.items.length > 0 && (
-                                <span className="text-gray-300">
-                                  ({sec.items.length} itens)
-                                </span>
+                                <span className="text-gray-300">({sec.items.length} itens)</span>
                               )}
                             </div>
                           ))}
@@ -273,8 +275,8 @@ export default function BusinessSetupPage() {
                         </div>
 
                         <Button
-                          variant="accent"
-                          className="w-full bg-[#00C853] hover:bg-[#00B34A]"
+                          variant="default"
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200"
                           onClick={() => cloneTemplate(template)}
                           disabled={cloning}
                         >
@@ -287,30 +289,31 @@ export default function BusinessSetupPage() {
                             </>
                           )}
                         </Button>
-                      </CardContent>
-                    </Card>
+                      </GlassCardContent>
+                    </GlassCard>
                   ))}
                 </div>
               </div>
             )}
 
+            {/* Other templates */}
             <div>
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
                 {recommendedTemplates.length > 0 ? "Outros modelos disponíveis" : "Modelos disponíveis"}
               </h3>
               <div className="grid sm:grid-cols-2 gap-4">
                 {otherTemplates.map((template) => (
-                  <Card
+                  <GlassCard
                     key={template.id}
-                    className="hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-gray-300"
+                    className="group-hover:shadow-lg transition-all"
                   >
-                    <CardContent className="p-6">
+                    <GlassCardContent className="p-6">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                          <Layout className="w-5 h-5 text-gray-500" />
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                          <Layout className="w-5 h-5 text-slate-500" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-[#111827]">
+                          <h3 className="font-bold text-slate-800">
                             {rt(template.name)}
                           </h3>
                           <p className="text-xs text-gray-400">
@@ -323,22 +326,18 @@ export default function BusinessSetupPage() {
                         {rt(template.description)}
                       </p>
 
-                      <div className="space-y-1 mb-4">                          {template.sections.slice(0, 3).map((sec, i) => (
-                            <div
-                              key={rt(sec.title) + i}
-                              className="text-xs text-gray-400 flex items-center gap-2"
-                            >
-                              <div className="w-1 h-1 rounded-full bg-gray-300" />
-                              {rt(sec.title)}
+                      <div className="space-y-1 mb-4">
+                        {template.sections.slice(0, 3).map((sec, i) => (
+                          <div key={rt(sec.title) + i} className="text-xs text-gray-400 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                            {rt(sec.title)}
                             {sec.items.length > 0 && (
-                              <span className="text-gray-300">
-                                ({sec.items.length} itens)
-                              </span>
+                              <span className="text-gray-300">({sec.items.length} itens)</span>
                             )}
                           </div>
                         ))}
                         {template.sections.length > 3 && (
-                          <div className="text-xs text-gray-300 pl-3">
+                          <div className="text-xs text-gray-300 pl-3.5">
                             +{template.sections.length - 3} seções
                           </div>
                         )}
@@ -346,7 +345,7 @@ export default function BusinessSetupPage() {
 
                       <Button
                         variant="outline"
-                        className="w-full hover:bg-gray-50"
+                        className="w-full border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/30"
                         onClick={() => cloneTemplate(template)}
                         disabled={cloning}
                       >
@@ -359,20 +358,18 @@ export default function BusinessSetupPage() {
                           </>
                         )}
                       </Button>
-                    </CardContent>
-                  </Card>
+                    </GlassCardContent>
+                  </GlassCard>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Option to skip template */}
-          <div className="mt-6 text-center">
+          {/* Skip */}
+          <div className="text-center">
             <button
-              onClick={() => {
-                setStep("done");
-              }}
-              className="text-sm text-gray-400 hover:text-gray-600"
+              onClick={() => setStep("done")}
+              className="text-sm text-gray-400 hover:text-indigo-600 transition-colors font-medium"
             >
               Pular esta etapa (criar manualmente depois)
             </button>
@@ -381,32 +378,32 @@ export default function BusinessSetupPage() {
       )}
 
       {step === "done" && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="w-16 h-16 bg-[#00C853]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 text-[#00C853]" />
+        <GlassCard>
+          <GlassCardContent className="py-16 text-center">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-200">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600" />
             </div>
-            <h2 className="text-xl font-bold text-[#111827] mb-2">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
               Negócio configurado!
             </h2>
-            <p className="text-gray-500 mb-8">
+            <p className="text-gray-500 mb-8 max-w-md mx-auto">
               Sua página está pronta. Agora personalize, edite itens e compartilhe seu QR code.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href={`/dashboard/business/${businessId}`}>
-                <Button variant="default" size="lg">
+                <Button variant="default" size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
                   Gerenciar Negócio
                 </Button>
               </Link>
               <Link href={`/dashboard/business/${businessId}/qr`}>
-                <Button variant="accent" size="lg">
+                <Button variant="default" size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200">
                   <QrCode className="w-5 h-5 mr-2" />
                   Ver QR Code
                 </Button>
               </Link>
             </div>
-          </CardContent>
-        </Card>
+          </GlassCardContent>
+        </GlassCard>
       )}
     </div>
   );

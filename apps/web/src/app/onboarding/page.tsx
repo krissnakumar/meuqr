@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from "@meuqr/ui";
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Button } from "@meuqr/ui";
 import { BUSINESS_CATEGORIES } from "@meuqr/shared";
-import { QrCode, Loader2, Building, MapPin, Store, ArrowRight, ArrowLeft, Search, Sparkles, User } from "lucide-react";
+import { QrCode, Loader2, Building, MapPin, Store, ArrowRight, ArrowLeft, Search, Sparkles, User, Check } from "lucide-react";
 import { toast } from "sonner";
 
 interface BrasilAPICNPJ {
@@ -54,6 +54,12 @@ function validateCPF(cpf: string) {
   return true;
 }
 
+const steps = [
+  { key: 1, label: "Documentação", icon: Building },
+  { key: 2, label: "Identificação", icon: Store },
+  { key: 3, label: "Endereço", icon: MapPin },
+];
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -86,9 +92,7 @@ export default function OnboardingPage() {
 
   async function checkUser() {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
         router.push("/login");
@@ -142,10 +146,10 @@ export default function OnboardingPage() {
     const slugified = val
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
-      .replace(/\s+/g, "-") // Replace spaces with dashes
-      .replace(/-+/g, "-") // Remove duplicate dashes
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
       .trim();
     setBizSlug(slugified);
   };
@@ -234,7 +238,6 @@ export default function OnboardingPage() {
 
   // Reactive CEP Auto-fill via ViaCEP API
   const handleCepChange = async (val: string) => {
-    // Keep only numbers and apply simple mask 00000-000
     const cleanCep = val.replace(/\D/g, "");
     let formatted = cleanCep;
     if (cleanCep.length > 5) {
@@ -242,7 +245,6 @@ export default function OnboardingPage() {
     }
     setBizCep(formatted.slice(0, 9));
 
-    // When hits exactly 8 digits, fetch address automatically
     if (cleanCep.length === 8) {
       const toastId = toast.loading("Buscando CEP...");
       try {
@@ -278,7 +280,6 @@ export default function OnboardingPage() {
 
     setSubmitting(true);
     try {
-      // Append CPF or CNPJ details directly into the description
       const docLabel = docType === "cnpj" ? `CNPJ: ${cnpj}` : `CPF: ${cpf}`;
       const finalDescription = `${docLabel} - Estabelecimento criado no onboarding do MeuQR.`;
 
@@ -319,202 +320,267 @@ export default function OnboardingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="w-10 h-10 animate-spin text-[#1877F2]" />
-        <p className="text-sm font-medium text-gray-500">Preparando seu setup...</p>
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+          <Loader2 className="w-6 h-6 text-white animate-spin" />
+        </div>
+        <p className="text-sm font-medium text-[#64748B] animate-pulse">Preparando seu setup...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 sm:p-6">
+      {/* Gradient background accents */}
+      <div className="fixed -top-32 -right-32 w-96 h-96 rounded-full opacity-15 blur-3xl bg-indigo-400 pointer-events-none" />
+      <div className="fixed -bottom-32 -left-32 w-80 h-80 rounded-full opacity-10 blur-3xl bg-violet-400 pointer-events-none" />
+
+      <div className="w-full max-w-lg relative z-10">
         {/* Header Branding */}
-        <div className="flex items-center justify-center gap-2 mb-8 animate-fade-in">
-          <div className="w-10 h-10 bg-[#1877F2] rounded-xl flex items-center justify-center shadow-lg shadow-[#1877F2]/20">
-            <QrCode className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-center gap-2.5 mb-8 animate-fade-in-up">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <QrCode className="w-5 h-5 text-white" />
           </div>
-          <span className="text-2xl font-bold text-[#050505] tracking-tight">MeuQR</span>
+          <span className="text-2xl font-bold text-[#0F172A] tracking-tight">MeuQR</span>
         </div>
 
-        {/* Step Progress Bar */}
-        <div className="mb-6 flex items-center justify-between px-2 text-xs font-semibold text-gray-400">
-          <span className={step >= 1 ? "text-[#1877F2]" : ""}>1. Documentação</span>
-          <span className={step >= 2 ? "text-[#1877F2]" : ""}>2. Identificação</span>
-          <span className={step >= 3 ? "text-[#1877F2]" : ""}>3. Endereço</span>
-        </div>
-        <div className="h-1.5 w-full bg-gray-200 rounded-full mb-8 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-[#1877F2] to-[#4094F7] transition-all duration-300"
-            style={{ width: `${(step / 3) * 100}%` }}
-          />
-        </div>
-
-        {/* Wizard Cards */}
-        {step === 1 && (
-          <Card className="animate-slide-up">
-            <CardHeader className="text-center pb-4">
-              <div className="w-12 h-12 rounded-xl bg-[#1877F2]/10 text-[#1877F2] flex items-center justify-center mx-auto mb-2">
-                <Building className="w-6 h-6" />
-              </div>
-              <CardTitle className="text-xl font-bold">Como deseja se cadastrar?</CardTitle>
-              <CardDescription>
-                Selecione se você atua como Pessoa Jurídica (CNPJ) ou Autônomo/Pessoa Física (CPF).
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Premium Document Type Selector Tabs */}
-              <div className="grid grid-cols-2 gap-2 mb-6">
-                <button
-                  type="button"
-                  onClick={() => setDocType("cnpj")}
-                  className={`py-3 rounded-lg border text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    docType === "cnpj"
-                      ? "border-[#1877F2] bg-[#1877F2]/5 text-[#1877F2] shadow-sm shadow-[#1877F2]/5"
-                      : "border-[#E4E6EB] hover:border-gray-300 text-gray-500 bg-white"
-                  }`}
-                >
-                  <Building className="w-4 h-4 inline mr-1.5" />
-                  Pessoa Jurídica (CNPJ)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDocType("cpf")}
-                  className={`py-3 rounded-lg border text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    docType === "cpf"
-                      ? "border-[#1877F2] bg-[#1877F2]/5 text-[#1877F2] shadow-sm shadow-[#1877F2]/5"
-                      : "border-[#E4E6EB] hover:border-gray-300 text-gray-500 bg-white"
-                  }`}
-                >
-                  <User className="w-4 h-4 inline mr-1.5" />
-                  Pessoa Física (CPF)
-                </button>
-              </div>
-
-              {docType === "cnpj" ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cnpj">CNPJ do seu estabelecimento</Label>
-                    <div className="relative">
-                      <Input
-                        id="cnpj"
-                        type="text"
-                        placeholder="00.000.000/0000-00"
-                        value={cnpj}
-                        onChange={(e) => handleCnpjChange(e.target.value)}
-                        className="pr-12"
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <Building className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-gray-400">Preenchimento automático via consulta pública BrasilAPI.</p>
+        {/* Step Progress */}
+        <div className="mb-8 animate-fade-in-up delay-1">
+          <div className="flex items-center justify-between mb-3">
+            {steps.map((s, i) => (
+              <div key={s.key} className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      step > s.key
+                        ? "bg-emerald-100 text-emerald-700"
+                        : step === s.key
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                        : "bg-slate-100 text-[#94A3B8]"
+                    }`}
+                  >
+                    {step > s.key ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <s.icon className="w-4 h-4" />
+                    )}
                   </div>
+                  <span
+                    className={`text-xs font-medium hidden sm:block transition-colors ${
+                      step >= s.key ? "text-[#0F172A]" : "text-[#94A3B8]"
+                    }`}
+                  >
+                    {s.label}
+                  </span>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="w-8 sm:w-12 h-px mx-2 relative">
+                    <div className="absolute inset-0 bg-slate-200 rounded-full" />
+                    <div
+                      className={`absolute inset-0 bg-indigo-500 rounded-full transition-all duration-500 ${
+                        step > s.key ? "w-full" : "w-0"
+                      }`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
 
-                  <div className="space-y-3">
-                    <Button
-                      onClick={handleCnpjLookup}
-                      className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white py-5"
-                      disabled={searchingCnpj}
-                    >
-                      {searchingCnpj ? (
-                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                      ) : (
-                        <Search className="w-4 h-4 mr-2" />
-                      )}
-                      Buscar dados e Avançar
-                    </Button>
+        {/* ===== STEP 1: Documentação ===== */}
+        {step === 1 && (
+          <div className="animate-fade-in-up">
+            <GlassCard>
+              <GlassCardHeader className="text-center pb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200/50 flex items-center justify-center mx-auto mb-3 shadow-sm">
+                  <Building className="w-6 h-6 text-indigo-500" />
+                </div>
+                <GlassCardTitle className="text-xl font-bold">Como deseja se cadastrar?</GlassCardTitle>
+                <p className="text-sm text-[#64748B] mt-1.5">
+                  Selecione se você atua como Pessoa Jurídica (CNPJ) ou Autônomo/Pessoa Física (CPF).
+                </p>
+              </GlassCardHeader>
+              <GlassCardContent className="space-y-6">
+                {/* Document Type Selector */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDocType("cnpj")}
+                    className={`relative p-4 rounded-xl border-2 text-sm font-semibold transition-all text-left ${
+                      docType === "cnpj"
+                        ? "border-indigo-500 bg-indigo-50/50 text-[#0F172A] shadow-sm"
+                        : "border-slate-200 hover:border-slate-300 text-[#64748B] bg-white"
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-2 ${
+                      docType === "cnpj" ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-[#94A3B8]"
+                    }`}>
+                      <Building className="w-4 h-4" />
+                    </div>
+                    Pessoa Jurídica
+                    <span className="block text-xs font-normal text-[#94A3B8] mt-0.5">CNPJ</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDocType("cpf")}
+                    className={`relative p-4 rounded-xl border-2 text-sm font-semibold transition-all text-left ${
+                      docType === "cpf"
+                        ? "border-indigo-500 bg-indigo-50/50 text-[#0F172A] shadow-sm"
+                        : "border-slate-200 hover:border-slate-300 text-[#64748B] bg-white"
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-2 ${
+                      docType === "cpf" ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-[#94A3B8]"
+                    }`}>
+                      <User className="w-4 h-4" />
+                    </div>
+                    Pessoa Física
+                    <span className="block text-xs font-normal text-[#94A3B8] mt-0.5">CPF</span>
+                  </button>
+                </div>
+
+                {docType === "cnpj" ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                        CNPJ do seu estabelecimento
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="00.000.000/0000-00"
+                          value={cnpj}
+                          onChange={(e) => handleCnpjChange(e.target.value)}
+                          className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        />
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]">
+                          <Building className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#94A3B8] mt-1.5">
+                        Preenchimento automático via consulta pública BrasilAPI.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Button
+                        onClick={handleCnpjLookup}
+                        disabled={searchingCnpj}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl shadow-md shadow-indigo-200"
+                      >
+                        {searchingCnpj ? (
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : (
+                          <Search className="w-4 h-4 mr-2" />
+                        )}
+                        Buscar dados e Avançar
+                      </Button>
+
+                      <button
+                        onClick={() => setStep(2)}
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 border border-slate-200 transition-all"
+                      >
+                        Pular auto-preenchimento
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                        Seu CPF
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="000.000.000-00"
+                          value={cpf}
+                          onChange={(e) => handleCpfChange(e.target.value)}
+                          className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        />
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]">
+                          <User className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#94A3B8] mt-1.5">
+                        Por privacidade, dados de CPF são validados localmente.
+                      </p>
+                    </div>
 
                     <Button
-                      variant="outline"
-                      onClick={() => setStep(2)}
-                      className="w-full border-slate-200 text-gray-600 hover:bg-slate-50 py-5"
+                      onClick={handleCpfNext}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl shadow-md shadow-indigo-200"
                     >
-                      Pular auto-preenchimento
+                      Validar CPF e Continuar
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">Seu CPF</Label>
-                    <div className="relative">
-                      <Input
-                        id="cpf"
-                        type="text"
-                        placeholder="000.000.000-00"
-                        value={cpf}
-                        onChange={(e) => handleCpfChange(e.target.value)}
-                        className="pr-12"
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <User className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-gray-400">Por privacidade, dados de CPF são validados localmente.</p>
-                  </div>
-
-                  <Button
-                    onClick={handleCpfNext}
-                    className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white py-5"
-                  >
-                    Validar CPF e Continuar
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </GlassCardContent>
+            </GlassCard>
+          </div>
         )}
 
+        {/* ===== STEP 2: Identificação ===== */}
         {step === 2 && (
-          <Card className="animate-slide-up">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
-                <Store className="w-5 h-5 text-[#1877F2]" />
-                Sobre o seu Negócio
-              </CardTitle>
-              <CardDescription>
-                Defina o nome comercial, sua categoria de atuação e crie seu endereço amigável na internet.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="bizName">Nome do Estabelecimento *</Label>
-                <Input
-                  id="bizName"
-                  placeholder="Ex: Pizzaria Bella Italia"
-                  value={bizName}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bizSlug">URL do Estabelecimento *</Label>
-                <div className="flex rounded-lg shadow-sm">
-                  <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-[#E4E6EB] bg-gray-50 text-gray-500 text-xs sm:text-sm">
-                    meuqr.com.br/
-                  </span>
-                  <Input
-                    id="bizSlug"
-                    placeholder="pizzaria-bella-italia"
-                    value={bizSlug}
-                    onChange={(e) => setBizSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
-                    className="rounded-l-none"
+          <div className="animate-fade-in-up">
+            <GlassCard>
+              <GlassCardHeader className="pb-4">
+                <div className="flex items-center gap-2.5 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200/50 flex items-center justify-center">
+                    <Store className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <GlassCardTitle className="text-lg">Sobre o seu Negócio</GlassCardTitle>
+                </div>
+                <p className="text-sm text-[#64748B] mt-1">
+                  Defina o nome comercial, sua categoria de atuação e crie seu endereço amigável na internet.
+                </p>
+              </GlassCardHeader>
+              <GlassCardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                    Nome do Estabelecimento <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Pizzaria Bella Italia"
+                    value={bizName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     required
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Categoria *</Label>                    <select
-                      id="category"
+                <div>
+                  <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                    URL do Estabelecimento <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="flex rounded-xl overflow-hidden border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
+                    <span className="inline-flex items-center px-3.5 bg-slate-50 text-[#64748B] text-sm border-r border-slate-200">
+                      meuqr.com.br/
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="pizzaria-bella-italia"
+                      value={bizSlug}
+                      onChange={(e) => setBizSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                      className="flex-1 h-11 px-3.5 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                      Categoria <span className="text-rose-500">*</span>
+                    </label>
+                    <select
                       value={bizCategory}
                       onChange={(e) => setBizCategory(e.target.value)}
-                      className="w-full h-10 px-3 rounded-lg border border-[#E4E6EB] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2] focus:border-transparent transition-all shadow-sm"
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     >
                       {BUSINESS_CATEGORIES.map((cat) => (
                         <option key={cat.value} value={cat.value}>
@@ -522,135 +588,165 @@ export default function OnboardingPage() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                      Telefone Comercial
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="(11) 99999-8888"
+                      value={bizPhone}
+                      onChange={(e) => setBizPhone(e.target.value)}
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="bizPhone">Telefone Comercial</Label>
-                  <Input
-                    id="bizPhone"
+                <div>
+                  <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                    WhatsApp para Pedidos
+                  </label>
+                  <input
+                    type="text"
                     placeholder="(11) 99999-8888"
-                    value={bizPhone}
-                    onChange={(e) => setBizPhone(e.target.value)}
+                    value={bizWhatsapp}
+                    onChange={(e) => setBizWhatsapp(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="bizWhatsapp">WhatsApp para Pedidos</Label>
-                <Input
-                  id="bizWhatsapp"
-                  placeholder="(11) 99999-8888"
-                  value={bizWhatsapp}
-                  onChange={(e) => setBizWhatsapp(e.target.value)}
-                />
-              </div>
-
-              <div className="flex items-center gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                  className="flex-1 py-5"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <Button
-                  onClick={() => setStep(3)}
-                  className="flex-1 bg-[#1877F2] hover:bg-[#166FE5] text-white py-5"
-                  disabled={!bizName || !bizSlug}
-                >
-                  Próximo
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="flex items-center gap-3 pt-4">
+                  <button
+                    onClick={() => setStep(1)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 border border-slate-200 transition-all"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Voltar
+                  </button>
+                  <Button
+                    onClick={() => setStep(3)}
+                    disabled={!bizName || !bizSlug}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl shadow-md shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Próximo
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </GlassCardContent>
+            </GlassCard>
+          </div>
         )}
 
+        {/* ===== STEP 3: Endereço ===== */}
         {step === 3 && (
-          <Card className="animate-slide-up">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-[#1877F2]" />
-                Onde você fica?
-              </CardTitle>
-              <CardDescription>
-                Adicione seu endereço. Insira o CEP para que o endereço seja preenchido automaticamente.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2 col-span-1">
-                  <Label htmlFor="bizCep">CEP *</Label>
-                  <Input
-                    id="bizCep"
-                    placeholder="01234-567"
-                    value={bizCep}
-                    onChange={(e) => handleCepChange(e.target.value)}
-                    required
-                  />
+          <div className="animate-fade-in-up">
+            <GlassCard>
+              <GlassCardHeader className="pb-4">
+                <div className="flex items-center gap-2.5 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200/50 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <GlassCardTitle className="text-lg">Onde você fica?</GlassCardTitle>
+                </div>
+                <p className="text-sm text-[#64748B] mt-1">
+                  Adicione seu endereço. Insira o CEP para que o endereço seja preenchido automaticamente.
+                </p>
+              </GlassCardHeader>
+              <GlassCardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-1">
+                    <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                      CEP <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="01234-567"
+                      value={bizCep}
+                      onChange={(e) => handleCepChange(e.target.value)}
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                      Endereço (Rua, Número, Bairro)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Av. Paulista, 1000 - Bela Vista"
+                      value={bizAddress}
+                      onChange={(e) => setBizAddress(e.target.value)}
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="bizAddress">Endereço (Rua, Número, Bairro)</Label>
-                  <Input
-                    id="bizAddress"
-                    placeholder="Ex: Av. Paulista, 1000 - Bela Vista"
-                    value={bizAddress}
-                    onChange={(e) => setBizAddress(e.target.value)}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                      Cidade
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: São Paulo"
+                      value={bizCity}
+                      onChange={(e) => setBizCity(e.target.value)}
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+                      Estado (UF)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: SP"
+                      value={bizState}
+                      maxLength={2}
+                      onChange={(e) => setBizState(e.target.value.toUpperCase())}
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bizCity">Cidade</Label>
-                  <Input
-                    id="bizCity"
-                    placeholder="Ex: São Paulo"
-                    value={bizCity}
-                    onChange={(e) => setBizCity(e.target.value)}
-                  />
+                <div className="flex items-center gap-3 pt-4">
+                  <button
+                    onClick={() => setStep(2)}
+                    disabled={submitting}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 border border-slate-200 transition-all disabled:opacity-50"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Voltar
+                  </button>
+                  <Button
+                    onClick={handleOnboardingComplete}
+                    disabled={submitting}
+                    className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3.5 rounded-xl shadow-md shadow-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 mr-2" />
+                    )}
+                    Concluir Setup!
+                  </Button>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bizState">Estado (UF)</Label>
-                  <Input
-                    id="bizState"
-                    placeholder="Ex: SP"
-                    value={bizState}
-                    maxLength={2}
-                    onChange={(e) => setBizState(e.target.value.toUpperCase())}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 pt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(2)}
-                  className="flex-1 py-5"
-                  disabled={submitting}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <Button
-                  onClick={handleOnboardingComplete}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold py-5 shadow-lg shadow-emerald-500/10"
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mr-2" />
-                  )}
-                  Concluir Setup!
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </GlassCardContent>
+            </GlassCard>
+          </div>
         )}
+
+        {/* Back to login link */}
+        <div className="text-center mt-6 animate-fade-in-up delay-3">
+          <Link
+            href="/login"
+            className="text-sm text-[#64748B] hover:text-[#0F172A] transition-colors"
+          >
+            Voltar para o login
+          </Link>
+        </div>
       </div>
     </div>
   );

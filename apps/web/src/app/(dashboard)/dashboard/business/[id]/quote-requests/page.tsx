@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent } from "@meuqr/ui";
+import { GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -14,6 +14,8 @@ import {
   Package,
   MessageSquare,
   Trash2,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 interface QuoteItem {
@@ -75,58 +77,73 @@ export default function QuoteRequestsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+        <p className="text-sm font-medium text-gray-500">Carregando orçamentos...</p>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-8 animate-fade-in-up">
+      {/* Back */}
       <Link
         href={`/dashboard/business/${businessId}`}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#111827] mb-6"
+        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {business?.name || "Voltar"}
       </Link>
 
-      <h1 className="text-2xl font-bold text-[#111827] mb-2">Pedidos de Orçamento</h1>
-      <p className="text-gray-500 mb-8">{quotes.length} solicitação(ões)</p>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-200">
+          <FileText className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Pedidos de Orçamento</h1>
+          <p className="text-sm text-gray-400">{quotes.length} solicitação(ões)</p>
+        </div>
+      </div>
 
       {quotes.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-[#111827] mb-2">
-              Nenhum orçamento solicitado
-            </h3>
-            <p className="text-sm text-gray-500">
-              As solicitações de orçamento dos clientes aparecerão aqui.
-            </p>
-          </CardContent>
-        </Card>
+        <GlassCard>
+          <GlassCardContent className="py-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-slate-300" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-700 mb-2">Nenhum orçamento solicitado</h3>
+            <p className="text-sm text-gray-400">As solicitações de orçamento dos clientes aparecerão aqui.</p>
+          </GlassCardContent>
+        </GlassCard>
       ) : (
         <div className="space-y-4">
           {quotes.map((quote) => (
-            <Card key={quote.id} className="overflow-hidden">
-              <CardContent className="p-5">
+            <GlassCard key={quote.id} className="overflow-hidden">
+              <GlassCardContent className="p-5">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
+                    {/* Customer Info */}
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-[#111827]">
-                        {quote.customer_name}
-                      </h3>
-                      <span className="text-xs text-gray-400">
-                        {new Date(quote.created_at).toLocaleString("pt-BR")}
-                      </span>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm shadow-teal-200">
+                        {quote.customer_name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800">
+                          {quote.customer_name}
+                        </h3>
+                        <span className="text-xs text-gray-400">
+                          {new Date(quote.created_at).toLocaleString("pt-BR")}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
+                    {/* Contact */}
+                    <div className="flex items-center gap-3 text-xs text-gray-400 ml-10 mb-3">
                       <a
                         href={`https://wa.me/${quote.customer_phone}`}
                         target="_blank"
-                        className="flex items-center gap-1 hover:text-[#00C853]"
+                        className="flex items-center gap-1 hover:text-indigo-600 transition-colors"
                       >
                         <Phone className="w-3 h-3" />
                         {quote.customer_phone}
@@ -134,7 +151,7 @@ export default function QuoteRequestsPage() {
                       {quote.customer_email && (
                         <a
                           href={`mailto:${quote.customer_email}`}
-                          className="flex items-center gap-1 hover:text-[#00C853]"
+                          className="flex items-center gap-1 hover:text-indigo-600 transition-colors"
                         >
                           <Mail className="w-3 h-3" />
                           {quote.customer_email}
@@ -142,28 +159,25 @@ export default function QuoteRequestsPage() {
                       )}
                     </div>
 
-                    {/* Items */}
+                    {/* Items Toggle */}
                     <button
-                      onClick={() =>
-                        setExpanded(expanded === quote.id ? null : quote.id)
-                      }
-                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#111827] mb-2"
+                      onClick={() => setExpanded(expanded === quote.id ? null : quote.id)}
+                      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 transition-colors font-medium ml-10"
                     >
+                      {expanded === quote.id ? (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      )}
                       <Package className="w-3 h-3" />
                       {Array.isArray(quote.items) ? quote.items.length : 0} item(ns)
-                      {expanded !== quote.id && (
-                        <span className="text-gray-300"> (clique para ver)</span>
-                      )}
                     </button>
 
                     {expanded === quote.id && Array.isArray(quote.items) && (
-                      <div className="mb-3 p-3 rounded-lg bg-gray-50 space-y-1">
+                      <div className="ml-10 mt-2 p-3 rounded-xl bg-gradient-to-br from-teal-50/30 to-emerald-50/30 border border-teal-100/30 space-y-1.5">
                         {quote.items.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between text-sm"
-                          >
-                            <span className="text-gray-600">{item.name}</span>
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 font-medium">{item.name}</span>
                             <span className="text-gray-400 text-xs">
                               Qtd: {item.quantity}
                             </span>
@@ -172,9 +186,10 @@ export default function QuoteRequestsPage() {
                       </div>
                     )}
 
+                    {/* Message */}
                     {quote.message && (
-                      <div className="p-3 rounded-lg bg-blue-50 text-sm text-gray-600">
-                        <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                      <div className="ml-10 mt-2 p-3 rounded-xl bg-gradient-to-br from-indigo-50/30 to-blue-50/30 border border-indigo-100/30 text-sm text-gray-600">
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
                           <MessageSquare className="w-3 h-3" />
                           Mensagem
                         </div>
@@ -185,13 +200,14 @@ export default function QuoteRequestsPage() {
 
                   <button
                     onClick={() => deleteQuote(quote.id)}
-                    className="p-1.5 text-gray-300 hover:text-red-500 transition-colors shrink-0 ml-4"
+                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0 ml-4"
+                    title="Excluir solicitação"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              </CardContent>
-            </Card>
+              </GlassCardContent>
+            </GlassCard>
           ))}
         </div>
       )}

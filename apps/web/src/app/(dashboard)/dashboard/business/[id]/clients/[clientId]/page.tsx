@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Badge } from "@meuqr/ui";
 import {
   Users,
   ArrowLeft,
@@ -16,9 +16,8 @@ import {
   FileText,
   MessageSquare,
   QrCode,
-  CheckCircle2,
-  Edit,
   Save,
+  Edit,
   Clock,
   ExternalLink,
   ChevronRight,
@@ -61,8 +60,7 @@ export default function ClientDetailPage() {
   const [client, setClient] = useState<Client | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Notes edit state
+
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesText, setNotesText] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
@@ -74,7 +72,6 @@ export default function ClientDetailPage() {
   async function loadClientData() {
     setLoading(true);
     try {
-      // 1. Fetch client details
       const { data: clientData, error: clientErr } = await supabase
         .from("clients")
         .select("*")
@@ -92,15 +89,13 @@ export default function ClientDetailPage() {
       setClient(clientData);
       setNotesText(clientData.notes || "");
 
-      // 2. Fetch all activities to build timeline
       const timelineEvents: TimelineItem[] = [];
 
-      // Fetch Orders
       const { data: orders } = await supabase
         .from("orders")
         .select("id, total, status, created_at")
         .eq("client_id", clientId);
-      
+
       orders?.forEach((o) => {
         timelineEvents.push({
           id: o.id,
@@ -113,12 +108,11 @@ export default function ClientDetailPage() {
         });
       });
 
-      // Fetch Quote Requests
       const { data: quotes } = await supabase
         .from("quote_requests")
         .select("id, items, created_at")
         .eq("client_id", clientId);
-      
+
       quotes?.forEach((q) => {
         const itemCount = Array.isArray(q.items) ? q.items.length : 1;
         timelineEvents.push({
@@ -131,12 +125,11 @@ export default function ClientDetailPage() {
         });
       });
 
-      // Fetch Leads
       const { data: leads } = await supabase
         .from("leads")
         .select("id, message, source, created_at")
         .eq("client_id", clientId);
-      
+
       leads?.forEach((l) => {
         timelineEvents.push({
           id: l.id,
@@ -149,14 +142,12 @@ export default function ClientDetailPage() {
         });
       });
 
-      // Fetch Notifications related to this client (captures WhatsApp clicks, QR Scans, checkout, etc.)
       const { data: notifications } = await supabase
         .from("notifications")
         .select("id, type, title, message, created_at")
         .eq("client_id", clientId);
-      
+
       notifications?.forEach((n) => {
-        // Exclude new_order, new_quote, new_lead since they are fetched directly above to avoid duplication
         if (!n.type.includes("new_order") && !n.type.includes("new_quote") && !n.type.includes("new_lead")) {
           timelineEvents.push({
             id: n.id,
@@ -169,10 +160,8 @@ export default function ClientDetailPage() {
         }
       });
 
-      // Sort timeline chronologically (newest first)
       timelineEvents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setTimeline(timelineEvents);
-
     } catch (err) {
       console.error("Failed to load client timeline:", err);
       toast.error("Erro ao carregar detalhes do cliente.");
@@ -190,7 +179,7 @@ export default function ClientDetailPage() {
         .eq("id", clientId);
 
       if (error) throw error;
-      
+
       setClient(prev => prev ? { ...prev, notes: notesText } : null);
       setEditingNotes(false);
       toast.success("Anotações salvas com sucesso!");
@@ -204,29 +193,27 @@ export default function ClientDetailPage() {
 
   function getTimelineIcon(type: string, status?: string) {
     const cls = "w-5 h-5 text-white";
-    if (type === "order") return <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center shrink-0"><ShoppingBag className={cls} /></div>;
-    if (type === "quote") return <div className="w-9 h-9 rounded-full bg-teal-500 flex items-center justify-center shrink-0"><FileText className={cls} /></div>;
-    if (type === "lead") return <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center shrink-0"><MessageSquare className={cls} /></div>;
-    
-    // Custom interactions
-    if (status?.includes("qr")) return <div className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center shrink-0"><QrCode className={cls} /></div>;
-    if (status?.includes("whatsapp")) return <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center shrink-0"><Phone className={cls} /></div>;
-    return <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center shrink-0"><Clock className={cls} /></div>;
+    if (type === "order") return <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0 shadow-md shadow-amber-200"><ShoppingBag className={cls} /></div>;
+    if (type === "quote") return <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shrink-0 shadow-md shadow-teal-200"><FileText className={cls} /></div>;
+    if (type === "lead") return <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shrink-0 shadow-md shadow-emerald-200"><MessageSquare className={cls} /></div>;
+    if (status?.includes("qr")) return <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shrink-0 shadow-md shadow-indigo-200"><QrCode className={cls} /></div>;
+    if (status?.includes("whatsapp")) return <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shrink-0 shadow-md shadow-emerald-200"><Phone className={cls} /></div>;
+    return <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shrink-0 shadow-md shadow-blue-200"><Clock className={cls} /></div>;
   }
 
   function getSourceBadge(source: string) {
     switch (source) {
-      case "qr": return <Badge className="bg-indigo-100 text-indigo-700">QR Code</Badge>;
-      case "whatsapp": return <Badge className="bg-emerald-100 text-emerald-700">WhatsApp</Badge>;
-      case "manual": return <Badge className="bg-gray-100 text-gray-700">Manual</Badge>;
-      default: return <Badge className="bg-blue-100 text-blue-700">Catálogo / Menu</Badge>;
+      case "qr": return <Badge variant="indigo">QR Code</Badge>;
+      case "whatsapp": return <Badge variant="emerald">WhatsApp</Badge>;
+      case "manual": return <Badge variant="rose">Manual</Badge>;
+      default: return <Badge variant="indigo">Catálogo / Menu</Badge>;
     }
   }
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
-        <Loader2 className="w-10 h-10 animate-spin text-[#1877F2]" />
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
         <p className="text-sm font-medium text-gray-500">Carregando timeline do cliente...</p>
       </div>
     );
@@ -235,36 +222,35 @@ export default function ClientDetailPage() {
   if (!client) return null;
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-10">
-      
-      {/* Back Button and profile header */}
-      <div className="space-y-4">
-        <Link
-          href={`/dashboard/business/${businessId}/clients`}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#111827] transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar para Base de Clientes
-        </Link>
+    <div className="space-y-8 max-w-5xl mx-auto pb-10 animate-fade-in-up">
+      {/* Back */}
+      <Link
+        href={`/dashboard/business/${businessId}/clients`}
+        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Voltar para Base de Clientes
+      </Link>
 
-        {/* Profile Card */}
-        <div className="bg-white border border-slate-100 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+      {/* Profile Card */}
+      <GlassCard>
+        <GlassCardContent className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-indigo-50 border-2 border-indigo-100 flex items-center justify-center text-indigo-600 text-2xl font-black shrink-0">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shrink-0 shadow-lg shadow-indigo-200">
               {client.name.substring(0, 2).toUpperCase()}
             </div>
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black text-[#050505]">{client.name}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-800">{client.name}</h1>
                 {getSourceBadge(client.source)}
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 font-medium">
-                <span className="flex items-center gap-1">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                <span className="flex items-center gap-1.5">
                   <Phone className="w-4 h-4 text-gray-400" />
                   {client.phone}
                 </span>
                 {client.email && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1.5">
                     <Mail className="w-4 h-4 text-gray-400" />
                     {client.email}
                   </span>
@@ -273,162 +259,145 @@ export default function ClientDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 text-xs text-gray-400 font-bold uppercase tracking-wider bg-slate-50 border border-slate-100 px-3.5 py-2 rounded-xl">
-            <UserCheck className="w-4 h-4 text-indigo-500 mr-1" />
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium bg-indigo-50 border border-indigo-100 px-4 py-2.5 rounded-xl text-indigo-600">
+            <UserCheck className="w-4 h-4 mr-1" />
             Cliente desde: {new Date(client.created_at).toLocaleDateString()}
           </div>
-        </div>
-      </div>
+        </GlassCardContent>
+      </GlassCard>
 
-      {/* Core Metrics Cards Grid */}
+      {/* Metrics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        
-        {/* Total Orders */}
-        <Card className="border border-slate-100 shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
+        <GlassCard>
+          <GlassCardContent className="p-4 flex items-center justify-between">
             <div className="space-y-0.5">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total de Pedidos</p>
-              <p className="text-2xl font-black text-slate-800">{client.total_orders}</p>
+              <p className="text-2xl font-bold text-slate-800">{client.total_orders}</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
-              <ShoppingBag className="w-5 h-5 text-orange-600" />
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5 text-amber-600" />
             </div>
-          </CardContent>
-        </Card>
+          </GlassCardContent>
+        </GlassCard>
 
-        {/* Total Quotes */}
-        <Card className="border border-slate-100 shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
+        <GlassCard>
+          <GlassCardContent className="p-4 flex items-center justify-between">
             <div className="space-y-0.5">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Orçamentos</p>
-              <p className="text-2xl font-black text-slate-800">{client.total_quote_requests}</p>
+              <p className="text-2xl font-bold text-slate-800">{client.total_quote_requests}</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-50 to-emerald-50 flex items-center justify-center">
               <FileText className="w-5 h-5 text-teal-600" />
             </div>
-          </CardContent>
-        </Card>
+          </GlassCardContent>
+        </GlassCard>
 
-        {/* Last Seen */}
-        <Card className="border border-slate-100 shadow-sm col-span-2">
-          <CardContent className="p-4 flex items-center justify-between">
+        <GlassCard className="md:col-span-2">
+          <GlassCardContent className="p-4 flex items-center justify-between">
             <div className="space-y-0.5">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Último Acesso</p>
-              <p className="text-sm font-extrabold text-slate-700">
+              <p className="text-sm font-semibold text-slate-700">
                 {new Date(client.last_seen_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
               </p>
               <p className="text-[10px] text-gray-400 mt-0.5">
-                Ação: <span className="font-bold text-indigo-500 capitalize">{client.last_interaction_type?.replace("_", " ") || "Nenhuma"}</span>
+                Ação: <span className="font-bold text-indigo-500 capitalize">{client.last_interaction_type?.replace(/_/g, " ") || "Nenhuma"}</span>
               </p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
               <Clock className="w-5 h-5 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
-
+          </GlassCardContent>
+        </GlassCard>
       </div>
 
-      {/* Main Split Layout: Timeline (left) & Notes Pad (right) */}
+      {/* Main Layout: Timeline + Notes */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Timeline Feed (2/3 width) */}
+        {/* Timeline */}
         <div className="lg:col-span-2 space-y-6">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#1877F2]" />
+          <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-white" />
+            </div>
             Timeline de Interações
           </h3>
 
           {timeline.length === 0 ? (
-            <Card className="border border-slate-100 shadow-sm">
-              <CardContent className="p-12 text-center text-gray-400">
+            <GlassCard>
+              <GlassCardContent className="py-12 text-center text-gray-400">
                 <Clock className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                 <p className="text-sm font-medium">Nenhuma atividade registrada para este cliente.</p>
-              </CardContent>
-            </Card>
+              </GlassCardContent>
+            </GlassCard>
           ) : (
-            <div className="relative pl-8 border-l-2 border-dashed border-slate-200 ml-4 space-y-8 pb-4">
+            <div className="relative pl-8 border-l-2 border-dashed border-indigo-200 ml-4 space-y-6 pb-4">
               {timeline.map((item) => (
                 <div key={item.id} className="relative flex gap-4 items-start animate-fade-in group">
-                  
-                  {/* Absolute Timeline Icon connector bullet */}
                   <div className="absolute -left-[53px] top-0.5 z-10 shrink-0">
                     {getTimelineIcon(item.type, item.status)}
                   </div>
 
-                  {/* Activity Details Box */}
-                  <div className="bg-white border border-slate-100 hover:border-slate-200/80 rounded-2xl p-4 flex-1 shadow-sm transition-all group-hover:shadow-md flex justify-between items-start gap-4">
-                    <div className="space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-black text-slate-800">{item.title}</span>
-                        <span className="text-[10px] text-gray-400 flex items-center gap-1 font-semibold">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {new Date(item.created_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
-                        </span>
+                  <GlassCard className="flex-1 transition-all group-hover:shadow-md">
+                    <GlassCardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-bold text-slate-800">{item.title}</span>
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1 font-medium">
+                              <Calendar className="w-3.5 h-3.5" />
+                              {new Date(item.created_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 leading-relaxed">{item.message}</p>
+                        </div>
+
+                        {item.type === "order" && (
+                          <Link href={`/dashboard/business/${businessId}/orders`} className="shrink-0">
+                            <div className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-gray-400 hover:text-indigo-600 transition-all cursor-pointer">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </div>
+                          </Link>
+                        )}
+                        {item.type === "quote" && (
+                          <Link href={`/dashboard/business/${businessId}/quote-requests`} className="shrink-0">
+                            <div className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-gray-400 hover:text-indigo-600 transition-all cursor-pointer">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </div>
+                          </Link>
+                        )}
+                        {item.type === "lead" && (
+                          <Link href={`/dashboard/business/${businessId}/leads`} className="shrink-0">
+                            <div className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-gray-400 hover:text-indigo-600 transition-all cursor-pointer">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </div>
+                          </Link>
+                        )}
                       </div>
-                      
-                      <p className="text-sm text-gray-500 leading-relaxed">
-                        {item.message}
-                      </p>
-                    </div>
-
-                    {/* Timeline Deep Links */}
-                    {item.type === "order" && (
-                      <Link href={`/dashboard/business/${businessId}/orders`} className="shrink-0">
-                        <button className="p-1.5 rounded-lg border border-slate-200 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all cursor-pointer flex items-center gap-1">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </button>
-                      </Link>
-                    )}
-                    {item.type === "quote" && (
-                      <Link href={`/dashboard/business/${businessId}/quote-requests`} className="shrink-0">
-                        <button className="p-1.5 rounded-lg border border-slate-200 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all cursor-pointer flex items-center gap-1">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </button>
-                      </Link>
-                    )}
-                    {item.type === "lead" && (
-                      <Link href={`/dashboard/business/${businessId}/leads`} className="shrink-0">
-                        <button className="p-1.5 rounded-lg border border-slate-200 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all cursor-pointer flex items-center gap-1">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </button>
-                      </Link>
-                    )}
-                  </div>
-
+                    </GlassCardContent>
+                  </GlassCard>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Notes Pad Column (1/3 width) */}
+        {/* Notes */}
         <div className="space-y-6">
-          <Card className="border border-slate-100 shadow-sm bg-gradient-to-br from-amber-50/10 to-amber-50/40">
-            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-gray-100/60">
-              <CardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
+          <GlassCard className="bg-gradient-to-br from-amber-50/30 to-amber-50/10 border-amber-100/30">
+            <GlassCardHeader className="pb-3 border-b border-amber-100/30">
+              <GlassCardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-amber-500" />
                 Anotações do Cliente
-              </CardTitle>
-              {!editingNotes && (
-                <button
-                  onClick={() => setEditingNotes(true)}
-                  className="text-xs font-bold text-[#1877F2] hover:text-[#1877F2]/80 transition-colors flex items-center gap-0.5 cursor-pointer"
-                >
-                  <Edit className="w-3.5 h-3.5" />
-                  Editar
-                </button>
-              )}
-            </CardHeader>
-            <CardContent className="pt-4">
+              </GlassCardTitle>
+            </GlassCardHeader>
+            <GlassCardContent className="pt-4">
               {editingNotes ? (
                 <div className="space-y-3">
                   <textarea
                     value={notesText}
                     onChange={(e) => setNotesText(e.target.value)}
                     rows={6}
-                    className="w-full rounded-lg border border-gray-200 px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2] bg-white resize-none"
-                    placeholder="Adicione observações internas sobre este cliente (Ex: prefere entrega aos sábados, orçamento pendente)..."
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white resize-none transition-all"
+                    placeholder="Adicione observações internas sobre este cliente..."
                   />
                   <div className="flex gap-2.5">
                     <Button
@@ -446,7 +415,7 @@ export default function ClientDetailPage() {
                       size="sm"
                       onClick={handleSaveNotes}
                       disabled={savingNotes}
-                      className="flex-1 text-xs bg-[#1877F2] hover:bg-[#166FE5] text-white"
+                      className="flex-1 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
                     >
                       {savingNotes ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Save className="w-3.5 h-3.5 mr-1" /> Salvar</>}
                     </Button>
@@ -455,28 +424,35 @@ export default function ClientDetailPage() {
               ) : (
                 <div className="space-y-4">
                   {client.notes ? (
-                    <p className="text-sm text-gray-650 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
                       {client.notes}
                     </p>
                   ) : (
                     <div className="text-center py-6 text-gray-400">
-                      <p className="text-xs font-semibold">Nenhuma anotação adicionada.</p>
+                      <p className="text-xs font-medium">Nenhuma anotação adicionada.</p>
                       <button
                         onClick={() => setEditingNotes(true)}
-                        className="text-xs text-[#1877F2] hover:underline font-bold mt-2 cursor-pointer block mx-auto"
+                        className="text-xs text-indigo-500 hover:text-indigo-600 font-bold mt-2 cursor-pointer block mx-auto"
                       >
                         Escrever anotação
                       </button>
                     </div>
                   )}
+                  {!editingNotes && client.notes && (
+                    <button
+                      onClick={() => setEditingNotes(true)}
+                      className="text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      Editar
+                    </button>
+                  )}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </GlassCardContent>
+          </GlassCard>
         </div>
-
       </div>
-
     </div>
   );
 }

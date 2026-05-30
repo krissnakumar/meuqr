@@ -647,9 +647,29 @@ export function PublicBusinessPageClient({
                         Confirmar Presença
                       </button>
                     )}
-                    {!section.section_type && (
+                    {section.section_type === "info" && (
+                      <p className="text-sm text-gray-500 text-center">
+                        Informações adicionais serão publicadas em breve.
+                      </p>
+                    )}
+                    {section.section_type === "gallery" && (
+                      <p className="text-sm text-gray-500 text-center">
+                        Galeria de fotos em construção.
+                      </p>
+                    )}
+                    {section.section_type === "schedule" && (
+                      <p className="text-sm text-gray-500 text-center">
+                        Agenda não disponível no momento.
+                      </p>
+                    )}
+                    {section.section_type === "events" && (
+                      <p className="text-sm text-gray-500 text-center">
+                        Nenhum evento programado.
+                      </p>
+                    )}
+                    {!["whatsapp", "booking", "rsvp", "info", "gallery", "schedule", "events"].includes(section.section_type || "") && (
                       <p className="text-sm text-gray-400">
-                        Em breve
+                        Nenhum item disponível no momento.
                       </p>
                     )}
                   </div>

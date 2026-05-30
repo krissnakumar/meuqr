@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Badge } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Input, Label, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -59,7 +59,6 @@ export default function MembersPage() {
 
       const membersList = membersData || [];
 
-      // Fetch profiles for each member
       const enriched = await Promise.all(
         membersList.map(async (m) => {
           const { data: profile } = await supabase
@@ -86,7 +85,6 @@ export default function MembersPage() {
     setInviting(true);
 
     try {
-      // First, find the user by email
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id")
@@ -94,7 +92,7 @@ export default function MembersPage() {
         .single();
 
       if (!profiles) {
-        alert("Usuário não encontrado. Certifique-se de que o email está correto.");
+        toast.error("Usuário não encontrado. Certifique-se de que o email está correto.");
         return;
       }
 
@@ -144,39 +142,52 @@ export default function MembersPage() {
     toast.success("Cargo atualizado");
   }
 
-  const roleConfig: Record<string, { label: string; icon: any; color: string }> = {
-    owner: { label: "Proprietário", icon: Crown, color: "text-yellow-500" },
-    admin: { label: "Admin", icon: ShieldCheck, color: "text-blue-500" },
-    staff: { label: "Staff", icon: Shield, color: "text-gray-500" },
+  const roleConfig: Record<string, { label: string; icon: any; color: string; bg: string }> = {
+    owner: { label: "Proprietário", icon: Crown, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
+    admin: { label: "Admin", icon: ShieldCheck, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
+    staff: { label: "Staff", icon: Shield, color: "text-slate-600", bg: "bg-slate-50 border-slate-200" },
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+        <p className="text-sm font-medium text-gray-500">Carregando equipe...</p>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-8 animate-fade-in-up">
+      {/* Back */}
       <Link
         href={`/dashboard/business/${businessId}`}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#111827] mb-6"
+        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {business?.name || "Voltar"}
       </Link>
 
-      <h1 className="text-2xl font-bold text-[#111827] mb-2">Equipe</h1>
-      <p className="text-gray-500 mb-8">Gerencie os membros da sua equipe</p>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+          <Users className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Equipe</h1>
+          <p className="text-sm text-gray-400">Gerencie os membros da sua equipe</p>
+        </div>
+      </div>
 
-      {/* Invite form */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="text-base">Convidar Membro</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Invite Form */}
+      <GlassCard>
+        <GlassCardHeader>
+          <GlassCardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-indigo-500" />
+            Convidar Membro
+          </GlassCardTitle>
+        </GlassCardHeader>
+        <GlassCardContent>
           <div className="flex flex-col sm:flex-row items-end gap-3">
             <div className="flex-1 space-y-2 w-full">
               <Label htmlFor="inviteEmail">Email do usuário</Label>
@@ -186,6 +197,7 @@ export default function MembersPage() {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="email@exemplo.com"
+                className="h-11 rounded-xl border-slate-200"
               />
             </div>
             <div className="space-y-2">
@@ -194,16 +206,17 @@ export default function MembersPage() {
                 id="role"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as "admin" | "staff")}
-                className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#111827]"
+                className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 cursor-pointer"
               >
                 <option value="staff">Staff</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
             <Button
-              variant="accent"
+              variant="default"
               onClick={inviteMember}
               disabled={inviting || !inviteEmail.trim()}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white h-11"
             >
               {inviting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -215,32 +228,33 @@ export default function MembersPage() {
               )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </GlassCardContent>
+      </GlassCard>
 
-      {/* Members list */}
-      <div className="space-y-3">
+      {/* Members List */}
+      <div className="space-y-4">
         {/* Owner */}
         {business && (
-          <Card className="border-2 border-yellow-100 bg-yellow-50/20">
-            <CardContent className="p-5">
+          <GlassCard className="border-2 border-amber-100 bg-gradient-to-br from-amber-50/20 to-amber-50/5 overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-500" />
+            <GlassCardContent className="p-5 pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                    <Crown className="w-5 h-5 text-yellow-600" />
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center shadow-sm">
+                    <Crown className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-[#111827]">Proprietário</p>
-                    <p className="text-xs text-gray-400">ID: {business.owner_id?.slice(0, 8)}...</p>
+                    <p className="font-bold text-slate-800">Proprietário</p>
+                    <p className="text-xs text-gray-400 font-mono">ID: {business.owner_id?.slice(0, 8)}...</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="text-yellow-600 border-yellow-200">
+                <Badge variant="amber">
                   <Crown className="w-3 h-3 mr-1" />
                   Owner
                 </Badge>
               </div>
-            </CardContent>
-          </Card>
+            </GlassCardContent>
+          </GlassCard>
         )}
 
         {/* Members */}
@@ -249,15 +263,15 @@ export default function MembersPage() {
           const RoleIcon = role.icon;
 
           return (
-            <Card key={member.id}>
-              <CardContent className="p-5">
+            <GlassCard key={member.id}>
+              <GlassCardContent className="p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-gray-500" />
+                    <div className={`w-11 h-11 rounded-full ${role.bg} flex items-center justify-center shadow-sm`}>
+                      <RoleIcon className={`w-5 h-5 ${role.color}`} />
                     </div>
                     <div>
-                      <p className="font-medium text-[#111827]">
+                      <p className="font-bold text-slate-800">
                         {member.profile?.full_name || "Sem nome"}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -267,40 +281,37 @@ export default function MembersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Role selector (for non-owner members) */}
                     <select
                       value={member.role}
                       onChange={(e) => changeRole(member.id, e.target.value)}
-                      className="text-xs rounded-lg border border-gray-200 bg-white px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#111827]"
+                      className="text-xs rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                     >
                       <option value="admin">Admin</option>
                       <option value="staff">Staff</option>
                     </select>
                     <button
                       onClick={() => removeMember(member.id)}
-                      className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                      className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </GlassCardContent>
+            </GlassCard>
           );
         })}
 
         {members.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[#111827] mb-2">
-                Nenhum membro na equipe
-              </h3>
-              <p className="text-sm text-gray-500">
-                Convide pessoas para ajudar a gerenciar este negócio.
-              </p>
-            </CardContent>
-          </Card>
+          <GlassCard>
+            <GlassCardContent className="py-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-slate-300" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-700 mb-2">Nenhum membro na equipe</h3>
+              <p className="text-sm text-gray-400">Convide pessoas para ajudar a gerenciar este negócio.</p>
+            </GlassCardContent>
+          </GlassCard>
         )}
       </div>
     </div>

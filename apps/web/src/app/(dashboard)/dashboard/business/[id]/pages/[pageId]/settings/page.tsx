@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Input, Label } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -13,6 +13,7 @@ import {
   Search,
   Eye,
   Code,
+  Globe,
 } from "lucide-react";
 
 export default function PageSettingsPage() {
@@ -26,7 +27,6 @@ export default function PageSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Form state
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
@@ -96,33 +96,37 @@ export default function PageSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+        <p className="text-sm font-medium text-gray-500">Carregando configurações...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-8 animate-fade-in-up">
+      {/* Back */}
       <Link
         href={`/dashboard/business/${businessId}/pages/${pageId}`}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#111827] mb-6"
+        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {page?.title || "Editor"}
       </Link>
 
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-[#111827]">
-            Configurações da Página
-          </h1>
-          <p className="text-sm text-gray-500">
-            {business?.name} / {page?.title}
-          </p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <Settings className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Configurações da Página</h1>
+            <p className="text-sm text-gray-400">{business?.name} / {page?.title}</p>
+          </div>
         </div>
         <Link href={`/${business?.slug}`} target="_blank">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="border-slate-200 hover:border-indigo-200">
             <Eye className="w-4 h-4 mr-1" />
             Visualizar
           </Button>
@@ -130,15 +134,15 @@ export default function PageSettingsPage() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
-        {/* Basic info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Settings className="w-4 h-4" />
+        {/* Basic Info */}
+        <GlassCard>
+          <GlassCardHeader>
+            <GlassCardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-indigo-500" />
               Informações básicas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </GlassCardTitle>
+          </GlassCardHeader>
+          <GlassCardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Título da página</Label>
               <Input
@@ -146,13 +150,16 @@ export default function PageSettingsPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                className="h-11 rounded-xl border-slate-200"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="slug">Slug (URL)</Label>
               <div className="flex items-center gap-1 text-sm">
-                <span className="text-gray-400">{business?.slug}/</span>
+                <span className="text-gray-400 font-mono bg-slate-50 px-2.5 py-2 rounded-lg border border-slate-200">
+                  {business?.slug}/
+                </span>
                 <Input
                   id="slug"
                   value={slug}
@@ -166,21 +173,22 @@ export default function PageSettingsPage() {
                     )
                   }
                   required
+                  className="h-11 rounded-xl border-slate-200"
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </GlassCardContent>
+        </GlassCard>
 
         {/* SEO */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Search className="w-4 h-4" />
+        <GlassCard>
+          <GlassCardHeader>
+            <GlassCardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Search className="w-4 h-4 text-indigo-500" />
               SEO (Otimização para buscadores)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </GlassCardTitle>
+          </GlassCardHeader>
+          <GlassCardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="seoTitle">Título SEO</Label>
               <Input
@@ -188,6 +196,7 @@ export default function PageSettingsPage() {
                 value={seoTitle}
                 onChange={(e) => setSeoTitle(e.target.value)}
                 placeholder="Título que aparece no Google"
+                className="h-11 rounded-xl border-slate-200"
               />
               <p className="text-xs text-gray-400">
                 Recomendado: 50-60 caracteres. Atual: {seoTitle.length}
@@ -200,7 +209,7 @@ export default function PageSettingsPage() {
                 id="seoDescription"
                 value={seoDescription}
                 onChange={(e) => setSeoDescription(e.target.value)}
-                className="flex min-h-[80px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]"
+                className="flex min-h-[80px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-400 transition-all"
                 placeholder="Descrição que aparece nos resultados de busca"
               />
               <p className="text-xs text-gray-400">
@@ -215,30 +224,29 @@ export default function PageSettingsPage() {
                 value={seoImageUrl}
                 onChange={(e) => setSeoImageUrl(e.target.value)}
                 placeholder="https://exemplo.com/imagem.jpg"
+                className="h-11 rounded-xl border-slate-200"
               />
-              <p className="text-xs text-gray-400">
-                Imagem exibida ao compartilhar link (OG Image)
-              </p>
+              <p className="text-xs text-gray-400">Imagem exibida ao compartilhar link (OG Image)</p>
             </div>
-          </CardContent>
-        </Card>
+          </GlassCardContent>
+        </GlassCard>
 
         {/* Custom CSS/JS */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Code className="w-4 h-4" />
+        <GlassCard>
+          <GlassCardHeader>
+            <GlassCardTitle className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Code className="w-4 h-4 text-indigo-500" />
               Personalização avançada
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </GlassCardTitle>
+          </GlassCardHeader>
+          <GlassCardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="customCss">CSS personalizado</Label>
               <textarea
                 id="customCss"
                 value={customCss}
                 onChange={(e) => setCustomCss(e.target.value)}
-                className="flex min-h-[120px] w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]"
+                className="flex min-h-[120px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-400 transition-all"
                 placeholder="/* Adicione CSS personalizado aqui */"
                 spellCheck={false}
               />
@@ -250,13 +258,13 @@ export default function PageSettingsPage() {
                 id="customJs"
                 value={customJs}
                 onChange={(e) => setCustomJs(e.target.value)}
-                className="flex min-h-[120px] w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]"
+                className="flex min-h-[120px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-400 transition-all"
                 placeholder="// Adicione JavaScript personalizado aqui"
                 spellCheck={false}
               />
             </div>
-          </CardContent>
-        </Card>
+          </GlassCardContent>
+        </GlassCard>
 
         <div className="flex justify-end gap-3">
           <Link href={`/dashboard/business/${businessId}/pages/${pageId}`}>
@@ -264,7 +272,12 @@ export default function PageSettingsPage() {
               Cancelar
             </Button>
           </Link>
-          <Button type="submit" variant="default" disabled={saving}>
+          <Button
+            type="submit"
+            variant="default"
+            disabled={saving}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
             ) : (

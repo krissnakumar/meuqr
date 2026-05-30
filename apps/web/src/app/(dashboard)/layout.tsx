@@ -1,35 +1,37 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Button, ErrorBoundary, LanguageSelector } from "@meuqr/ui";
-import type { Language } from "@meuqr/shared";
 import { Toaster } from "sonner";
 import {
-  QrCode,
   LayoutDashboard,
   Store,
-  QrCode as QrCodeIcon,
+  ShoppingCart,
   BarChart3,
-  CreditCard,
   Settings,
   LogOut,
   Menu,
   X,
+  QrCode,
+  Bell,
+  ShieldAlert,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
 import { NotificationBell } from "@/components/NotificationBell";
 
 const sidebarItems = [
-  { href: "/dashboard", icon: LayoutDashboard, key: "dashboard" },
-  { href: "/dashboard/business", icon: Store, key: "business" },
-  { href: "/dashboard/qr-codes", icon: QrCodeIcon, key: "qrcodes" },
-  { href: "/dashboard/analytics", icon: BarChart3, key: "analytics" },
-  { href: "/dashboard/billing", icon: CreditCard, key: "billing" },
-  { href: "/dashboard/settings", icon: Settings, key: "settings" },
+  { href: "/dashboard", icon: LayoutDashboard, key: "sidebar.home", match: "/dashboard$" },
+  { href: "/dashboard/business", icon: Store, key: "sidebar.my_business", match: "/dashboard/business" },
+  { href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" },
+  { href: "/dashboard/analytics", icon: BarChart3, key: "sidebar.analytics", match: "/dashboard/analytics" },
+  { href: "/dashboard/notifications", icon: Bell, key: "sidebar.notifications", match: "/dashboard/notifications" },
+  { href: "/dashboard/billing", icon: ShoppingCart, key: "sidebar.billing", match: "/dashboard/billing" },
+  { href: "/dashboard/settings", icon: Settings, key: "sidebar.settings", match: "/dashboard/settings" },
+  { href: "/dashboard/admin", icon: ShieldAlert, key: "sidebar.admin", match: "/dashboard/admin" },
 ];
 
 function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleLogout }: {
@@ -41,78 +43,99 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
 }) {
   const { t, lang, setLang } = useTranslation();
 
+  const isActive = (item: typeof sidebarItems[0]) => {
+    if (item.match === "/dashboard$") return pathname === "/dashboard";
+    return pathname.startsWith(item.match);
+  };
+
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-[#E4E6EB] transform transition-transform duration-200 lg:translate-x-0 ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } lg:static lg:z-auto`}
-    >
-      <div className="h-16 flex items-center justify-between px-4 border-b border-[#E4E6EB]">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#1877F2] rounded-lg flex items-center justify-center">
-            <QrCode className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-lg font-bold text-[#050505]">MeuQR</span>
-        </Link>
-        <button
-          className="lg:hidden p-1 pointer-events-auto cursor-pointer"
+    <>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
           onClick={() => setSidebarOpen(false)}
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+        />
+      )}
 
-      <nav className="p-3 space-y-1">
-        {sidebarItems.map((item) => {
-          const isActive = pathname === item.href;
-          const label = t(item.key);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                isActive
-                  ? "bg-[#1877F2] text-white font-medium shadow-sm shadow-[#1877F2]/20"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-[#050505]"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-[#E4E6EB]">
-        <div className="flex items-center justify-center mb-2">
-          <LanguageSelector
-            currentLang={lang}
-            onLanguageChange={setLang}
-            variant="minimal"
-            size="sm"
-          />
-        </div>
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-[#1877F2]/10 flex items-center justify-center text-sm font-medium text-[#1877F2]">
-            {user?.email?.[0]?.toUpperCase() || "U"}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-[#050505] truncate">
-              {user?.email}
-            </p>
-            <p className="text-xs text-gray-400">{t("free_plan")}</p>
-          </div>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-xl border-r border-[#E2E8F0] transform transition-all duration-300 ease-out lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:sticky lg:top-0 lg:h-screen lg:z-auto`}
+      >
+        <div className="h-16 flex items-center justify-between px-4 border-b border-[#E2E8F0]">
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-sm shadow-indigo-200 group-hover:shadow-md group-hover:shadow-indigo-200 transition-shadow">
+              <QrCode className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="text-lg font-bold text-[#0F172A]">MeuQR</span>
+              <span className="block text-[10px] text-[#64748B] font-medium leading-none -mt-0.5">Business OS</span>
+            </div>
+          </Link>
           <button
-            onClick={handleLogout}
-            className="p-1.5 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
-            title={t("logout")}
+            className="lg:hidden p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors cursor-pointer"
+            onClick={() => setSidebarOpen(false)}
           >
-            <LogOut className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
-      </div>
-    </aside>
+
+        <nav className="p-3 space-y-1">
+          {sidebarItems.map((item) => {
+            const active = isActive(item);
+            const label = t(item.key);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  active
+                    ? "bg-indigo-50 text-indigo-700 font-semibold shadow-sm"
+                    : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#0F172A]"
+                }`}
+              >
+                <item.icon className={`w-5 h-5 ${active ? "text-indigo-600" : ""}`} />
+                <span>{label}</span>
+                {active && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#E2E8F0] bg-white/50">
+          <div className="flex items-center justify-center mb-3">
+            <LanguageSelector
+              currentLang={lang}
+              onLanguageChange={setLang}
+              variant="minimal"
+              size="sm"
+            />
+          </div>
+          <div className="flex items-center gap-3 px-2 py-2 rounded-xl bg-[#F8FAFC]">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white shadow-sm">
+              {user?.email?.[0]?.toUpperCase() || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#0F172A] truncate">
+                {user?.email?.split("@")[0] || "Usuário"}
+              </p>
+              <p className="text-[10px] text-[#64748B] font-medium">{t("free_plan")}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-[#94A3B8] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+              title={t("logout")}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -163,14 +186,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#1877F2] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-medium text-[#64748B]">{t("loading")}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] flex">
+    <div className="min-h-screen bg-[#F8FAFC] flex">
       <DashboardSidebar
         user={user}
         pathname={pathname}
@@ -179,54 +205,50 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         handleLogout={handleLogout}
       />
 
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* Mobile Header */}
-        <header className="h-16 bg-white border-b border-[#E4E6EB] flex items-center justify-between px-4 lg:hidden">
-          <button onClick={() => setSidebarOpen(true)} className="cursor-pointer">
-            <Menu className="w-6 h-6" />
+        <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-[#E2E8F0] flex items-center justify-between px-4 lg:hidden sticky top-0 z-30">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors cursor-pointer">
+            <Menu className="w-5 h-5" />
           </button>
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#1877F2] rounded-lg flex items-center justify-center">
-              <QrCode className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <QrCode className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-[#050505]">MeuQR</span>
+            <span className="text-base font-bold text-[#0F172A]">MeuQR</span>
           </Link>
           <NotificationBell />
         </header>
 
         {/* Desktop Header */}
-        <header className="hidden lg:flex h-16 bg-white border-b border-[#E4E6EB] items-center justify-between px-8">
-          <div>
-            <h1 className="text-lg font-bold text-[#050505] flex items-center gap-2">
-              <span>{t("dashboard")}</span>
-            </h1>
+        <header className="hidden lg:flex h-16 bg-white/80 backdrop-blur-xl border-b border-[#E2E8F0] items-center justify-between px-8 sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <nav className="flex items-center gap-2 text-sm text-[#64748B]">
+              <span className="font-semibold text-[#0F172A]">{t("sidebar.home")}</span>
+            </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <NotificationBell />
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
         </main>
       </div>
+
       <Toaster
         position="bottom-right"
         toastOptions={{
           style: {
             background: "#fff",
-            border: "1px solid #E4E6EB",
-            color: "#050505",
+            border: "1px solid #E2E8F0",
+            color: "#0F172A",
             fontSize: "14px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05)",
           },
         }}
       />
@@ -245,4 +267,3 @@ export default function DashboardLayout({
     </I18nProvider>
   );
 }
-

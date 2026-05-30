@@ -16,6 +16,12 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, ChevronRight, FileText } from "lucide-react-native";
 import { getAllBusinessTemplates } from "@meuqr/shared";
 
+function getLocalString(val: any): string {
+  if (!val) return "";
+  if (typeof val === "string") return val;
+  return val["pt-BR"] || "";
+}
+
 export default function NewPageScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
@@ -49,7 +55,7 @@ export default function NewPageScreen() {
 
   function handleSelectTemplate(tmpl: any) {
     setSelectedTemplate(tmpl);
-    setTitle(tmpl.name["pt-BR"] || tmpl.name);
+    setTitle(getLocalString(tmpl.name));
     setSlug(tmpl.id.replace("tmpl-", ""));
     setStep("details");
   }
@@ -86,7 +92,7 @@ export default function NewPageScreen() {
             .from("sections")
             .insert({
               page_id: page.id,
-              name: section.title["pt-BR"] || section.title,
+              name: getLocalString(section.title),
               slug: section.slug,
               section_type: section.sectionType || null,
               sort_order: i,
@@ -99,8 +105,8 @@ export default function NewPageScreen() {
           if (section.items && section.items.length > 0) {
             const itemsToInsert = section.items.map((item: any, idx: number) => ({
               section_id: newSection.id,
-              name: item.name["pt-BR"] || item.name,
-              description: item.description ? (item.description["pt-BR"] || item.description) : null,
+              name: getLocalString(item.name),
+              description: item.description ? getLocalString(item.description) : null,
               price: item.price || null,
               sort_order: idx,
             }));
@@ -173,9 +179,9 @@ export default function NewPageScreen() {
                     <FileText size={24} color="#00C853" />
                   </View>
                   <View style={styles.templateInfo}>
-                    <Text style={styles.templateName}>{tmpl.name["pt-BR"] || tmpl.name}</Text>
+                    <Text style={styles.templateName}>{getLocalString(tmpl.name)}</Text>
                     <Text style={styles.templateDesc} numberOfLines={2}>
-                      {tmpl.description["pt-BR"] || tmpl.description}
+                      {getLocalString(tmpl.description)}
                     </Text>
                   </View>
                   <ChevronRight size={20} color="#9CA3AF" />
@@ -241,7 +247,7 @@ export default function NewPageScreen() {
               <View style={styles.infoCard}>
                 <Text style={styles.infoTitle}>Modelo Selecionado:</Text>
                 <Text style={styles.infoValue}>
-                  {selectedTemplate.name["pt-BR"] || selectedTemplate.name}
+                  {getLocalString(selectedTemplate.name)}
                 </Text>
                 <Text style={styles.infoText}>
                   Isso irá criar automaticamente {selectedTemplate.sections.length} seções e preencher com produtos de demonstração que você poderá editar livremente depois!

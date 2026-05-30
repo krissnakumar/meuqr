@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -39,13 +39,13 @@ interface Order {
 
 const statusFlow = ["pending", "confirmed", "preparing", "ready", "delivered"];
 
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  pending: { label: "Pendente", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: Clock },
-  confirmed: { label: "Confirmado", color: "bg-blue-100 text-blue-800 border-blue-200", icon: CheckCircle2 },
-  preparing: { label: "Preparando", color: "bg-purple-100 text-purple-800 border-purple-200", icon: CookingPot },
-  ready: { label: "Pronto", color: "bg-green-100 text-green-800 border-green-200", icon: Bike },
-  delivered: { label: "Entregue", color: "bg-gray-100 text-gray-500 border-gray-200", icon: CheckCircle2 },
-  cancelled: { label: "Cancelado", color: "bg-red-100 text-red-800 border-red-200", icon: XCircle },
+const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
+  pending: { label: "Pendente", color: "text-amber-600 bg-amber-50 border-amber-200", bg: "bg-amber-50", icon: Clock },
+  confirmed: { label: "Confirmado", color: "text-blue-600 bg-blue-50 border-blue-200", bg: "bg-blue-50", icon: CheckCircle2 },
+  preparing: { label: "Preparando", color: "text-purple-600 bg-purple-50 border-purple-200", bg: "bg-purple-50", icon: CookingPot },
+  ready: { label: "Pronto", color: "text-emerald-600 bg-emerald-50 border-emerald-200", bg: "bg-emerald-50", icon: Bike },
+  delivered: { label: "Entregue", color: "text-slate-500 bg-slate-50 border-slate-200", bg: "bg-slate-50", icon: CheckCircle2 },
+  cancelled: { label: "Cancelado", color: "text-red-600 bg-red-50 border-red-200", bg: "bg-red-50", icon: XCircle },
 };
 
 export default function OrdersPage() {
@@ -116,31 +116,37 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+        <p className="text-sm font-medium text-gray-500">Carregando pedidos...</p>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-6 animate-fade-in-up">
+      {/* Back */}
       <Link
         href={`/dashboard/business/${businessId}`}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#111827] mb-6"
+        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {business?.name || "Voltar"}
       </Link>
 
-      <div className="flex items-center justify-between mb-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+          <ShoppingCart className="w-5 h-5 text-white" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-[#111827]">Pedidos</h1>
-          <p className="text-sm text-gray-500">{orders.length} pedido(s)</p>
+          <h1 className="text-2xl font-bold text-slate-800">Pedidos</h1>
+          <p className="text-sm text-gray-400">{orders.length} pedido(s)</p>
         </div>
       </div>
 
       {/* Status filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-2">
         {[
           { key: "all", label: "Todos", count: counts.all },
           { key: "pending", label: "Pendentes", count: counts.pending },
@@ -153,10 +159,10 @@ export default function OrdersPage() {
           <button
             key={s.key}
             onClick={() => setFilter(s.key)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all ${
               filter === s.key
-                ? "bg-[#111827] text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                : "bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200"
             }`}
           >
             {s.label} ({s.count})
@@ -164,18 +170,17 @@ export default function OrdersPage() {
         ))}
       </div>
 
+      {/* Orders */}
       {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-[#111827] mb-2">
-              Nenhum pedido encontrado
-            </h3>
-            <p className="text-sm text-gray-500">
-              Os pedidos feitos pelos clientes aparecerão aqui.
-            </p>
-          </CardContent>
-        </Card>
+        <GlassCard>
+          <GlassCardContent className="py-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4">
+              <ShoppingCart className="w-8 h-8 text-slate-300" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-700 mb-2">Nenhum pedido encontrado</h3>
+            <p className="text-sm text-gray-400">Os pedidos feitos pelos clientes aparecerão aqui.</p>
+          </GlassCardContent>
+        </GlassCard>
       ) : (
         <div className="space-y-4">
           {filtered.map((order) => {
@@ -183,13 +188,14 @@ export default function OrdersPage() {
             const StatusIcon = status.icon;
 
             return (
-              <Card key={order.id} className="overflow-hidden">
-                <CardContent className="p-6">
+              <GlassCard key={order.id} className="overflow-hidden relative">
+                <div className={`absolute top-0 left-0 w-1 h-full ${status.bg}`} />
+                <GlassCardContent className="p-6 ml-3">
+                  {/* Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    {/* Customer info */}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-[#111827]">
+                        <h3 className="font-bold text-slate-800">
                           {order.customer_name}
                         </h3>
                         <Badge className={`${status.color} border`}>
@@ -202,7 +208,7 @@ export default function OrdersPage() {
                         <a
                           href={`https://wa.me/${order.customer_phone}`}
                           target="_blank"
-                          className="flex items-center gap-1 hover:text-[#00C853]"
+                          className="flex items-center gap-1 hover:text-indigo-600 transition-colors"
                         >
                           <Phone className="w-3 h-3" />
                           {order.customer_phone}
@@ -213,15 +219,14 @@ export default function OrdersPage() {
                             {order.customer_email}
                           </span>
                         )}
-                        <span>
+                        <span className="text-gray-300">
                           {new Date(order.created_at).toLocaleString("pt-BR")}
                         </span>
                       </div>
                     </div>
 
-                    {/* Total */}
                     <div className="text-right">
-                      <p className="text-lg font-bold text-[#111827]">
+                      <p className="text-lg font-bold text-slate-800">
                         R$ {order.total.toFixed(2)}
                       </p>
                       {order.payment_method && (
@@ -231,32 +236,29 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Items */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="space-y-1">
-                      {Array.isArray(order.items) &&
-                        order.items.map((item: OrderItem, idx: number) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between text-sm"
-                          >
+                  {Array.isArray(order.items) && order.items.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                      <div className="space-y-1.5">
+                        {order.items.map((item: OrderItem, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
                             <span className="text-gray-600">
                               {item.quantity}x {item.name}
                             </span>
-                            <span className="text-gray-800 font-medium">
+                            <span className="text-slate-700 font-medium">
                               R$ {(item.price * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Actions */}
                   {order.status !== "cancelled" && order.status !== "delivered" && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
+                    <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
                       {(() => {
                         const currentIdx = statusFlow.indexOf(order.status);
                         const nextStatus = statusFlow[currentIdx + 1];
-                        const cancelStatus = order.status !== "cancelled";
 
                         return (
                           <>
@@ -265,6 +267,7 @@ export default function OrdersPage() {
                                 variant="default"
                                 size="sm"
                                 onClick={() => updateStatus(order.id, nextStatus)}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
                               >
                                 Avançar para {statusConfig[nextStatus]?.label}
                               </Button>
@@ -273,7 +276,7 @@ export default function OrdersPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => updateStatus(order.id, "cancelled")}
-                              className="text-red-500 hover:text-red-700"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             >
                               Cancelar
                             </Button>
@@ -282,8 +285,8 @@ export default function OrdersPage() {
                       })()}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </GlassCardContent>
+              </GlassCard>
             );
           })}
         </div>

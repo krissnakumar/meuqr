@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Separator, Badge } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Input, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -11,15 +11,12 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
-  GripVertical,
   Save,
   Eye,
-  ExternalLink,
-  Image,
   Package,
-  DollarSign,
-  ToggleLeft,
-  ToggleRight,
+  Layout,
+  EyeOff,
+  GripVertical,
 } from "lucide-react";
 
 interface SectionWithItems {
@@ -198,41 +195,49 @@ export default function PageEditorPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+        <p className="text-sm font-medium text-gray-500">Carregando editor...</p>
       </div>
     );
   }
 
+  const totalItems = sections.reduce((acc, s) => acc + s.items.length, 0);
+
   return (
-    <div>
+    <div className="space-y-8 animate-fade-in-up">
+      {/* Back */}
       <Link
         href={`/dashboard/business/${businessId}`}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#111827] mb-6"
+        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {business?.name}
       </Link>
 
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-[#111827]">{page?.title}</h1>
-          <p className="text-sm text-gray-500">
-            {business?.name} · {sections.length} seções ·{" "}
-            {sections.reduce((acc, s) => acc + s.items.length, 0)} itens
-          </p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <Layout className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">{page?.title}</h1>
+            <p className="text-sm text-gray-400">{business?.name} · {sections.length} seções · {totalItems} itens</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button
-            variant={page?.is_published ? "outline" : "accent"}
+            variant={page?.is_published ? "outline" : "default"}
             size="sm"
             onClick={togglePublish}
             disabled={saving}
+            className={page?.is_published ? "border-slate-200" : "bg-indigo-600 hover:bg-indigo-700 text-white"}
           >
             {page?.is_published ? "Despublicar" : "Publicar"}
           </Button>
           <Link href={`/${business?.slug}`} target="_blank">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:bg-slate-100">
               <Eye className="w-4 h-4" />
             </Button>
           </Link>
@@ -242,42 +247,44 @@ export default function PageEditorPage() {
       {/* Sections */}
       <div className="space-y-4">
         {sections.map((section) => (
-          <Card key={section.id} className={`${!section.is_visible ? "opacity-50" : ""}`}>
-            <CardHeader className="pb-3">
+          <GlassCard
+            key={section.id}
+            className={`transition-all ${!section.is_visible ? "opacity-50" : ""}`}
+          >
+            <GlassCardHeader className="pb-3 border-b border-slate-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <CardTitle className="text-base">{section.name}</CardTitle>
+                  <GripVertical className="w-4 h-4 text-gray-300 cursor-grab" />
+                  <GlassCardTitle className="text-sm font-bold text-slate-700">{section.name}</GlassCardTitle>
                   {section.section_type && (
-                    <Badge variant="muted" className="text-xs">
-                      {section.section_type}
-                    </Badge>
+                    <Badge variant="indigo">{section.section_type}</Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => toggleSectionVisibility(section)}
-                    className="p-1 text-gray-400 hover:text-[#111827]"
+                    className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-all"
                     title={section.is_visible ? "Ocultar" : "Mostrar"}
                   >
                     {section.is_visible ? (
-                      <ToggleRight className="w-5 h-5 text-[#00C853]" />
+                      <Eye className="w-4 h-4 text-indigo-500" />
                     ) : (
-                      <ToggleLeft className="w-5 h-5" />
+                      <EyeOff className="w-4 h-4" />
                     )}
                   </button>
                   <button
                     onClick={() => deleteSection(section.id)}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
+            </GlassCardHeader>
+            <GlassCardContent>
               {/* Items */}
               {section.items.length === 0 ? (
-                <p className="text-sm text-gray-400 py-4 text-center">
+                <p className="text-sm text-gray-400 py-6 text-center">
                   Nenhum item nesta seção
                 </p>
               ) : (
@@ -285,35 +292,33 @@ export default function PageEditorPage() {
                   {section.items.map((item: any) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-gray-50 group"
+                      className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-br from-slate-50 to-white border border-slate-100 group hover:border-indigo-100 hover:shadow-sm transition-all"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Package className="w-4 h-4 text-gray-400 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-[#111827] truncate">
+                          <p className="text-sm font-medium text-slate-800 truncate">
                             {item.name}
                           </p>
                           {item.description && (
-                            <p className="text-xs text-gray-400 truncate">
-                              {item.description}
-                            </p>
+                            <p className="text-xs text-gray-400 truncate">{item.description}</p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <input
                           type="number"
                           step="0.01"
                           defaultValue={item.price || ""}
                           onBlur={(e) => updateItemPrice(item.id, e.target.value)}
                           placeholder="Preço"
-                          className="w-20 text-sm text-right bg-transparent border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#111827]"
+                          className="w-20 text-sm text-right bg-transparent border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
                         />
                         <button
                           onClick={() => deleteItem(item.id, section.id)}
-                          className="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -323,33 +328,38 @@ export default function PageEditorPage() {
 
               <button
                 onClick={() => addItem(section.id)}
-                className="mt-3 flex items-center gap-2 text-sm text-gray-400 hover:text-[#00C853] transition-colors"
+                className="mt-3 flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors font-medium px-1"
               >
                 <Plus className="w-4 h-4" />
                 Adicionar item
               </button>
-            </CardContent>
-          </Card>
+            </GlassCardContent>
+          </GlassCard>
         ))}
       </div>
 
       {/* Add Section */}
-      <Card className="mt-6">
-        <CardContent className="p-4">
+      <GlassCard className="bg-gradient-to-br from-indigo-50/30 to-indigo-50/10 border-indigo-100/30">
+        <GlassCardContent className="p-4">
           <div className="flex items-center gap-3">
             <Input
               value={newSectionName}
               onChange={(e) => setNewSectionName(e.target.value)}
               placeholder="Nome da nova seção..."
               onKeyDown={(e) => e.key === "Enter" && addSection()}
+              className="h-11 rounded-xl border-slate-200"
             />
-            <Button variant="accent" onClick={addSection}>
+            <Button
+              variant="default"
+              onClick={addSection}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white h-11"
+            >
               <Plus className="w-4 h-4 mr-1" />
               Adicionar Seção
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </GlassCardContent>
+      </GlassCard>
     </div>
   );
 }
