@@ -14,7 +14,18 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Plus,
+  Minus,
+  Trash2,
+  X,
+  Send,
+  Loader2,
+  FileText,
+  User,
+  Mail,
+  MessageSquare,
 } from "lucide-react";
+import { Button, Badge } from "@meuqr/ui";
 
 async function trackClick(clickType: string, pageId?: string) {
   try {
@@ -31,6 +42,14 @@ async function trackClick(clickType: string, pageId?: string) {
   }
 }
 
+function sanitizeWhatsApp(number: string): string {
+  const digits = number.replace(/\D/g, "");
+  if (digits.length === 11 || digits.length === 10) {
+    return `55${digits}`; // Prepend Brazilian country code
+  }
+  return digits;
+}
+
 interface BusinessData {
   id: string;
   name: string;
@@ -43,10 +62,10 @@ interface BusinessData {
   pix_key: string | null;
   address: string | null;
   city: string | null;
-  state: string | null;
   instagram: string | null;
   website: string | null;
   opening_hours: Record<string, string> | null;
+  category?: string | null;
 }
 
 interface SectionItem {
@@ -71,8 +90,6 @@ interface PageSection {
   items: SectionItem[];
 }
 
-import { Button } from "@meuqr/ui";
-
 export function PublicBusinessPageClient({
   business,
   page,
@@ -86,10 +103,32 @@ export function PublicBusinessPageClient({
 }) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
-  const [orderItems, setOrderItems] = useState<{ item: SectionItem; qty: number }[]>([]);
-  const [showOrderForm, setShowOrderForm] = useState(false);
+  
+  // Cart & Order States
+  const [orderItems, setOrderItems] = useState<{ item: SectionItem; qty: number; quality: string }[]>([]);
+  const [showOrderDrawer, setShowOrderDrawer] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("pix");
+  const [orderNotes, setOrderNotes] = useState("");
+  const [submittingOrder, setSubmittingOrder] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
+
+  // B2B Quotes States
+  const [quoteItems, setQuoteItems] = useState<{ item: SectionItem; qty: number; quality: string }[]>([]);
+  const [showQuoteDrawer, setShowQuoteDrawer] = useState(false);
+  const [quoteNotes, setQuoteNotes] = useState("");
+  const [submittingQuote, setSubmittingQuote] = useState(false);
+  const [quoteSuccess, setQuoteSuccess] = useState(false);
+
+  // Lead Form States
+  const [leadName, setLeadName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadMessage, setLeadMessage] = useState("");
+  const [submittingLead, setSubmittingLead] = useState(false);
+  const [leadSuccess, setLeadSuccess] = useState(false);
 
   useEffect(() => {
     // Expand first section by default
@@ -98,10 +137,14 @@ export function PublicBusinessPageClient({
     }
   }, [sections]);
 
+  // Check page template types to pre-hook styles
+  const isQuotePage = sections.some((s) => s.section_type === "quote");
+
   function toggleSection(id: string) {
     setExpandedSections((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
+  // === Shopping Cart Functions ===
   function addToOrder(item: SectionItem) {
     setOrderItems((prev) => {
       const existing = prev.find((i) => i.item.id === item.id);
@@ -110,7 +153,20 @@ export function PublicBusinessPageClient({
           i.item.id === item.id ? { ...i, qty: i.qty + 1 } : i
         );
       }
-      return [...prev, { item, qty: 1 }];
+      return [...prev, { item, qty: 1, quality: getDefaultQuality(item.name) }];
+    });
+  }
+
+  function decrementQty(item: SectionItem) {
+    setOrderItems((prev) => {
+      const existing = prev.find((i) => i.item.id === item.id);
+      if (!existing) return prev;
+      if (existing.qty <= 1) {
+        return prev.filter((i) => i.item.id !== item.id);
+      }
+      return prev.map((i) =>
+        i.item.id === item.id ? { ...i, qty: i.qty - 1 } : i
+      );
     });
   }
 
@@ -118,21 +174,82 @@ export function PublicBusinessPageClient({
     setOrderItems((prev) => prev.filter((i) => i.item.id !== itemId));
   }
 
-  function updateQty(itemId: string, qty: number) {
-    if (qty <= 0) {
-      removeFromOrder(itemId);
-      return;
-    }
-    setOrderItems((prev) =>
-      prev.map((i) => (i.item.id === itemId ? { ...i, qty } : i))
-    );
-  }
-
   const totalOrder = orderItems.reduce(
     (sum, i) => sum + (i.item.price || 0) * i.qty,
     0
   );
 
+  // === Quote List Functions ===
+  function addToQuote(item: SectionItem) {
+    setQuoteItems((prev) => {
+      const existing = prev.find((i) => i.item.id === item.id);
+      if (existing) {
+        return prev.map((i) =>
+          i.item.id === item.id ? { ...i, qty: i.qty + 1 } : i
+        );
+      }
+      return [...prev, { item, qty: 1, quality: getDefaultQuality(item.name) }];
+    });
+  }
+
+  function decrementQuoteQty(item: SectionItem) {
+    setQuoteItems((prev) => {
+      const existing = prev.find((i) => i.item.id === item.id);
+      if (!existing) return prev;
+      if (existing.qty <= 1) {
+        return prev.filter((i) => i.item.id !== item.id);
+      }
+      return prev.map((i) =>
+        i.item.id === item.id ? { ...i, qty: i.qty - 1 } : i
+      );
+    });
+  }
+
+  function removeFromQuote(itemId: string) {
+    setQuoteItems((prev) => prev.filter((i) => i.item.id !== itemId));
+  }
+
+  function getDefaultQuality(name: string): string {
+    const n = name.toLowerCase();
+    if (n.includes("areia") || n.includes("brita") || n.includes("pedra") || n.includes("sand") || n.includes("gravel")) {
+      return "Média (Medium)";
+    }
+    if (n.includes("cimento") || n.includes("argamassa") || n.includes("cement")) {
+      return "CPII (Standard)";
+    }
+    if (n.includes("tijolo") || n.includes("bloco") || n.includes("brick")) {
+      return "Classe A (Estrutural)";
+    }
+    return "Padrão (Standard)";
+  }
+
+  function getQualityOptions(name: string): string[] {
+    const n = name.toLowerCase();
+    if (n.includes("areia") || n.includes("brita") || n.includes("pedra") || n.includes("sand") || n.includes("gravel")) {
+      return ["Fina (Fine)", "Média (Medium)", "Grossa (Coarse)"];
+    }
+    if (n.includes("cimento") || n.includes("argamassa") || n.includes("cement")) {
+      return ["CPII (Standard)", "CPIII (Especial)", "CPV (Alta Resistência)"];
+    }
+    if (n.includes("tijolo") || n.includes("bloco") || n.includes("brick")) {
+      return ["Classe A (Estrutural)", "Classe B (Vedação)", "Classe C (Comercial)"];
+    }
+    return ["Padrão (Standard)", "Premium (Tipo A)", "Econômica (Tipo B)"];
+  }
+
+  function updateOrderQuality(itemId: string, quality: string) {
+    setOrderItems((prev) =>
+      prev.map((i) => (i.item.id === itemId ? { ...i, quality } : i))
+    );
+  }
+
+  function updateQuoteQuality(itemId: string, quality: string) {
+    setQuoteItems((prev) =>
+      prev.map((i) => (i.item.id === itemId ? { ...i, quality } : i))
+    );
+  }
+
+  // === Share Helper ===
   function handleShare() {
     const url = window.location.href;
     if (navigator.share) {
@@ -144,139 +261,316 @@ export function PublicBusinessPageClient({
     }
   }
 
-  function handleWhatsApp() {
+  // === WhatsApp Redirect Helper ===
+  function handleWhatsAppRedirect(messageText: string) {
     if (!business.whatsapp) return;
-    trackClick("whatsapp", page.id);
-    const text = `Olá! Vim pelo MeuQR e gostaria de mais informações.`;
+    const cleanPhone = sanitizeWhatsApp(business.whatsapp);
     window.open(
-      `https://wa.me/${business.whatsapp}?text=${encodeURIComponent(text)}`,
+      `https://wa.me/${cleanPhone}?text=${encodeURIComponent(messageText)}`,
       "_blank"
     );
   }
 
   function getWhatsAppLink(extraText?: string): string {
     if (!business.whatsapp) return "#";
+    const cleanPhone = sanitizeWhatsApp(business.whatsapp);
     const msg = extraText
       ? `Olá! Gostaria de pedir: ${extraText}`
       : `Olá! Vim pelo MeuQR e gostaria de mais informações.`;
-    return `https://wa.me/${business.whatsapp}?text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
   }
 
-  function handleWhatsAppLinkClick() {
-    trackClick("whatsapp", page.id);
+  async function submitOrder(e: React.FormEvent) {
+    e.preventDefault();
+    if (!customerName || !customerPhone) return;
+
+    setSubmittingOrder(true);
+    trackClick("order", page.id);
+
+    try {
+      const payload = {
+        businessId: business.id,
+        pageId: page.id,
+        customerName,
+        customerPhone,
+        customerEmail,
+        items: orderItems.map((oi) => ({
+          id: oi.item.id,
+          name: oi.item.name,
+          qty: oi.qty,
+          price: oi.item.price,
+          quality: oi.quality,
+        })),
+        total: totalOrder,
+        paymentMethod,
+        notes: orderNotes,
+      };
+
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Erro ao processar pedido.");
+
+      setOrderSuccess(true);
+
+      setTimeout(() => {
+        setOrderItems([]);
+        setShowOrderDrawer(false);
+        setOrderSuccess(false);
+        setCustomerName("");
+        setCustomerPhone("");
+        setCustomerEmail("");
+        setOrderNotes("");
+      }, 3000);
+
+    } catch (err) {
+      alert("Houve um problema ao finalizar o pedido. Tente novamente.");
+    } finally {
+      setSubmittingOrder(false);
+    }
+  }
+
+  async function submitQuote(e: React.FormEvent) {
+    e.preventDefault();
+    if (!customerName || !customerPhone) return;
+
+    setSubmittingQuote(true);
+    trackClick("quote", page.id);
+
+    try {
+      const payload = {
+        businessId: business.id,
+        pageId: page.id,
+        customerName,
+        customerPhone,
+        customerEmail,
+        items: quoteItems.map((qi) => ({
+          id: qi.item.id,
+          name: qi.item.name,
+          qty: qi.qty,
+          quality: qi.quality,
+        })),
+        message: quoteNotes,
+      };
+
+      const res = await fetch("/api/quote-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Erro ao salvar cotação.");
+
+      setQuoteSuccess(true);
+
+      const itemsList = quoteItems.map((qi) => `• ${qi.qty}x ${qi.item.name} (${qi.quality})`).join("\n");
+      const waMsg = `*Solicitação de Orçamento - ${business.name}*\n` +
+        `---------------------------------\n` +
+        `👤 *Cliente:* ${customerName}\n` +
+        `📞 *Telefone:* ${customerPhone}\n` +
+        (customerEmail ? `✉️ *E-mail:* ${customerEmail}\n` : "") +
+        (quoteNotes ? `📝 *Mensagem:* ${quoteNotes}\n` : "") +
+        `---------------------------------\n` +
+        `📋 *Itens solicitados:*\n${itemsList}\n` +
+        `---------------------------------\n` +
+        `Aguardando retorno com preços. Obrigado!`;
+
+      setTimeout(() => {
+        handleWhatsAppRedirect(waMsg);
+        setQuoteItems([]);
+        setShowQuoteDrawer(false);
+        setQuoteSuccess(false);
+        setCustomerName("");
+        setCustomerPhone("");
+        setCustomerEmail("");
+        setQuoteNotes("");
+      }, 2000);
+
+    } catch (err) {
+      alert("Houve um problema ao salvar seu orçamento. Tente novamente.");
+    } finally {
+      setSubmittingQuote(false);
+    }
+  }
+
+  async function submitLead(e: React.FormEvent) {
+    e.preventDefault();
+    if (!leadName || !leadPhone) return;
+
+    setSubmittingLead(true);
+    trackClick("lead", page.id);
+
+    try {
+      const payload = {
+        businessId: business.id,
+        pageId: page.id,
+        name: leadName,
+        email: leadEmail,
+        phone: leadPhone,
+        message: leadMessage,
+        source: "public_page",
+      };
+
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Erro ao salvar contato.");
+
+      setLeadSuccess(true);
+      
+      const waMsg = `*Novo Contato - ${business.name}*\n` +
+        `Olá! Acabo de enviar uma mensagem pelo formulário de contato:\n\n` +
+        `👤 *Nome:* ${leadName}\n` +
+        `📞 *WhatsApp:* ${leadPhone}\n` +
+        (leadEmail ? `✉️ *E-mail:* ${leadEmail}\n` : "") +
+        (leadMessage ? `📝 *Mensagem:* ${leadMessage}` : "");
+
+      setTimeout(() => {
+        handleWhatsAppRedirect(waMsg);
+        setLeadName("");
+        setLeadEmail("");
+        setLeadPhone("");
+        setLeadMessage("");
+        setLeadSuccess(false);
+      }, 2000);
+
+    } catch (err) {
+      alert("Erro ao enviar contato. Tente novamente.");
+    } finally {
+      setSubmittingLead(false);
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] max-w-lg mx-auto pb-24">
-      {/* Cover Image */}
-      {business.cover_url && (
-        <div className="h-48 bg-gray-200">
+    <div className="min-h-screen bg-[#F9FAFB] max-w-lg mx-auto pb-24 relative shadow-md">
+      {/* Cover Image & Banner */}
+      <div className="h-56 relative w-full overflow-hidden bg-gradient-to-tr from-indigo-600 via-purple-600 to-emerald-500">
+        {/* Floating gradient blobs for ultimate dynamic aesthetics */}
+        <div className="absolute top-6 left-12 w-28 h-28 bg-white/10 rounded-full blur-xl animate-pulse" />
+        <div className="absolute bottom-4 right-10 w-24 h-24 bg-emerald-400/20 rounded-full blur-lg" />
+        
+        {business.cover_url ? (
           <img
             src={business.cover_url}
             alt={business.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
           />
-        </div>
-      )}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
+            <QrCode className="w-16 h-16 text-white/20 animate-pulse" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+      </div>
 
-      {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <div className="flex items-start gap-4">
-          {business.logo_url ? (
-            <img
-              src={business.logo_url}
-              alt={business.name}
-              className="w-20 h-20 rounded-2xl object-cover shadow-sm border border-gray-100"
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-2xl bg-[#111827] flex items-center justify-center shadow-sm">
-              <span className="text-2xl font-bold text-white">
-                {business.name.charAt(0)}
-              </span>
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-[#111827]">
+      {/* Floating Profile Info Overlap */}
+      <div className="px-6 relative -mt-12 z-10 flex flex-col items-start">
+        {business.logo_url ? (
+          <img
+            src={business.logo_url}
+            alt={business.name}
+            className="w-24 h-24 rounded-3xl object-cover shadow-xl border-4 border-white bg-white"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-3xl bg-[#111827] flex items-center justify-center shadow-xl border-4 border-white text-white">
+            <span className="text-3xl font-black">{business.name.charAt(0)}</span>
+          </div>
+        )}
+
+        <div className="mt-4 w-full">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-none">
               {business.name}
             </h1>
-            {business.description && (
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                {business.description}
-              </p>
+            {business.category && (
+              <Badge variant="accent" className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize">
+                {business.category.replace("_", " ")}
+              </Badge>
             )}
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 mt-4">
-          {business.whatsapp && (
-            <a
-              href={getWhatsAppLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={handleWhatsAppLinkClick}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#00C853] text-white rounded-xl py-3 font-medium text-sm hover:bg-[#00B34A] transition-colors shadow-sm"
-            >
-              <MessageCircle className="w-5 h-5" />
-              WhatsApp
-            </a>
-          )}
-          <button
-            onClick={handleShare}
-            className="flex items-center justify-center gap-2 bg-[#111827] text-white rounded-xl py-3 px-4 font-medium text-sm hover:bg-[#1f2937] transition-colors shadow-sm"
-          >
-            {copied ? (
-              <Check className="w-5 h-5" />
-            ) : (
-              <Share2 className="w-5 h-5" />
-            )}
-            {copied ? "Copiado!" : "Compartilhar"}
-          </button>
-        </div>
-
-        {/* Info Chips */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          {business.address && (
-            <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(
-                business.address + (business.city ? `, ${business.city}` : "")
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full text-xs text-gray-600 border border-gray-200 hover:border-gray-300 transition-colors"
-            >
-              <MapPin className="w-3.5 h-3.5" />
-              {business.city || business.address?.split(",")[0]}
-            </a>
-          )}
-          {business.instagram && (
-            <a
-              href={`https://instagram.com/${business.instagram.replace("@", "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full text-xs text-gray-600 border border-gray-200 hover:border-gray-300 transition-colors"
-            >
-              <Instagram className="w-3.5 h-3.5" />
-              {business.instagram}
-            </a>
-          )}
-          {business.website && (
-            <a
-              href={business.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full text-xs text-gray-600 border border-gray-200 hover:border-gray-300 transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Site
-            </a>
+          {business.description && (
+            <p className="text-sm text-gray-500 mt-2 font-medium leading-relaxed">
+              {business.description}
+            </p>
           )}
         </div>
       </div>
 
+      {/* Minimalistic & Compact Header Actions */}
+      <div className="px-6 flex items-center gap-2.5 mt-4">
+        {business.whatsapp && (
+          <button
+            onClick={() => handleWhatsAppRedirect("Olá! Vim pelo MeuQR e gostaria de mais informações.")}
+            className="w-9 h-9 rounded-full bg-[#00C853]/10 hover:bg-[#00C853]/20 text-[#00C853] flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
+            title="WhatsApp"
+          >
+            <MessageCircle className="w-4.5 h-4.5" />
+          </button>
+        )}
+
+        {business.instagram && (
+          <a
+            href={`https://instagram.com/${business.instagram.replace("@", "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-9 h-9 rounded-full bg-pink-50 hover:bg-pink-100 text-pink-600 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
+            title="Instagram"
+          >
+            <Instagram className="w-4.5 h-4.5" />
+          </a>
+        )}
+
+        <button
+          onClick={handleShare}
+          className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
+          title="Compartilhar"
+        >
+          {copied ? (
+            <Check className="w-4.5 h-4.5 text-emerald-600" />
+          ) : (
+            <Share2 className="w-4.5 h-4.5" />
+          )}
+        </button>
+      </div>
+
+      {/* Modern Floating Info Chips */}
+      <div className="px-6 py-4 flex flex-wrap gap-2">
+        {business.address && (
+          <a
+            href={`https://maps.google.com/?q=${encodeURIComponent(
+              business.address + (business.city ? `, ${business.city}` : "")
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full text-xs font-semibold text-gray-600 border border-gray-200/80 hover:border-gray-300 shadow-sm transition-all"
+          >
+            <MapPin className="w-3.5 h-3.5 text-red-500" />
+            {business.city || business.address?.split(",")[0]}
+          </a>
+        )}
+        {business.website && (
+          <a
+            href={business.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full text-xs font-semibold text-gray-600 border border-gray-200/80 hover:border-gray-300 shadow-sm transition-all"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-blue-500" />
+            Site
+          </a>
+        )}
+      </div>
+
       {/* Page Navigation Tabs */}
       {pages.length > 1 && (
-        <div className="px-4 mb-6">
+        <div className="px-6 mb-4">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
             {pages.map((p) => {
               const isActive = p.id === page.id;
@@ -284,7 +578,7 @@ export function PublicBusinessPageClient({
                 <a
                   key={p.id}
                   href={`/${business.slug}?p=${p.slug}`}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
                     isActive
                       ? "bg-[#111827] text-white border-[#111827] shadow-sm"
                       : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
@@ -298,11 +592,14 @@ export function PublicBusinessPageClient({
         </div>
       )}
 
+
+
       {/* Sections with Items */}
-      <div className="px-4 space-y-3">
+      <div className="px-6 space-y-4">
         {sections.map((section) => (
           <div
             key={section.id}
+            id={section.id}
             className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
           >
             {/* Section Header */}
@@ -327,8 +624,8 @@ export function PublicBusinessPageClient({
                   <div className="text-center py-4">
                     {section.section_type === "whatsapp" && (
                       <button
-                        onClick={handleWhatsApp}
-                        className="w-full flex items-center justify-center gap-2 bg-[#00C853] text-white rounded-xl py-3 font-medium"
+                        onClick={() => handleWhatsAppRedirect("Olá! Vim pelo MeuQR e gostaria de mais informações.")}
+                        className="w-full flex items-center justify-center gap-2 bg-[#00C853] text-white rounded-xl py-3 font-medium hover:bg-[#00B34A]"
                       >
                         <MessageCircle className="w-5 h-5" />
                         Fale conosco no WhatsApp
@@ -336,16 +633,16 @@ export function PublicBusinessPageClient({
                     )}
                     {section.section_type === "booking" && (
                       <button
-                        onClick={handleWhatsApp}
-                        className="w-full flex items-center justify-center gap-2 bg-[#111827] text-white rounded-xl py-3 font-medium"
+                        onClick={() => handleWhatsAppRedirect("Olá! Gostaria de agendar um horário.")}
+                        className="w-full flex items-center justify-center gap-2 bg-[#111827] text-white rounded-xl py-3 font-medium hover:bg-[#1f2937]"
                       >
                         Agendar via WhatsApp
                       </button>
                     )}
                     {section.section_type === "rsvp" && (
                       <button
-                        onClick={handleWhatsApp}
-                        className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] text-white rounded-xl py-3 font-medium"
+                        onClick={() => handleWhatsAppRedirect("Olá! Gostaria de confirmar minha presença.")}
+                        className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] text-white rounded-xl py-3 font-medium hover:bg-[#c29e2f]"
                       >
                         Confirmar Presença
                       </button>
@@ -357,60 +654,130 @@ export function PublicBusinessPageClient({
                     )}
                   </div>
                 ) : (
-                  section.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`flex items-start gap-3 p-3 rounded-xl ${
-                        item.price ? "bg-gray-50" : ""
-                      } ${!item.is_available ? "opacity-50" : ""}`}
-                    >
-                      {item.image_url && (
-                        <img
-                          src={item.image_url}
-                          alt={item.name}
-                          className="w-16 h-16 rounded-lg object-cover shrink-0"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium text-[#111827]">
-                          {item.name}
-                        </h3>
-                        {item.description && (
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                            {item.description}
-                          </p>
+                  section.items.map((item) => {
+                    const cartItem = orderItems.find((oi) => oi.item.id === item.id);
+                    const quoteItem = quoteItems.find((qi) => qi.item.id === item.id);
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        className={`flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100 ${
+                          !item.is_available ? "opacity-50" : ""
+                        }`}
+                      >
+                        {item.image_url && (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-16 h-16 rounded-lg object-cover shrink-0"
+                          />
                         )}
-                      </div>
-                      <div className="text-right shrink-0">
-                        {item.price !== null && item.price > 0 && (
-                          <div>
-                            <p className="text-sm font-bold text-[#111827]">
-                              R$ {item.price.toFixed(2)}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-[#111827]">
+                            {item.name}
+                          </h3>
+                          {item.description && (
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                              {item.description}
                             </p>
-                            {item.original_price && item.original_price > item.price && (
-                              <p className="text-xs text-gray-400 line-through">
-                                R$ {item.original_price.toFixed(2)}
+                          )}
+                        </div>
+                        <div className="text-right shrink-0 flex flex-col items-end justify-between min-h-[60px]">
+                          {item.price !== null && item.price > 0 ? (
+                            <div>
+                              <p className="text-sm font-bold text-[#111827]">
+                                R$ {item.price.toFixed(2)}
                               </p>
-                            )}
-                          </div>
-                        )}
-                        {item.price !== null && business.whatsapp && item.price > 0 && (
-                          <a
-                            href={getWhatsAppLink(
-                              `${item.name} - R$ ${item.price.toFixed(2)}`
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={handleWhatsAppLinkClick}
-                            className="mt-1 inline-flex items-center gap-1 text-xs text-[#00C853] font-medium"
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                            Pedir
-                          </a>
-                        )}
+                              {item.original_price && item.original_price > item.price && (
+                                <p className="text-xs text-gray-400 line-through">
+                                  R$ {item.original_price.toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="h-4" />
+                          )}
+
+                          {/* Add to Cart or Quote Controls */}
+                          {item.is_available && (
+                            <>
+                              {section.section_type === "quote" ? (
+                                // B2B Quote controls
+                                quoteItem ? (
+                                  <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full p-1 mt-1 shadow-sm shrink-0">
+                                    <button
+                                      onClick={() => decrementQuoteQty(item)}
+                                      className="p-1 hover:bg-gray-100 rounded-full text-gray-400 active:scale-90 transition-transform"
+                                    >
+                                      <Minus className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="text-xs font-bold text-gray-800 min-w-[14px] text-center">
+                                      {quoteItem.qty}
+                                    </span>
+                                    <button
+                                      onClick={() => addToQuote(item)}
+                                      className="p-1 hover:bg-gray-100 rounded-full text-gray-400 active:scale-90 transition-transform"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => addToQuote(item)}
+                                    className="mt-1 flex items-center justify-center bg-[#111827] text-white w-7 h-7 rounded-full hover:bg-gray-800 shadow-sm transition-all active:scale-95 shrink-0"
+                                    title="Adicionar à cotação"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                )
+                              ) : (
+                                // General Menu Orders
+                                item.price && item.price > 0 ? (
+                                  cartItem ? (
+                                    <div className="flex items-center gap-1.5 bg-white border border-[#00C853]/30 rounded-full p-1 mt-1 shadow-sm shrink-0">
+                                      <button
+                                        onClick={() => decrementQty(item)}
+                                        className="p-1 hover:bg-gray-100 rounded-full text-gray-400 active:scale-90 transition-transform"
+                                      >
+                                        <Minus className="w-3.5 h-3.5" />
+                                      </button>
+                                      <span className="text-xs font-bold text-gray-800 min-w-[14px] text-center">
+                                        {cartItem.qty}
+                                      </span>
+                                      <button
+                                        onClick={() => addToOrder(item)}
+                                        className="p-1 hover:bg-[#00C853]/15 rounded-full text-[#00C853] active:scale-90 transition-transform"
+                                      >
+                                        <Plus className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => addToOrder(item)}
+                                      className="mt-1 flex items-center justify-center bg-[#00C853] text-white w-7 h-7 rounded-full hover:bg-[#00B34A] shadow-sm transition-all active:scale-95 shrink-0"
+                                      title="Pedir"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
+                                  )
+                                ) : (
+                                  // Direct info button if no price
+                                  business.whatsapp && (
+                                    <button
+                                      onClick={() => handleWhatsAppRedirect(`Olá! Gostaria de mais informações sobre: ${item.name}`)}
+                                      className="mt-1 flex items-center gap-1 text-xs text-[#00C853] font-medium"
+                                    >
+                                      <MessageCircle className="w-3 h-3" /> Falar
+                                    </button>
+                                  )
+                                )
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             )}
@@ -418,19 +785,512 @@ export function PublicBusinessPageClient({
         ))}
       </div>
 
-      {/* Fixed Bottom Bar - WhatsApp */}
-      {business.whatsapp && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-4 bg-white border-t border-gray-100 shadow-lg">
-          <a
-            href={getWhatsAppLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={handleWhatsAppLinkClick}
-            className="flex items-center justify-center gap-2 bg-[#00C853] text-white rounded-xl py-3.5 font-medium text-sm hover:bg-[#00B34A] transition-colors shadow-sm"
+      {/* Sleek Contact / Lead Form Block if required */}
+      {sections.some((s) => s.section_type === "lead" || s.section_type === "contact") && (
+        <div className="px-4 mt-6">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+              <Mail className="text-[#111827] w-5 h-5" /> Enviar Mensagem
+            </h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Preencha os dados abaixo e entraremos em contato o mais rápido possível.
+            </p>
+            <form onSubmit={submitLead} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Seu Nome *</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <User className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={leadName}
+                    onChange={(e) => setLeadName(e.target.value)}
+                    placeholder="Ex: João da Silva"
+                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">WhatsApp / Telefone *</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <Phone className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                      placeholder="Ex: (11) 99999-9999"
+                      className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">E-mail (Opcional)</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <Mail className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="email"
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      placeholder="Ex: joao@gmail.com"
+                      className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Sua Mensagem</label>
+                <textarea
+                  value={leadMessage}
+                  onChange={(e) => setLeadMessage(e.target.value)}
+                  placeholder="Olá! Gostaria de falar sobre..."
+                  rows={3}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingLead}
+                className="w-full bg-[#111827] hover:bg-gray-800 text-white py-3 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+              >
+                {submittingLead ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" /> Enviar para WhatsApp
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Bottom Cart Bar */}
+      {orderItems.length > 0 && !showOrderDrawer && (
+        <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-slide-up">
+          <button
+            onClick={() => setShowOrderDrawer(true)}
+            className="w-full flex items-center justify-between bg-black/90 backdrop-blur-md text-white rounded-2xl p-4 shadow-xl border border-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
-            <MessageCircle className="w-5 h-5" />
-            Fale conosco no WhatsApp
-          </a>
+            <div className="flex items-center gap-3">
+              <div className="relative bg-[#00C853] p-2 rounded-xl">
+                <ShoppingCart className="w-5 h-5 text-white" />
+                <span className="absolute -top-1.5 -right-1.5 bg-white text-[#111827] text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  {orderItems.reduce((sum, oi) => sum + oi.qty, 0)}
+                </span>
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-semibold text-gray-400">Ver sacola</p>
+                <p className="text-sm font-bold text-white">R$ {totalOrder.toFixed(2)}</p>
+              </div>
+            </div>
+            <span className="bg-white/15 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-white/20 transition-colors">
+              Continuar
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Floating Bottom Quote Bar */}
+      {quoteItems.length > 0 && !showQuoteDrawer && (
+        <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-slide-up">
+          <button
+            onClick={() => setShowQuoteDrawer(true)}
+            className="w-full flex items-center justify-between bg-[#111827] text-white rounded-2xl p-4 shadow-xl border border-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="relative bg-white/10 p-2 rounded-xl">
+                <FileText className="w-5 h-5 text-white" />
+                <span className="absolute -top-1.5 -right-1.5 bg-[#D4AF37] text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  {quoteItems.reduce((sum, qi) => sum + qi.qty, 0)}
+                </span>
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-semibold text-gray-400">Itens para orçamento</p>
+                <p className="text-sm font-bold text-white">
+                  {quoteItems.length} {quoteItems.length === 1 ? "item" : "itens"} selecionado(s)
+                </p>
+              </div>
+            </div>
+            <span className="bg-white/15 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-white/20 transition-colors">
+              Ver Orçamento
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* SHOPPING CART CHECKOUT DRAWER */}
+      {showOrderDrawer && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setShowOrderDrawer(false)} />
+          <div className="bg-white rounded-t-[30px] p-6 max-h-[85vh] overflow-y-auto w-full max-w-lg mx-auto shadow-2xl z-10 relative animate-drawer-slide">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-[#111827] flex items-center gap-2">
+                <ShoppingCart className="text-[#00C853] w-5 h-5" /> Sua Sacola
+              </h2>
+              <button
+                onClick={() => setShowOrderDrawer(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Cart Items List */}
+            <div className="py-4 divide-y divide-gray-100 max-h-[30vh] overflow-y-auto scrollbar-none">
+              {orderItems.map((oi) => (
+                <div key={oi.item.id} className="flex items-center justify-between py-3">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-sm font-bold text-gray-800">{oi.item.name}</p>
+                    <p className="text-xs text-gray-400">R$ ${(oi.item.price || 0).toFixed(2)} cada</p>
+                    {business.category?.includes("constru") && (
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Qualidade:</span>
+                        <select
+                          value={oi.quality}
+                          onChange={(e) => updateOrderQuality(oi.item.id, e.target.value)}
+                          className="text-[10px] font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200/80 rounded px-1.5 py-0.5 focus:outline-none cursor-pointer"
+                        >
+                          {getQualityOptions(oi.item.name).map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg p-1">
+                      <button
+                        onClick={() => decrementQty(oi.item)}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-500"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-xs font-bold text-gray-800 px-1">{oi.qty}</span>
+                      <button
+                        onClick={() => addToOrder(oi.item)}
+                        className="p-1 hover:bg-gray-100 rounded text-[#00C853]"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => removeFromOrder(oi.item.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="py-4 border-t border-gray-100 flex items-center justify-between font-bold text-[#111827] text-lg">
+              <span>Total:</span>
+              <span className="text-[#00C853]">R$ {totalOrder.toFixed(2)}</span>
+            </div>
+
+            {/* Customer info form */}
+            <form onSubmit={submitOrder} className="space-y-3 pt-2">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Dados de Entrega</h3>
+              
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Seu Nome *</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <User className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Ex: João da Silva"
+                    className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00C853]/50 focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">Telefone / WhatsApp *</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <Phone className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="Ex: (11) 99999-9999"
+                      className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00C853]/50 focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">E-mail (Opcional)</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <Mail className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="Ex: joao@gmail.com"
+                      className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00C853]/50 focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Forma de Pagamento *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["pix", "cartao", "dinheiro"].map((method) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setPaymentMethod(method)}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold text-center capitalize transition-all ${
+                        paymentMethod === method
+                          ? "bg-[#00C853]/10 border-[#00C853] text-[#00C853]"
+                          : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {method === "cartao" ? "Cartão" : method}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Observações do Pedido</label>
+                <textarea
+                  value={orderNotes}
+                  onChange={(e) => setOrderNotes(e.target.value)}
+                  placeholder="Retirar cebola, trazer troco para R$ 100, etc."
+                  rows={2}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00C853]/50 focus:bg-white transition-all resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingOrder}
+                className="w-full bg-[#00C853] hover:bg-[#00B34A] text-white py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50 mt-4"
+              >
+                {submittingOrder ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Processando...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4" /> Enviar Pedido
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* B2B QUOTE REQUEST DRAWER */}
+      {showQuoteDrawer && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setShowQuoteDrawer(false)} />
+          <div className="bg-white rounded-t-[30px] p-6 max-h-[85vh] overflow-y-auto w-full max-w-lg mx-auto shadow-2xl z-10 relative animate-drawer-slide">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-[#111827] flex items-center gap-2">
+                <FileText className="text-[#111827] w-5 h-5" /> Solicitar Orçamento
+              </h2>
+              <button
+                onClick={() => setShowQuoteDrawer(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quote Items List */}
+            <div className="py-4 divide-y divide-gray-100 max-h-[30vh] overflow-y-auto scrollbar-none">
+              {quoteItems.map((qi) => (
+                <div key={qi.item.id} className="flex items-center justify-between py-3">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-sm font-bold text-gray-800">{qi.item.name}</p>
+                    <p className="text-xs text-gray-400">Adicionado à cotação</p>
+                    {business.category?.includes("constru") && (
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Qualidade:</span>
+                        <select
+                          value={qi.quality}
+                          onChange={(e) => updateQuoteQuality(qi.item.id, e.target.value)}
+                          className="text-[10px] font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200/80 rounded px-1.5 py-0.5 focus:outline-none cursor-pointer"
+                        >
+                          {getQualityOptions(qi.item.name).map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg p-1">
+                      <button
+                        onClick={() => decrementQuoteQty(qi.item)}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-500"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-xs font-bold text-gray-800 px-1">{qi.qty}</span>
+                      <button
+                        onClick={() => addToQuote(qi.item)}
+                        className="p-1 hover:bg-gray-100 rounded text-[#111827]"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => removeFromQuote(qi.item.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Customer info form */}
+            <form onSubmit={submitQuote} className="space-y-3 pt-2">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Dados Corporativos / Contato</h3>
+              
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Seu Nome *</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <User className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Ex: João da Silva"
+                    className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">Telefone / WhatsApp *</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <Phone className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="Ex: (11) 99999-9999"
+                      className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">E-mail (Opcional)</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <Mail className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="Ex: compras@empresa.com"
+                      className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Mensagem Adicional</label>
+                <textarea
+                  value={quoteNotes}
+                  onChange={(e) => setQuoteNotes(e.target.value)}
+                  placeholder="Gostaria de cotar frete para o CEP 01001-000, desconto para atacado, etc."
+                  rows={3}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingQuote}
+                className="w-full bg-[#111827] hover:bg-gray-800 text-white py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50 mt-4"
+              >
+                {submittingQuote ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" /> Solicitar Orçamento via WhatsApp
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* PREMIUM SUCCESS SUBMISSION OVERLAY (Order, Quote or Lead) */}
+      {(orderSuccess || quoteSuccess || leadSuccess) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border border-gray-100 flex flex-col items-center gap-4">
+            <div className="w-20 h-20 rounded-full bg-[#00C853]/10 flex items-center justify-center text-[#00C853] animate-bounce-subtle">
+              <Check className="w-10 h-10 stroke-[3]" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              {orderSuccess ? "Pedido Enviado!" : leadSuccess ? "Sucesso!" : "Pedido Salvo!"}
+            </h2>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              {orderSuccess
+                ? "Seu pedido foi recebido com sucesso em nosso sistema! Agradecemos a preferência."
+                : leadSuccess
+                ? "Sua mensagem foi registrada em nosso banco de dados. Abrindo o WhatsApp..."
+                : "Seus itens foram salvos no sistema. Redirecionando para o WhatsApp do vendedor..."}
+            </p>
+            {!orderSuccess && (
+              <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 mt-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Conectando ao WhatsApp...
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -438,7 +1298,7 @@ export function PublicBusinessPageClient({
       <div className="text-center py-6 mt-8">
         <a
           href="https://meuqr.com.br"
-          className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600"
+          className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
         >
           <QrCode className="w-3 h-3" />
           Powered by MeuQR

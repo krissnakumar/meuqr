@@ -1,11 +1,13 @@
 import type { BusinessCategory, BusinessTemplate, FormType } from "../types";
 import { resolveText } from "../i18n";
+import type { TranslatedText } from "../i18n/types";
+import { TEMPLATE_TRANSLATIONS } from "./translations";
 
 // =============================================================================
 // Business Templates — 50+ production-ready templates for MeuQR
 // =============================================================================
 
-export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
+const RAW_BUSINESS_TEMPLATES: any[] = [
   // ===== 1. RESTAURANT / LANCHONETE =====
   {
     id: "tmpl-001-restaurante",
@@ -2555,6 +2557,46 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
     ],
   },
 ];
+
+function toTranslatedText(val: string): TranslatedText {
+  const translations = TEMPLATE_TRANSLATIONS[val];
+  if (translations) {
+    return {
+      "pt-BR": val,
+      en: translations.en,
+      es: translations.es,
+    };
+  }
+  return {
+    "pt-BR": val,
+    en: val,
+    es: val,
+  };
+}
+
+function localizeTemplate(t: any): BusinessTemplate {
+  return {
+    ...t,
+    name: toTranslatedText(t.name),
+    description: toTranslatedText(t.description),
+    pageTitle: toTranslatedText(t.pageTitle),
+    whatsappCta: toTranslatedText(t.whatsappCta),
+    qrUseCase: toTranslatedText(t.qrUseCase),
+    sections: t.sections.map((sec: any) => ({
+      ...sec,
+      title: toTranslatedText(sec.title),
+      description: sec.description ? toTranslatedText(sec.description) : undefined,
+      items: sec.items.map((item: any) => ({
+        ...item,
+        name: toTranslatedText(item.name),
+        description: item.description ? toTranslatedText(item.description) : undefined,
+        whatsappMessage: item.whatsappMessage ? toTranslatedText(item.whatsappMessage) : undefined,
+      })),
+    })),
+  };
+}
+
+export const BUSINESS_TEMPLATES: BusinessTemplate[] = RAW_BUSINESS_TEMPLATES.map(localizeTemplate);
 
 // =============================================================================
 // HELPER FUNCTIONS

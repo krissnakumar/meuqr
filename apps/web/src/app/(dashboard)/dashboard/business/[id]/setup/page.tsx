@@ -53,9 +53,10 @@ export default function BusinessSetupPage() {
     }
   }
 
-  // Helper to resolve LocalizedString to string (default: pt-BR)
+  // Helper to resolve LocalizedString to string (default: pt-BR or business preference)
   function rt(text: LocalizedString): string {
-    return resolveText(text, "pt-BR");
+    const lang = business?.default_language || "pt-BR";
+    return resolveText(text, lang as any);
   }
 
   const allTemplates = getAllBusinessTemplates();
@@ -124,8 +125,8 @@ export default function BusinessSetupPage() {
         if (section.items.length > 0) {
           const itemsToInsert = section.items.map((item, idx) => ({
             section_id: newSection.id,
-            name: item.name,
-            description: item.description || null,
+            name: rt(item.name),
+            description: item.description ? rt(item.description) : null,
             price: item.price || null,
             sort_order: idx,
           }));

@@ -210,9 +210,7 @@ export default function BusinessDetailScreen() {
           </View>
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => {
-              Alert.alert("Criar Página", "Função disponível em breve");
-            }}
+            onPress={() => router.push(`/business/${businessId}/pages/new`)}
           >
             <Plus size={16} color="#00C853" />
             <Text style={styles.addButtonText}>Nova</Text>
@@ -225,9 +223,7 @@ export default function BusinessDetailScreen() {
             <Text style={styles.emptyText}>Nenhuma página ainda</Text>
             <TouchableOpacity
               style={styles.emptyButton}
-              onPress={() => {
-                Alert.alert("Criar Página", "Função disponível em breve");
-              }}
+              onPress={() => router.push(`/business/${businessId}/pages/new`)}
             >
               <Text style={styles.emptyButtonText}>Criar primeira página</Text>
             </TouchableOpacity>

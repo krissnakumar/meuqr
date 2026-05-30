@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const sidebarItems = [
   { href: "/dashboard", icon: LayoutDashboard, key: "dashboard" },
@@ -186,6 +187,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex-1 min-w-0">
+        {/* Mobile Header */}
         <header className="h-16 bg-white border-b border-[#E4E6EB] flex items-center justify-between px-4 lg:hidden">
           <button onClick={() => setSidebarOpen(true)} className="cursor-pointer">
             <Menu className="w-6 h-6" />
@@ -196,7 +198,19 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             </div>
             <span className="text-lg font-bold text-[#050505]">MeuQR</span>
           </Link>
-          <div className="w-10" />
+          <NotificationBell />
+        </header>
+
+        {/* Desktop Header */}
+        <header className="hidden lg:flex h-16 bg-white border-b border-[#E4E6EB] items-center justify-between px-8">
+          <div>
+            <h1 className="text-lg font-bold text-[#050505] flex items-center gap-2">
+              <span>{t("dashboard")}</span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+          </div>
         </header>
 
         <main className="p-4 sm:p-6 lg:p-8">
