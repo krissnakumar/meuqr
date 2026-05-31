@@ -34,6 +34,19 @@ import type { User } from "@supabase/supabase-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
 import { NotificationBell } from "@/components/NotificationBell";
 
+type SidebarItem = {
+  href: string;
+  icon: any;
+  match: string;
+  key?: string;
+  label?: string;
+};
+
+type SidebarGroup = {
+  title?: string;
+  items: SidebarItem[];
+};
+
 function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleLogout, primaryBusiness }: {
   user: User | null;
   pathname: string;
@@ -45,10 +58,10 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
   const { t, lang, setLang } = useTranslation();
 
   const getSidebarItems = () => {
-    const groups: { title?: string; items: any[] }[] = [];
+    const groups: SidebarGroup[] = [];
 
     // Base Group 1
-    const mainItems = [
+    const mainItems: SidebarItem[] = [
       { href: "/dashboard", icon: LayoutDashboard, key: "sidebar.overview", match: "/dashboard$" },
       { href: "/dashboard/business", icon: Store, key: "dashboard.businesses", match: "/dashboard/business$" },
     ];
@@ -127,7 +140,7 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
 
   const sidebarItems = getSidebarItems();
 
-  const isActive = (item: typeof sidebarItems[0]) => {
+  const isActive = (item: SidebarItem) => {
     if (item.match === "/dashboard$") return pathname === "/dashboard";
     return pathname.includes(item.match);
   };
@@ -177,7 +190,7 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
               )}
               {group.items.map((item) => {
                 const active = isActive(item);
-                const label = item.label || t(item.key);
+                const label = item.label ?? (item.key ? t(item.key) : "");
                 return (
                   <Link
                     key={item.href}

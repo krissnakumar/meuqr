@@ -24,6 +24,7 @@ import {
   User,
   Mail,
   MessageSquare,
+  Heart,
 } from "lucide-react";
 import { Button, Badge } from "@meuqr/ui";
 import { usePublicPage } from "./context";
@@ -67,6 +68,8 @@ interface BusinessData {
   website: string | null;
   opening_hours: Record<string, string> | null;
   category?: string | null;
+  notification_settings?: any;
+  form_schema?: any;
 }
 
 interface SectionItem {
@@ -603,7 +606,8 @@ export function PublicBusinessPageClient({
         customerEmail,
         appointmentDate: bookingDate,
         appointmentTime: bookingTime + ":00", // pad seconds
-        notes: finalNotes // reusing notes state + custom fields
+        notes: quoteNotes,
+        customFields: bookingCustomFields,
       };
 
       const res = await fetch("/api/appointments", {
@@ -1886,7 +1890,7 @@ export function PublicBusinessPageClient({
               </div>
 
               {/* Dynamic Custom Fields */}
-              {business.notification_settings?.form_schemas?.appointments?.map((field: any) => (
+              {(business.form_schema?.appointments || business.notification_settings?.form_schemas?.appointments || []).map((field: any) => (
                 <div key={field.id}>
                   <label className="text-xs font-semibold text-gray-600 block mb-1">
                     {field.label} {field.required && "*"}

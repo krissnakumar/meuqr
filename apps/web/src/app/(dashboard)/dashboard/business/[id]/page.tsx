@@ -65,8 +65,8 @@ const getManagementLinks = (cat: string, id: string) => {
     links.push({ label: "Customers", descKey: "clients_desc", href: `/dashboard/business/${id}/clients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
   } else if (isClinic || isDentist) {
     links.push({ label: "Appointments", descKey: "appointments_desc", href: `/dashboard/business/${id}/appointments`, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50", iconBg: "from-emerald-50 to-green-50", iconColor: "text-emerald-600", countKey: null, icon: Calendar });
-    links.push({ label: "Patients", descKey: "patients_desc", href: `/dashboard/business/${id}/patients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
-    links.push({ label: "Doctors", descKey: "doctors_desc", href: `/dashboard/business/${id}/doctors`, color: "from-teal-500 to-emerald-500", bg: "bg-teal-50", iconBg: "from-teal-50 to-emerald-50", iconColor: "text-teal-600", countKey: null, icon: Stethoscope });
+    links.push({ label: "Patients", descKey: "patients_desc", href: `/dashboard/business/${id}/clients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
+    links.push({ label: "Doctors", descKey: "doctors_desc", href: `/dashboard/business/${id}/members`, color: "from-teal-500 to-emerald-500", bg: "bg-teal-50", iconBg: "from-teal-50 to-emerald-50", iconColor: "text-teal-600", countKey: "totalMembers" as const, icon: Stethoscope });
   } else if (isConstruction) {
     links.push({ label: "Product Catalog", descKey: "catalog_desc", href: `/dashboard/business/${id}/pages`, color: "from-blue-500 to-indigo-500", bg: "bg-blue-50", iconBg: "from-blue-50 to-indigo-50", iconColor: "text-blue-600", countKey: null, icon: FileText });
     links.push({ label: "Quote Requests", descKey: "quote_requests_desc", href: `/dashboard/business/${id}/quote-requests`, color: "from-teal-500 to-emerald-500", bg: "bg-teal-50", iconBg: "from-teal-50 to-emerald-50", iconColor: "text-teal-600", countKey: "totalQuoteRequests" as const, icon: ClipboardList });
@@ -75,7 +75,7 @@ const getManagementLinks = (cat: string, id: string) => {
     links.push({ label: "Appointments", descKey: "appointments_desc", href: `/dashboard/business/${id}/appointments`, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50", iconBg: "from-emerald-50 to-green-50", iconColor: "text-emerald-600", countKey: null, icon: Calendar });
     links.push({ label: "Fidelidade", descKey: "loyalty_desc", href: `/dashboard/business/${id}/loyalty`, color: "from-pink-500 to-rose-500", bg: "bg-pink-50", iconBg: "from-pink-50 to-rose-50", iconColor: "text-pink-600", countKey: null, icon: Gift });
     links.push({ label: "Clients", descKey: "clients_desc", href: `/dashboard/business/${id}/clients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
-    links.push({ label: "Professionals", descKey: "professionals_desc", href: `/dashboard/business/${id}/professionals`, color: "from-purple-500 to-fuchsia-500", bg: "bg-purple-50", iconBg: "from-purple-50 to-fuchsia-50", iconColor: "text-purple-600", countKey: null, icon: Users });
+    links.push({ label: "Professionals", descKey: "professionals_desc", href: `/dashboard/business/${id}/members`, color: "from-purple-500 to-fuchsia-500", bg: "bg-purple-50", iconBg: "from-purple-50 to-fuchsia-50", iconColor: "text-purple-600", countKey: "totalMembers" as const, icon: Users });
   } else {
     // Generic
     links.push({ label: "Pages", descKey: "pages_desc", href: `/dashboard/business/${id}/pages`, color: "from-blue-500 to-indigo-500", bg: "bg-blue-50", iconBg: "from-blue-50 to-indigo-50", iconColor: "text-blue-600", countKey: null, icon: FileText });
@@ -581,4 +581,3 @@ export default function BusinessDetailPage() {
     </div>
   );
 }
-

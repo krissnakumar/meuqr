@@ -82,7 +82,7 @@ export default function SettingsPage() {
           id: biz.id,
           name: biz.name || "",
           slug: biz.slug || "",
-          category: biz.category || "restaurante",
+          category: biz.category || "restaurant",
           phone: biz.phone || "",
           whatsapp: biz.whatsapp || "",
           address: biz.address || "",

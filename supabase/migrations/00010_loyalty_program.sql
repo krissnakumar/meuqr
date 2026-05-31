@@ -1,7 +1,7 @@
 -- 10. Loyalty Program
 
 CREATE TABLE loyalty_programs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   points_required INTEGER NOT NULL DEFAULT 10,
@@ -12,7 +12,7 @@ CREATE TABLE loyalty_programs (
 );
 
 CREATE TABLE loyalty_cards (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   program_id UUID NOT NULL REFERENCES loyalty_programs(id) ON DELETE CASCADE,
   customer_phone TEXT NOT NULL,
   customer_name TEXT,
@@ -26,7 +26,7 @@ CREATE TABLE loyalty_cards (
 );
 
 CREATE TABLE loyalty_transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   card_id UUID NOT NULL REFERENCES loyalty_cards(id) ON DELETE CASCADE,
   points_change INTEGER NOT NULL, -- Positive for earn, negative for redeem
   transaction_type TEXT NOT NULL CHECK (transaction_type IN ('earn', 'redeem', 'admin_adjustment')),

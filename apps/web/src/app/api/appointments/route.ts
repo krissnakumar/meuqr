@@ -4,7 +4,18 @@ import { ERR } from "@meuqr/shared";
 
 export async function POST(req: Request) {
   try {
-    const { businessId, serviceId, staffId, customerName, customerPhone, customerEmail, appointmentDate, appointmentTime, notes } = await req.json();
+    const {
+      businessId,
+      serviceId,
+      staffId,
+      customerName,
+      customerPhone,
+      customerEmail,
+      appointmentDate,
+      appointmentTime,
+      notes,
+      customFields,
+    } = await req.json();
 
     if (!businessId || !customerName || !customerPhone || !appointmentDate || !appointmentTime) {
       return NextResponse.json(
@@ -45,6 +56,7 @@ export async function POST(req: Request) {
         start_time: appointmentTime,
         end_time: endTime,
         notes: notes || null,
+        custom_fields: customFields || {},
         status: "pending"
       })
       .select()

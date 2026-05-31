@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
-import { SectionItem } from "@meuqr/shared"; // adjust import as needed
 
 // A generic item type since SectionItem might not be exported perfectly yet
 type CartItem = { item: any; qty: number; quality: string; selectedModifiers?: any[] };

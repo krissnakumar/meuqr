@@ -78,11 +78,14 @@ export default function BillingPage() {
           setCurrentTier("free");
           toast.success(t('success.updated'));
         } else {
-          // Redirect to checkout for paid plans (MercadoPago)
-          const res = await fetch("/api/checkout-mp", {
+          // Redirect to secure backend checkout (Stripe)
+          const res = await fetch("/api/checkout", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ planKey, businessId }),
+            body: JSON.stringify({
+              planKey: annual ? `${planKey}_annual` : planKey,
+              businessId,
+            }),
           });
           
           const data = await res.json();

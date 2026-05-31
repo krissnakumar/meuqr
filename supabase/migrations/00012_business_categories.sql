@@ -1,7 +1,7 @@
 -- Migration: Business Categories and Template Enhancements
 -- 1. Create business_categories table
 CREATE TABLE IF NOT EXISTS business_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   key TEXT UNIQUE NOT NULL,
   label_pt TEXT NOT NULL,
   label_en TEXT NOT NULL,

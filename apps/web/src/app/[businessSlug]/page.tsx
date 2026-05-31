@@ -116,6 +116,7 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
     website: string | null;
     opening_hours: Record<string, string> | null;
     notification_settings: any;
+    form_schema?: any;
   } | null;
 
   if (!biz) {

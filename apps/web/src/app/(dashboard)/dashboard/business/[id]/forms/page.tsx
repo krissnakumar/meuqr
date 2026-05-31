@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Button, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { useTranslation } from "@/lib/i18n-provider";
-import { Loader2, Plus, GripVertical, Settings2, Trash2, AlignLeft, CheckSquare, Calendar, Link as LinkIcon, FileText } from "lucide-react";
+import { Loader2, Plus, GripVertical, Trash2, AlignLeft, CheckSquare, Calendar, Link as LinkIcon, FileText } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
 
 type FieldType = "text" | "email" | "phone" | "date" | "select" | "textarea";
 
@@ -21,7 +20,6 @@ interface FormField {
 
 export default function FormsBuilderPage() {
   const params = useParams();
-  const router = useRouter();
   const businessId = params.id as string;
   const { t } = useTranslation();
 
@@ -44,7 +42,7 @@ export default function FormsBuilderPage() {
     try {
       const { data, error } = await supabase
         .from("businesses")
-        .select("id, category, notification_settings")
+        .select("id, category, form_schema, notification_settings")
         .eq("id", businessId)
         .single();
 
@@ -52,12 +50,22 @@ export default function FormsBuilderPage() {
 
       setBusiness(data);
       
-      const settings = data.notification_settings || {};
-      if (settings.form_schemas) {
+      // Preferred: businesses.form_schema. Back-compat: notification_settings.form_schemas.
+      if (data.form_schema) {
         setFormSchemas({
-          appointments: settings.form_schemas.appointments || [],
-          leads: settings.form_schemas.leads || [],
-          quotes: settings.form_schemas.quotes || []
+          appointments: data.form_schema.appointments || [],
+          leads: data.form_schema.leads || [],
+          quotes: data.form_schema.quotes || [],
+        });
+      } else {
+        const settings = data.notification_settings || {};
+        const legacy = settings.form_schemas;
+        if (!legacy) return;
+
+        setFormSchemas({
+          appointments: legacy.appointments || [],
+          leads: legacy.leads || [],
+          quotes: legacy.quotes || []
         });
       }
     } catch (err) {
@@ -100,15 +108,9 @@ export default function FormsBuilderPage() {
   async function handleSave() {
     setSaving(true);
     try {
-      const settings = business.notification_settings || {};
-      const updatedSettings = {
-        ...settings,
-        form_schemas: formSchemas
-      };
-
       const { error } = await supabase
         .from("businesses")
-        .update({ notification_settings: updatedSettings })
+        .update({ form_schema: formSchemas })
         .eq("id", businessId);
 
       if (error) throw error;
