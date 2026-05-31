@@ -315,7 +315,40 @@ export default function OnboardingPage() {
         return;
       }
 
-      toast.success(t("onboarding.setup_success"));
+      // Fetch the newly created business to get its ID
+      const { data: newBusiness } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("slug", bizSlug)
+        .single();
+
+      if (newBusiness?.id && selectedTemplate) {
+        // Apply the template
+        toast.loading("Configurando seu catálogo...", { id: "template-setup" });
+        try {
+          const res = await fetch("/api/templates/apply", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              businessId: newBusiness.id,
+              templateId: selectedTemplate,
+            }),
+          });
+          
+          if (!res.ok) {
+            console.error("Failed to apply template");
+            toast.error("O negócio foi criado, mas houve um erro ao aplicar o modelo.", { id: "template-setup" });
+          } else {
+            toast.success(t("onboarding.setup_success"), { id: "template-setup" });
+          }
+        } catch (err) {
+          console.error(err);
+          toast.error("Erro ao aplicar o modelo.", { id: "template-setup" });
+        }
+      } else {
+        toast.success(t("onboarding.setup_success"));
+      }
+
       router.push("/dashboard");
     } catch (err: any) {
       console.error(err);
