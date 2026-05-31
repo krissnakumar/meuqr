@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { PublicBusinessPageClient } from "./client";
+import { PublicPageProvider } from "./context";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -167,12 +168,14 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
   }
 
   return (
-    <PublicBusinessPageClient
-      business={biz}
-      page={page}
-      pages={pagesList || []}
-      sections={(sections as unknown as any[]) || []}
-      nearbyBusinesses={nearbyBusinesses}
-    />
+    <PublicPageProvider>
+      <PublicBusinessPageClient
+        business={biz}
+        page={page}
+        pages={pagesList || []}
+        sections={(sections as unknown as any[]) || []}
+        nearbyBusinesses={nearbyBusinesses}
+      />
+    </PublicPageProvider>
   );
 }

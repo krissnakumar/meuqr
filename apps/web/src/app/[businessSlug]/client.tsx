@@ -26,6 +26,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Button, Badge } from "@meuqr/ui";
+import { usePublicPage } from "./context";
 
 async function trackClick(clickType: string, pageId?: string) {
   try {
@@ -107,48 +108,45 @@ export function PublicBusinessPageClient({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
   
-  // Cart & Order States
-  const [orderItems, setOrderItems] = useState<{ item: SectionItem; qty: number; quality: string; selectedModifiers?: any[] }[]>([]);
-  const [showOrderDrawer, setShowOrderDrawer] = useState(false);
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("pix");
-  const [orderNotes, setOrderNotes] = useState("");
-  const [submittingOrder, setSubmittingOrder] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(false);
+  const {
+    customerName, setCustomerName,
+    customerPhone, setCustomerPhone,
+    customerEmail, setCustomerEmail,
+    
+    orderItems, setOrderItems,
+    showOrderDrawer, setShowOrderDrawer,
+    paymentMethod, setPaymentMethod,
+    orderNotes, setOrderNotes,
+    submittingOrder, setSubmittingOrder,
+    orderSuccess, setOrderSuccess,
 
-  // B2B Quotes States
-  const [quoteItems, setQuoteItems] = useState<{ item: SectionItem; qty: number; quality: string; selectedModifiers?: any[] }[]>([]);
-  const [showQuoteDrawer, setShowQuoteDrawer] = useState(false);
-  const [quoteNotes, setQuoteNotes] = useState("");
-  const [submittingQuote, setSubmittingQuote] = useState(false);
-  const [quoteSuccess, setQuoteSuccess] = useState(false);
+    quoteItems, setQuoteItems,
+    showQuoteDrawer, setShowQuoteDrawer,
+    quoteNotes, setQuoteNotes,
+    submittingQuote, setSubmittingQuote,
+    quoteSuccess, setQuoteSuccess,
 
-  // Modifiers Drawer States
-  const [modifierItem, setModifierItem] = useState<SectionItem | null>(null);
-  const [activeModifiers, setActiveModifiers] = useState<Record<string, any[]>>({});
-  const [modifierMode, setModifierMode] = useState<"order" | "quote">("order");
+    modifierItem, setModifierItem,
+    activeModifiers, setActiveModifiers,
+    modifierMode, setModifierMode,
 
-  // Donation States
-  const [donationItem, setDonationItem] = useState<SectionItem | null>(null);
-  const [donationAmount, setDonationAmount] = useState<number | "">("");
+    donationItem, setDonationItem,
+    donationAmount, setDonationAmount,
 
-  // Lead Form States
-  const [leadName, setLeadName] = useState("");
-  const [leadEmail, setLeadEmail] = useState("");
-  const [leadPhone, setLeadPhone] = useState("");
-  const [leadMessage, setLeadMessage] = useState("");
-  const [submittingLead, setSubmittingLead] = useState(false);
-  const [leadSuccess, setLeadSuccess] = useState(false);
+    leadName, setLeadName,
+    leadEmail, setLeadEmail,
+    leadPhone, setLeadPhone,
+    leadMessage, setLeadMessage,
+    submittingLead, setSubmittingLead,
+    leadSuccess, setLeadSuccess,
 
-  // Booking Form States
-  const [showBookingDrawer, setShowBookingDrawer] = useState(false);
-  const [bookingDate, setBookingDate] = useState("");
-  const [bookingTime, setBookingTime] = useState("");
-  const [submittingBooking, setSubmittingBooking] = useState(false);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [bookingCustomFields, setBookingCustomFields] = useState<Record<string, string>>({});
+    showBookingDrawer, setShowBookingDrawer,
+    bookingDate, setBookingDate,
+    bookingTime, setBookingTime,
+    submittingBooking, setSubmittingBooking,
+    bookingSuccess, setBookingSuccess,
+    bookingCustomFields, setBookingCustomFields,
+  } = usePublicPage();
 
   useEffect(() => {
     // Expand first section by default
