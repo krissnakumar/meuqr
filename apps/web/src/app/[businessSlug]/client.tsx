@@ -130,6 +130,13 @@ export function PublicBusinessPageClient({
   const [submittingLead, setSubmittingLead] = useState(false);
   const [leadSuccess, setLeadSuccess] = useState(false);
 
+  // Booking Form States
+  const [showBookingDrawer, setShowBookingDrawer] = useState(false);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+
   useEffect(() => {
     // Expand first section by default
     if (sections.length > 0) {
@@ -447,6 +454,59 @@ export function PublicBusinessPageClient({
     }
   }
 
+  async function submitBooking(e: React.FormEvent) {
+    e.preventDefault();
+    if (!customerName || !customerPhone || !bookingDate || !bookingTime) return;
+
+    setSubmittingBooking(true);
+    trackClick("booking", page.id);
+
+    try {
+      const payload = {
+        businessId: business.id,
+        customerName,
+        customerPhone,
+        customerEmail,
+        appointmentDate: bookingDate,
+        appointmentTime: bookingTime + ":00", // pad seconds
+        notes: quoteNotes // reusing notes state
+      };
+
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Erro ao salvar agendamento.");
+
+      setBookingSuccess(true);
+      
+      const waMsg = `*Novo Agendamento*\n\n` +
+        `👤 *Cliente:* ${customerName}\n` +
+        `📞 *Telefone:* ${customerPhone}\n` +
+        `📅 *Data:* ${bookingDate.split('-').reverse().join('/')}\n` +
+        `⏰ *Horário:* ${bookingTime}\n` +
+        `Gostaria de confirmar minha solicitação.`;
+
+      setTimeout(() => {
+        handleWhatsAppRedirect(waMsg);
+        setShowBookingDrawer(false);
+        setBookingSuccess(false);
+        setCustomerName("");
+        setCustomerPhone("");
+        setBookingDate("");
+        setBookingTime("");
+        setQuoteNotes("");
+      }, 2000);
+
+    } catch (err) {
+      alert("Erro ao enviar agendamento. Tente novamente.");
+    } finally {
+      setSubmittingBooking(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] max-w-lg mx-auto pb-24 relative shadow-md">
       {/* Cover Image & Banner */}
@@ -633,10 +693,10 @@ export function PublicBusinessPageClient({
                     )}
                     {section.section_type === "booking" && (
                       <button
-                        onClick={() => handleWhatsAppRedirect("Olá! Gostaria de agendar um horário.")}
+                        onClick={() => setShowBookingDrawer(true)}
                         className="w-full flex items-center justify-center gap-2 bg-[#111827] text-white rounded-xl py-3 font-medium hover:bg-[#1f2937]"
                       >
-                        Agendar via WhatsApp
+                        Agendar Horário
                       </button>
                     )}
                     {section.section_type === "rsvp" && (
@@ -1324,6 +1384,102 @@ export function PublicBusinessPageClient({
           Powered by MeuQR
         </a>
       </div>
+      {/* BOOKING DRAWER */}
+      {showBookingDrawer && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setShowBookingDrawer(false)} />
+          <div className="bg-white rounded-t-[30px] p-6 max-h-[85vh] overflow-y-auto w-full max-w-lg mx-auto shadow-2xl z-10 relative animate-drawer-slide">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-[#111827] flex items-center gap-2">
+                <Clock className="text-[#00C853] w-5 h-5" /> Agendar Horário
+              </h2>
+              <button
+                onClick={() => setShowBookingDrawer(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={submitBooking} className="mt-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">Data *</label>
+                  <input
+                    type="date"
+                    required
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">Horário *</label>
+                  <input
+                    type="time"
+                    required
+                    value={bookingTime}
+                    onChange={(e) => setBookingTime(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Seu Nome *</label>
+                <input
+                  type="text"
+                  required
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Nome completo"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">WhatsApp *</label>
+                <input
+                  type="tel"
+                  required
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="(00) 00000-0000"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Observações (Opcional)</label>
+                <textarea
+                  value={quoteNotes}
+                  onChange={(e) => setQuoteNotes(e.target.value)}
+                  placeholder="Alguma observação?"
+                  rows={2}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-gray-100">
+                <button
+                  type="submit"
+                  disabled={submittingBooking || bookingSuccess}
+                  className="w-full bg-[#111827] hover:bg-gray-800 text-white py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
+                >
+                  {submittingBooking ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
+                  ) : bookingSuccess ? (
+                    <><Check className="w-4 h-4 text-[#00C853]" /> Agendamento Concluído!</>
+                  ) : (
+                    <><Clock className="w-4 h-4" /> Confirmar Agendamento</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

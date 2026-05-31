@@ -65,10 +65,6 @@ export default function BusinessSetupPage() {
     (t) => t.businessType === business?.category
   );
 
-  const otherTemplates = allTemplates.filter(
-    (t) => t.businessType !== business?.category
-  );
-
   function templateSlug(template: BusinessTemplate): string {
     return template.id.replace(/^tmpl-\d+-/, "");
   }
@@ -296,74 +292,7 @@ export default function BusinessSetupPage() {
               </div>
             )}
 
-            {/* Other templates */}
-            <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-                {recommendedTemplates.length > 0 ? "Outros modelos disponíveis" : "Modelos disponíveis"}
-              </h3>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {otherTemplates.map((template) => (
-                  <GlassCard
-                    key={template.id}
-                    className="group-hover:shadow-lg transition-all"
-                  >
-                    <GlassCardContent className="p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                          <Layout className="w-5 h-5 text-slate-500" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-slate-800">
-                            {rt(template.name)}
-                          </h3>
-                          <p className="text-xs text-gray-400">
-                            {template.sections.length} seções
-                          </p>
-                        </div>
-                      </div>
 
-                      <p className="text-sm text-gray-500 mb-4">
-                        {rt(template.description)}
-                      </p>
-
-                      <div className="space-y-1 mb-4">
-                        {template.sections.slice(0, 3).map((sec, i) => (
-                          <div key={rt(sec.title) + i} className="text-xs text-gray-400 flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                            {rt(sec.title)}
-                            {sec.items.length > 0 && (
-                              <span className="text-gray-300">({sec.items.length} itens)</span>
-                            )}
-                          </div>
-                        ))}
-                        {template.sections.length > 3 && (
-                          <div className="text-xs text-gray-300 pl-3.5">
-                            +{template.sections.length - 3} seções
-                          </div>
-                        )}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        className="w-full border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/30"
-                        onClick={() => cloneTemplate(template)}
-                        disabled={cloning}
-                      >
-                        {cloning ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            Usar este modelo
-                            <ArrowRight className="w-4 h-4 ml-1" />
-                          </>
-                        )}
-                      </Button>
-                    </GlassCardContent>
-                  </GlassCard>
-                ))}
-              </div>
-            </div>
-          </div>
 
           {/* Skip */}
           <div className="text-center">

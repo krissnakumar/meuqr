@@ -2556,6 +2556,84 @@ const RAW_BUSINESS_TEMPLATES: any[] = [
       },
     ],
   },
+  // ===== CLINICS & HEALTHCARE =====
+  {
+    id: "tmpl-052-clinica-medica",
+    businessType: "medical_clinic",
+    name: "Clínica Médica Geral",
+    description: "Página para agendamento de consultas médicas via WhatsApp e cadastro de pacientes",
+    pageTitle: "Agende sua Consulta",
+    formType: "booking",
+    whatsappCta: "Agendar pelo WhatsApp",
+    qrUseCase: "QR na recepção para agendamento rápido",
+    sections: [
+      {
+        title: "Especialidades Médicas",
+        items: [
+          { name: "Clínica Geral", description: "Atendimento clínico preventivo e check-up", price: 200, isFeatured: true, is_available: true },
+          { name: "Cardiologia", description: "Prevenção e tratamento de doenças do coração", price: 250, is_available: true },
+          { name: "Pediatria", description: "Saúde infantil e acompanhamento de crescimento", price: 250, is_available: true },
+          { name: "Dermatologia", description: "Tratamentos para pele, cabelo e unhas", price: 220, is_available: true }
+        ]
+      },
+      {
+        title: "Agendamento Rápido",
+        sectionType: "booking",
+        items: []
+      }
+    ]
+  },
+  {
+    id: "tmpl-053-dental-ortodontia",
+    businessType: "dental_clinic",
+    name: "Clínica de Ortodontia",
+    description: "Página para agendamento de avaliação, tratamentos e contato via WhatsApp",
+    pageTitle: "Agende sua Avaliação",
+    formType: "booking",
+    whatsappCta: "Agendar pelo WhatsApp",
+    qrUseCase: "QR na recepção para agendamento rápido",
+    sections: [
+      {
+        title: "Tratamentos Ortodônticos",
+        items: [
+          { name: "Aparelho Fixo Metálico", description: "Tratamento ortodôntico tradicional", price: 150, isFeatured: true, is_available: true },
+          { name: "Aparelho Invisível", description: "Alinhadores transparentes e estéticos", price: 400, is_available: true },
+          { name: "Clareamento Dental", description: "Clareamento a laser e caseiro", price: 600, is_available: true },
+          { name: "Limpeza (Profilaxia)", description: "Remoção de tártaro e placa bacteriana", price: 120, is_available: true }
+        ]
+      },
+      {
+        title: "Agende sua Avaliação",
+        sectionType: "booking",
+        items: []
+      }
+    ]
+  },
+  {
+    id: "tmpl-054-construcao-materiais",
+    businessType: "construction_materials",
+    name: "Loja de Materiais de Construção (Novo)",
+    description: "Página catálogo para orçamento rápido de materiais de construção",
+    pageTitle: "Orçamento de Materiais",
+    formType: "quote",
+    whatsappCta: "Solicitar Orçamento",
+    qrUseCase: "QR em panfletos e loja física",
+    sections: [
+      {
+        title: "Construção Base",
+        items: [
+          { name: "Cimento CP-II 50kg", description: "Cimento Portland", price: 30.50, isFeatured: true, is_available: true },
+          { name: "Tijolo 8 Furos", description: "Tijolo baiano", price: 1.20, is_available: true },
+          { name: "Areia Fina", description: "Areia lavada por m3", price: 85.00, is_available: true }
+        ]
+      },
+      {
+        title: "Solicite um Orçamento",
+        sectionType: "quote",
+        items: []
+      }
+    ]
+  }
 ];
 
 function toTranslatedText(val: string): TranslatedText {

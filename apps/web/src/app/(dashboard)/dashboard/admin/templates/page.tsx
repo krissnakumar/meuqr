@@ -31,17 +31,13 @@ export default function AdminTemplatesPage() {
   const templates = getAllBusinessTemplates();
 
   // Categories present in templates
+  // Categories present in templates
   const categories = [
     { value: "all", label: "Todas Categorias" },
-    { value: "restaurant", label: "Alimentação & Menu" },
-    { value: "construction", label: "Construção & Ferragens" },
-    { value: "retail", label: "Varejo & Loja" },
-    { value: "services", label: "Serviços & Estética" },
-    { value: "health", label: "Saúde & Clínica" },
-    { value: "hospitality", label: "Hotelaria & Imóveis" },
-    { value: "automotive", label: "Automotivo" },
-    { value: "education", label: "Educação & Eventos" },
-    { value: "other", label: "Outros" },
+    ...Array.from(new Set(templates.map(t => t.businessType))).sort().map(cat => ({
+      value: cat,
+      label: cat.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+    })),
   ];
 
   // Match search and category filters

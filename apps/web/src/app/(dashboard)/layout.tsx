@@ -18,6 +18,7 @@ import {
   QrCode,
   Bell,
   ShieldAlert,
+  Calendar,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
@@ -27,6 +28,7 @@ const sidebarItems = [
   { href: "/dashboard", icon: LayoutDashboard, key: "sidebar.home", match: "/dashboard$" },
   { href: "/dashboard/business", icon: Store, key: "sidebar.my_business", match: "/dashboard/business" },
   { href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" },
+  { href: "/dashboard/appointments", icon: Calendar, key: "sidebar.appointments", match: "/dashboard/appointments" },
   { href: "/dashboard/analytics", icon: BarChart3, key: "sidebar.analytics", match: "/dashboard/analytics" },
   { href: "/dashboard/notifications", icon: Bell, key: "sidebar.notifications", match: "/dashboard/notifications" },
   { href: "/dashboard/billing", icon: ShoppingCart, key: "sidebar.billing", match: "/dashboard/billing" },

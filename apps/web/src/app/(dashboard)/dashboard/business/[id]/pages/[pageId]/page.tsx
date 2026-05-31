@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Input, Badge } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Input, Badge, ImageUpload } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -176,6 +176,56 @@ export default function PageEditorPage() {
     );
   }
 
+  async function uploadItemImage(itemId: string, sectionId: string, file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("businessId", businessId);
+
+    const loadingToast = toast.loading("Enviando imagem...");
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao enviar arquivo");
+
+      await supabase.from("items").update({ image_url: data.url }).eq("id", itemId);
+      
+      setSections(
+        sections.map((s) =>
+          s.id === sectionId
+            ? {
+                ...s,
+                items: s.items.map((i: any) =>
+                  i.id === itemId ? { ...i, image_url: data.url } : i
+                ),
+              }
+            : s
+        )
+      );
+      toast.success("Imagem atualizada", { id: loadingToast });
+    } catch (err: any) {
+      toast.error(err.message, { id: loadingToast });
+    }
+  }
+
+  async function removeItemImage(itemId: string, sectionId: string) {
+    await supabase.from("items").update({ image_url: null }).eq("id", itemId);
+    setSections(
+      sections.map((s) =>
+        s.id === sectionId
+          ? {
+              ...s,
+              items: s.items.map((i: any) =>
+                i.id === itemId ? { ...i, image_url: null } : i
+              ),
+            }
+          : s
+      )
+    );
+  }
+
   async function togglePublish() {
     setSaving(true);
     const wasPublished = page.is_published;
@@ -295,7 +345,16 @@ export default function PageEditorPage() {
                       className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-br from-slate-50 to-white border border-slate-100 group hover:border-indigo-100 hover:shadow-sm transition-all"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Package className="w-4 h-4 text-gray-400 shrink-0" />
+                        <div className="w-14 h-14 shrink-0">
+                          <ImageUpload
+                            value={item.image_url}
+                            onChange={(file) => uploadItemImage(item.id, section.id, file)}
+                            onRemove={() => removeItemImage(item.id, section.id)}
+                            shape="rounded"
+                            label="Foto"
+                            className="w-14 h-14"
+                          />
+                        </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-800 truncate">
                             {item.name}

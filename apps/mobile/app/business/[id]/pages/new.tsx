@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -33,11 +33,23 @@ export default function NewPageScreen() {
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [business, setBusiness] = useState<any>(null);
+
+  // Fetch business to get category
+  React.useEffect(() => {
+    async function loadBusiness() {
+      if (!businessId) return;
+      const { data } = await supabase.from("businesses").select("category").eq("id", businessId).single();
+      if (data) setBusiness(data);
+    }
+    loadBusiness();
+  }, [businessId]);
+
   const templates = getAllBusinessTemplates();
 
-  // Pick a subset of premium templates to display in mobile UI
-  const popularTemplates = templates.filter((t) =>
-    ["tmpl-001-restaurante", "tmpl-002-pizzaria", "tmpl-003-hamburgueria", "tmpl-009-materiais", "tmpl-021-salao", "tmpl-051-generico"].includes(t.id)
+  // Filter templates by business category
+  const popularTemplates = templates.filter((t) => 
+    business?.category ? t.businessType === business.category : true
   );
 
   function handleTitleChange(val: string) {
