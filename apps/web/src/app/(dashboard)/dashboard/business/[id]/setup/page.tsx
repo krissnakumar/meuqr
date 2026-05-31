@@ -14,6 +14,9 @@ import {
   Store,
   Layout,
   Sparkles,
+  CalendarDays,
+  FileText,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -218,7 +221,7 @@ export default function BusinessSetupPage() {
               className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
             >
               <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                <Calendar className="w-6 h-6" />
+                <CalendarDays className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-slate-800 mb-1">📅 Agendar Horários</h3>
               <p className="text-sm text-gray-500">Para clínicas, salões e profissionais. Marcação direta.</p>
