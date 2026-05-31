@@ -6,9 +6,10 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Button } from "@meuqr/ui";
 import { BUSINESS_CATEGORIES } from "@meuqr/shared";
-import { QrCode, Loader2, Building, MapPin, Store, ArrowRight, ArrowLeft, Search, Sparkles, User, Check } from "lucide-react";
+import { QrCode, Loader2, Building, MapPin, Store, ArrowRight, ArrowLeft, Search, Sparkles, User, Check, LayoutTemplate } from "lucide-react";
 import { useTranslation } from "@/lib/i18n-provider";
 import { toast } from "sonner";
+import { getTemplatesByBusinessType } from "@meuqr/shared";
 
 interface BrasilAPICNPJ {
   cnpj: string;
@@ -59,6 +60,7 @@ const steps = [
   { key: 1, keyName: "step_doc", icon: Building },
   { key: 2, keyName: "step_id", icon: Store },
   { key: 3, keyName: "step_address", icon: MapPin },
+  { key: 4, keyName: "step_template", icon: LayoutTemplate },
 ];
 
 export default function OnboardingPage() {
@@ -87,6 +89,9 @@ export default function OnboardingPage() {
   const [bizCep, setBizCep] = useState("");
   const [bizCity, setBizCity] = useState("");
   const [bizState, setBizState] = useState("");
+
+  // Template state
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   useEffect(() => {
     checkUser();
@@ -716,6 +721,67 @@ export default function OnboardingPage() {
                 <div className="flex items-center gap-3 pt-4">
                   <button
                     onClick={() => setStep(2)}
+                    disabled={submitting}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 border border-slate-200 transition-all disabled:opacity-50"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    {t("common.back")}
+                  </button>
+                  <Button
+                    onClick={() => setStep(4)}
+                    disabled={submitting}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl shadow-md shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {t("common.next")}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </GlassCardContent>
+            </GlassCard>
+          </div>
+        )}
+
+        {/* ===== STEP 4: Template ===== */}
+        {step === 4 && (
+          <div className="animate-fade-in-up">
+            <GlassCard>
+              <GlassCardHeader className="pb-4">
+                <div className="flex items-center gap-2.5 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200/50 flex items-center justify-center">
+                    <LayoutTemplate className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <GlassCardTitle className="text-lg">Escolha um Modelo</GlassCardTitle>
+                </div>
+                <p className="text-sm text-[#64748B] mt-1">
+                  Recomendamos os seguintes modelos baseados na sua categoria ({bizCategory}). Você poderá alterá-lo depois.
+                </p>
+              </GlassCardHeader>
+              <GlassCardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-80 overflow-y-auto pr-2 pb-2">
+                  {getTemplatesByBusinessType(bizCategory).map(t => (
+                    <div 
+                      key={t.id}
+                      onClick={() => setSelectedTemplate(t.id)}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        selectedTemplate === t.id 
+                          ? 'border-indigo-500 bg-indigo-50/50' 
+                          : 'border-slate-200 hover:border-indigo-300'
+                      }`}
+                    >
+                      <h4 className="font-bold text-sm text-slate-800">{t.name as string}</h4>
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{t.description as string}</p>
+                    </div>
+                  ))}
+                  {getTemplatesByBusinessType(bizCategory).length === 0 && (
+                    <div className="col-span-1 sm:col-span-2 text-center p-8 bg-slate-50 rounded-xl border border-slate-200">
+                      <p className="text-sm text-slate-500 mb-4">Nenhum modelo específico encontrado. Vamos criar um modelo em branco.</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                  <button
+                    onClick={() => setStep(3)}
                     disabled={submitting}
                     className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 border border-slate-200 transition-all disabled:opacity-50"
                   >
