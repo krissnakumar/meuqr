@@ -26,7 +26,8 @@ export default function BusinessSetupPage() {
   const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cloning, setCloning] = useState(false);
-  const [step, setStep] = useState<"templates" | "done">("templates");
+  const [step, setStep] = useState<"goals" | "templates" | "done">("goals");
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -62,7 +63,7 @@ export default function BusinessSetupPage() {
   const allTemplates = getAllBusinessTemplates();
 
   const recommendedTemplates = allTemplates.filter(
-    (t) => t.businessType === business?.category
+    (t) => selectedGoal ? t.formType === selectedGoal : t.businessType === business?.category
   );
 
   function templateSlug(template: BusinessTemplate): string {
@@ -192,11 +193,72 @@ export default function BusinessSetupPage() {
         </div>
       </div>
 
+      {step === "goals" && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-slate-800">
+            O que você deseja que seus clientes façam?
+          </h2>
+          <p className="text-sm text-gray-500">
+            Escolha o objetivo principal da sua página digital.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => { setSelectedGoal("order"); setStep("templates"); }}
+              className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <Store className="w-6 h-6" />
+              </div>
+              <h3 className="font-bold text-slate-800 mb-1">📦 Vender Produtos</h3>
+              <p className="text-sm text-gray-500">Catálogo digital, exibir preços e receber pedidos no WhatsApp.</p>
+            </button>
+
+            <button
+              onClick={() => { setSelectedGoal("booking"); setStep("templates"); }}
+              className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <h3 className="font-bold text-slate-800 mb-1">📅 Agendar Horários</h3>
+              <p className="text-sm text-gray-500">Para clínicas, salões e profissionais. Marcação direta.</p>
+            </button>
+
+            <button
+              onClick={() => { setSelectedGoal("quote"); setStep("templates"); }}
+              className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                <FileText className="w-6 h-6" />
+              </div>
+              <h3 className="font-bold text-slate-800 mb-1">📋 Orçamentos B2B</h3>
+              <p className="text-sm text-gray-500">Para materiais de construção, serviços complexos e atacado.</p>
+            </button>
+
+            <button
+              onClick={() => { setSelectedGoal("lead"); setStep("templates"); }}
+              className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <Users className="w-6 h-6" />
+              </div>
+              <h3 className="font-bold text-slate-800 mb-1">🎯 Capturar Leads</h3>
+              <p className="text-sm text-gray-500">Páginas de captura, formulários para seguros e imóveis.</p>
+            </button>
+          </div>
+        </div>
+      )}
+
       {step === "templates" && (
         <>
-          <h2 className="text-lg font-bold text-slate-700">
-            Escolha um modelo para sua página
-          </h2>
+          <div className="flex items-center gap-4 mb-4">
+            <button onClick={() => setStep("goals")} className="text-gray-400 hover:text-indigo-600">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-lg font-bold text-slate-700">
+              Escolha um modelo para sua página
+            </h2>
+          </div>
 
           {pages.length > 0 && (
             <GlassCard className="bg-gradient-to-br from-indigo-50/30 to-indigo-50/10 border-indigo-100/30">

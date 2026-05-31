@@ -17,7 +17,11 @@ import {
   X,
   QrCode,
   Bell,
-  ShieldAlert,
+  FileText,
+  Package,
+  Users,
+  LayoutTemplate,
+  Megaphone,
   Calendar,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
@@ -25,15 +29,17 @@ import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
 import { NotificationBell } from "@/components/NotificationBell";
 
 const sidebarItems = [
-  { href: "/dashboard", icon: LayoutDashboard, key: "sidebar.home", match: "/dashboard$" },
-  { href: "/dashboard/business", icon: Store, key: "sidebar.my_business", match: "/dashboard/business" },
-  { href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" },
+  { href: "/dashboard", icon: LayoutDashboard, key: "sidebar.overview", match: "/dashboard$" },
+  { href: "/dashboard/pages", icon: FileText, key: "sidebar.pages", match: "/dashboard/pages" },
+  { href: "/dashboard/products", icon: Package, key: "sidebar.products", match: "/dashboard/products" },
   { href: "/dashboard/appointments", icon: Calendar, key: "sidebar.appointments", match: "/dashboard/appointments" },
+  { href: "/dashboard/leads", icon: Users, key: "sidebar.leads", match: "/dashboard/leads" },
+  { href: "/dashboard/templates", icon: LayoutTemplate, key: "sidebar.templates", match: "/dashboard/templates" },
   { href: "/dashboard/analytics", icon: BarChart3, key: "sidebar.analytics", match: "/dashboard/analytics" },
-  { href: "/dashboard/notifications", icon: Bell, key: "sidebar.notifications", match: "/dashboard/notifications" },
-  { href: "/dashboard/billing", icon: ShoppingCart, key: "sidebar.billing", match: "/dashboard/billing" },
+  { href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" },
+  { href: "/dashboard/marketing", icon: Megaphone, key: "sidebar.marketing", match: "/dashboard/marketing" },
   { href: "/dashboard/settings", icon: Settings, key: "sidebar.settings", match: "/dashboard/settings" },
-  { href: "/dashboard/admin", icon: ShieldAlert, key: "sidebar.admin", match: "/dashboard/admin" },
+  { href: "/dashboard/billing", icon: ShoppingCart, key: "sidebar.billing", match: "/dashboard/billing" },
 ];
 
 function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleLogout }: {
