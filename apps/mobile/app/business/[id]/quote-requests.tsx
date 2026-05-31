@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Trash2,
 } from "lucide-react-native";
+import { useTranslation } from "../../../src/lib/i18n-provider";
 
 interface QuoteItemData {
   id: string;
@@ -39,16 +40,19 @@ interface QuoteRequestData {
   quote_items: QuoteItemData[];
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: "Pendente", color: "#D97706", bg: "#FFFBEB" },
-  contacted: { label: "Contactado", color: "#3B82F6", bg: "#EFF6FF" },
-  completed: { label: "Concluído", color: "#00C853", bg: "#F0FDF4" },
-  cancelled: { label: "Cancelado", color: "#DC2626", bg: "#FEF2F2" },
+// STATUS_CONFIG is now rendered using t() calls inside the component
+
+const STATUS_CONFIG: Record<string, { color: string; bg: string }> = {
+  pending: { color: "#D97706", bg: "#FFFBEB" },
+  contacted: { color: "#3B82F6", bg: "#EFF6FF" },
+  completed: { color: "#00C853", bg: "#F0FDF4" },
+  cancelled: { color: "#DC2626", bg: "#FEF2F2" },
 };
 
 export default function QuoteRequestsScreen() {
   const router = useRouter();
   const { id: businessId } = useLocalSearchParams();
+  const { t } = useTranslation();
 
   const [quotes, setQuotes] = useState<QuoteRequestData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,10 +93,10 @@ export default function QuoteRequestsScreen() {
   }
 
   async function deleteQuote(quoteId: string) {
-    Alert.alert("Excluir", "Tem certeza que deseja excluir esta solicitação?", [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(t("common.delete"), t("common.confirm_delete_quote"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Excluir",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await supabase.from("quote_requests").delete().eq("id", quoteId);
@@ -120,7 +124,7 @@ export default function QuoteRequestsScreen() {
         >
           <ArrowLeft size={20} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Orçamentos</Text>
+        <Text style={styles.headerTitle}>{t("business.quotes")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -139,14 +143,20 @@ export default function QuoteRequestsScreen() {
         {quotes.length === 0 ? (
           <View style={styles.emptyState}>
             <FileText size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>Nenhum Orçamento</Text>
+            <Text style={styles.emptyTitle}>{t("common.no_quotes_yet")}</Text>
             <Text style={styles.emptyText}>
-              Solicitações de orçamento aparecerão aqui
+              {t("common.no_quotes_desc")}
             </Text>
           </View>
         ) : (
           quotes.map((quote) => {
             const statusCfg = STATUS_CONFIG[quote.status] || STATUS_CONFIG.pending;
+            const statusLabels: Record<string, string> = {
+              pending: t("common.status_pending"),
+              contacted: t("common.status_contacted"),
+              completed: t("common.status_completed"),
+              cancelled: t("common.status_cancelled"),
+            };
 
             return (
               <View key={quote.id} style={styles.quoteCard}>
@@ -167,7 +177,7 @@ export default function QuoteRequestsScreen() {
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: statusCfg.bg }]}>
                     <Text style={[styles.statusText, { color: statusCfg.color }]}>
-                      {statusCfg.label}
+                      {statusLabels[quote.status] || t("common.status_pending")}
                     </Text>
                   </View>
                 </View>
@@ -225,7 +235,7 @@ export default function QuoteRequestsScreen() {
                       style={styles.actionPrimary}
                       onPress={() => updateQuoteStatus(quote.id, "contacted")}
                     >
-                      <Text style={styles.actionPrimaryText}>Marcar Contactado</Text>
+                      <Text style={styles.actionPrimaryText}>{t("common.mark_contacted")}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.actionDelete}
@@ -240,7 +250,7 @@ export default function QuoteRequestsScreen() {
                     style={styles.actionComplete}
                     onPress={() => updateQuoteStatus(quote.id, "completed")}
                   >
-                    <Text style={styles.actionCompleteText}>Concluir</Text>
+                    <Text style={styles.actionCompleteText}>{t("common.finish")}</Text>
                   </TouchableOpacity>
                 )}
               </View>

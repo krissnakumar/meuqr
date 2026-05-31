@@ -1,0 +1,25 @@
+{
+  "cli": {
+    "version": ">= 9.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "YOUR_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "YOUR_SUPABASE_ANON_KEY"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

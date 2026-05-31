@@ -13,6 +13,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
 import { supabase } from "../../../src/lib/supabase";
+import { useTranslation } from "../../../src/lib/i18n-provider";
 import {
   ArrowLeft,
   Plus,
@@ -48,6 +49,7 @@ export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams();
   const businessId = id as string;
 
+  const { t } = useTranslation();
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [pages, setPages] = useState<any[]>([]);
   const [qrCodes, setQrCodes] = useState<any[]>([]);
@@ -91,12 +93,12 @@ export default function BusinessDetailScreen() {
 
   async function deleteBusiness() {
     Alert.alert(
-      "Excluir Negócio",
-      "Tem certeza que deseja excluir este negócio? Esta ação não pode ser desfeita.",
+      t("business.delete"),
+      t("common.confirm_delete_desc"),
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Excluir",
+          text: t("common.delete"),
           style: "destructive",
           onPress: async () => {
             await supabase.from("businesses").delete().eq("id", businessId);
@@ -127,9 +129,9 @@ export default function BusinessDetailScreen() {
   if (!business) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.notFoundText}>Negócio não encontrado</Text>
+        <Text style={styles.notFoundText}>{t("business.not_found")}</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backLink}>Voltar</Text>
+          <Text style={styles.backLink}>{t("common.back")}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -150,7 +152,7 @@ export default function BusinessDetailScreen() {
         >
           <ArrowLeft size={20} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalhes</Text>
+        <Text style={styles.headerTitle}>{t("business.details")}</Text>
         <TouchableOpacity style={styles.deleteButton} onPress={deleteBusiness}>
           <Trash2 size={20} color="#EF4444" />
         </TouchableOpacity>
@@ -183,21 +185,21 @@ export default function BusinessDetailScreen() {
           onPress={() => router.push(`/business/${businessId}/qr`)}
         >
           <QrCode size={20} color="#00C853" />
-          <Text style={styles.quickActionText}>QR Codes</Text>
+          <Text style={styles.quickActionText}>{t("business.qrcodes")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.quickAction}
           onPress={() => handleShare()}
         >
           <Share2 size={20} color="#3B82F6" />
-          <Text style={styles.quickActionText}>Compartilhar</Text>
+          <Text style={styles.quickActionText}>{t("common.share")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.quickAction}
           onPress={() => Linking.openURL(`https://meuqr.com.br/${business.slug}`)}
         >
           <Eye size={20} color="#8B5CF6" />
-          <Text style={styles.quickActionText}>Ver Site</Text>
+          <Text style={styles.quickActionText}>{t("public.page")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -206,26 +208,26 @@ export default function BusinessDetailScreen() {
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <FileText size={18} color="#111827" />
-            <Text style={styles.sectionTitle}>Páginas</Text>
+            <Text style={styles.sectionTitle}>{t("business.pages")}</Text>
           </View>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => router.push(`/business/${businessId}/pages/new`)}
           >
             <Plus size={16} color="#00C853" />
-            <Text style={styles.addButtonText}>Nova</Text>
+            <Text style={styles.addButtonText}>{t("common.new")}</Text>
           </TouchableOpacity>
         </View>
 
         {pages.length === 0 ? (
           <View style={styles.emptyState}>
             <FileText size={32} color="#D1D5DB" />
-            <Text style={styles.emptyText}>Nenhuma página ainda</Text>
+            <Text style={styles.emptyText}>{t("business.no_pages_yet")}</Text>
             <TouchableOpacity
               style={styles.emptyButton}
               onPress={() => router.push(`/business/${businessId}/pages/new`)}
             >
-              <Text style={styles.emptyButtonText}>Criar primeira página</Text>
+              <Text style={styles.emptyButtonText}>{t("business.add_page")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -262,26 +264,26 @@ export default function BusinessDetailScreen() {
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <QrCode size={18} color="#111827" />
-            <Text style={styles.sectionTitle}>QR Codes</Text>
+            <Text style={styles.sectionTitle}>{t("business.qrcodes")}</Text>
           </View>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => router.push(`/business/${businessId}/qr`)}
           >
             <QrCode size={16} color="#00C853" />
-            <Text style={styles.addButtonText}>Ver todos</Text>
+            <Text style={styles.addButtonText}>{t("common.view_all")}</Text>
           </TouchableOpacity>
         </View>
 
         {qrCodes.length === 0 ? (
           <View style={styles.emptyState}>
             <QrCode size={32} color="#D1D5DB" />
-            <Text style={styles.emptyText}>Nenhum QR code gerado</Text>
+            <Text style={styles.emptyText}>{t("business.no_pages_yet")}</Text>
             <TouchableOpacity
               style={styles.emptyButton}
               onPress={() => router.push(`/business/${businessId}/qr`)}
             >
-              <Text style={styles.emptyButtonText}>Gerar QR Code</Text>
+              <Text style={styles.emptyButtonText}>{t("business.qrcodes")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -317,7 +319,7 @@ export default function BusinessDetailScreen() {
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Settings size={18} color="#111827" />
-            <Text style={styles.sectionTitle}>Gerenciamento</Text>
+            <Text style={styles.sectionTitle}>{t("dashboard.title")}</Text>
           </View>
         </View>
         <TouchableOpacity
@@ -328,7 +330,7 @@ export default function BusinessDetailScreen() {
             <View style={[styles.managementIcon, { backgroundColor: "#EFF6FF" }]}>
               <BarChart3 size={18} color="#3B82F6" />
             </View>
-            <Text style={styles.managementText}>Analytics</Text>
+            <Text style={styles.managementText}>{t("sidebar.analytics")}</Text>
           </View>
           <ChevronRight size={18} color="#9CA3AF" />
         </TouchableOpacity>
@@ -340,7 +342,7 @@ export default function BusinessDetailScreen() {
             <View style={[styles.managementIcon, { backgroundColor: "#FFFBEB" }]}>
               <ShoppingCart size={18} color="#F59E0B" />
             </View>
-            <Text style={styles.managementText}>Pedidos</Text>
+            <Text style={styles.managementText}>{t("sidebar.orders")}</Text>
           </View>
           <ChevronRight size={18} color="#9CA3AF" />
         </TouchableOpacity>
@@ -352,7 +354,7 @@ export default function BusinessDetailScreen() {
             <View style={[styles.managementIcon, { backgroundColor: "#F0FDF4" }]}>
               <Users size={18} color="#00C853" />
             </View>
-            <Text style={styles.managementText}>Leads</Text>
+            <Text style={styles.managementText}>{t("business.leads")}</Text>
           </View>
           <ChevronRight size={18} color="#9CA3AF" />
         </TouchableOpacity>
@@ -364,7 +366,7 @@ export default function BusinessDetailScreen() {
             <View style={[styles.managementIcon, { backgroundColor: "#F5F3FF" }]}>
               <MessageSquare size={18} color="#7C3AED" />
             </View>
-            <Text style={styles.managementText}>Equipe</Text>
+            <Text style={styles.managementText}>{t("business.members")}</Text>
           </View>
           <ChevronRight size={18} color="#9CA3AF" />
         </TouchableOpacity>
@@ -376,7 +378,7 @@ export default function BusinessDetailScreen() {
             <View style={[styles.managementIcon, { backgroundColor: "#ECFDF5" }]}>
               <ClipboardList size={18} color="#059669" />
             </View>
-            <Text style={styles.managementText}>Orçamentos</Text>
+            <Text style={styles.managementText}>{t("business.quotes")}</Text>
           </View>
           <ChevronRight size={18} color="#9CA3AF" />
         </TouchableOpacity>
@@ -387,22 +389,22 @@ export default function BusinessDetailScreen() {
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Settings size={18} color="#111827" />
-            <Text style={styles.sectionTitle}>Informações</Text>
+            <Text style={styles.sectionTitle}>{t("business.general_info")}</Text>
           </View>
         </View>
         <View style={styles.infoList}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>WhatsApp</Text>
+            <Text style={styles.infoLabel}>{t("common.phone")}</Text>
             <Text style={styles.infoValue}>{business.whatsapp || "—"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Plano</Text>
+            <Text style={styles.infoLabel}>{t("dashboard.subscription")}</Text>
             <Text style={styles.infoValue}>{business.subscription_tier}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Status</Text>
+            <Text style={styles.infoLabel}>{t("common.status")}</Text>
             <Text style={[styles.infoValue, business.is_active && { color: "#00C853" }]}>
-              {business.is_active ? "Ativo" : "Inativo"}
+              {business.is_active ? t("common.active") : t("common.inactive")}
             </Text>
           </View>
         </View>

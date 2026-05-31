@@ -21,6 +21,7 @@ import {
   Share2,
   ChevronRight,
 } from "lucide-react-native";
+import { useTranslation } from "../../../../src/lib/i18n-provider";
 
 interface QRCodeData {
   id: string;
@@ -35,6 +36,7 @@ interface QRCodeData {
 export default function BusinessQRCodesScreen() {
   const router = useRouter();
   const { id: businessId } = useLocalSearchParams();
+  const { t } = useTranslation();
 
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,10 +88,10 @@ export default function BusinessQRCodesScreen() {
   }
 
   async function deleteQR(qrId: string) {
-    Alert.alert("Excluir QR Code", "Tem certeza?", [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(t("business.qr_delete_title"), t("business.qr_delete_confirm"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Excluir",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await supabase.from("qr_codes").delete().eq("id", qrId);
@@ -123,13 +125,13 @@ export default function BusinessQRCodesScreen() {
         setQrCodes([data, ...qrCodes]);
         setShowNewQrModal(false);
         setNewQrTitle("");
-        Alert.alert("Sucesso", `QR Code criado: /q/${shortCode}`);
+        Alert.alert(t("success.created"), t("business.qr_created_success", { code: shortCode }));
       } else if (error) {
-        Alert.alert("Erro", error.message);
+        Alert.alert(t("errors.generic"), error.message);
       }
     } catch (err) {
       console.error(err);
-      Alert.alert("Erro", "Não foi possível criar o QR code");
+      Alert.alert(t("errors.generic"), t("business.qr_create_error"));
     } finally {
       setCreatingQr(false);
     }
@@ -153,7 +155,7 @@ export default function BusinessQRCodesScreen() {
         >
           <ArrowLeft size={20} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>QR Codes</Text>
+        <Text style={styles.headerTitle}>{t("business.qrcodes")}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setShowNewQrModal(true)}
@@ -177,16 +179,16 @@ export default function BusinessQRCodesScreen() {
         {qrCodes.length === 0 ? (
           <View style={styles.emptyState}>
             <QrCode size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>Nenhum QR Code</Text>
+            <Text style={styles.emptyTitle}>{t("business.no_qrcodes")}</Text>
             <Text style={styles.emptyText}>
-              Crie QR codes para compartilhar sua página
+              {t("business.no_qrcodes_desc")}
             </Text>
             <TouchableOpacity
               style={styles.generateButton}
               onPress={() => setShowNewQrModal(true)}
             >
               <Plus size={20} color="#FFFFFF" />
-              <Text style={styles.generateButtonText}>Gerar QR Code</Text>
+              <Text style={styles.generateButtonText}>{t("business.generate_qr")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -242,14 +244,14 @@ export default function BusinessQRCodesScreen() {
                         qr.is_active && styles.statusTextActive,
                       ]}
                     >
-                      {qr.is_active ? "Ativo" : "Inativo"}
+                      {qr.is_active ? t("common.active") : t("common.inactive")}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => deleteQR(qr.id)}
                     style={styles.deleteQrBtn}
                   >
-                    <Text style={styles.deleteQrText}>Excluir</Text>
+                    <Text style={styles.deleteQrText}>{t("common.delete")}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -262,15 +264,15 @@ export default function BusinessQRCodesScreen() {
       <Modal visible={showNewQrModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Novo QR Code</Text>
+            <Text style={styles.modalTitle}>{t("business.new_qr_title")}</Text>
             <Text style={styles.modalSubtitle}>
-              Dê um título para identificar este QR code
+              {t("business.new_qr_desc")}
             </Text>
             <TextInput
               style={styles.modalInput}
               value={newQrTitle}
               onChangeText={setNewQrTitle}
-              placeholder="Ex: Cardápio Principal"
+              placeholder={t("business.page_title_placeholder")}
               autoFocus
             />
             <View style={styles.modalActions}>
@@ -281,7 +283,7 @@ export default function BusinessQRCodesScreen() {
                   setNewQrTitle("");
                 }}
               >
-                <Text style={styles.modalCancelText}>Cancelar</Text>
+                <Text style={styles.modalCancelText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -294,7 +296,7 @@ export default function BusinessQRCodesScreen() {
                 {creatingQr ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Criar</Text>
+                  <Text style={styles.modalConfirmText}>{t("common.create")}</Text>
                 )}
               </TouchableOpacity>
             </View>

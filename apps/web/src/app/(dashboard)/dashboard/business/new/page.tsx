@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, GlassCard } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { BUSINESS_CATEGORIES } from "@meuqr/shared";
+import { useTranslation } from "@/lib/i18n-provider";
 import {
   ArrowLeft,
   Check,
@@ -208,6 +209,7 @@ export default function NewBusinessPage() {
   const router = useRouter();
 
   // ===== Wizard state =====
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [category, setCategory] = useState("");
   const [name, setName] = useState("");
@@ -274,7 +276,7 @@ export default function NewBusinessPage() {
     setError(null);
 
     if (limitsLoading) {
-      setError("Verificando limites do seu plano...");
+      setError(t("business.checking_limits"));
       return;
     }
 
@@ -284,12 +286,10 @@ export default function NewBusinessPage() {
       usage.businesses
     );
     if (!limitCheck.allowed) {
-      setError(limitCheck.message || "Limite de negócios atingido");
+      setError(limitCheck.message || t("business.limit_reached"));
       return;
-    }
-
-    if (!name.trim()) {
-      setError("Nome do negócio é obrigatório");
+    }      if (!name.trim()) {
+      setError(t("business.name_required"));
       return;
     }
 
@@ -316,11 +316,11 @@ export default function NewBusinessPage() {
 
       if (bizError) throw bizError;
 
-      toast.success("Negócio criado com sucesso!");
+      toast.success(t("business.success_create"));
       router.push(`/dashboard/business/${business.id}/setup`);
     } catch (err: any) {
-      setError(err.message || "Erro ao criar negócio");
-      toast.error("Erro ao criar negócio");
+      setError(err.message || t("business.error_create"));
+      toast.error(t("business.error_create"));
     } finally {
       setLoading(false);
     }
@@ -337,16 +337,16 @@ export default function NewBusinessPage() {
         className="inline-flex items-center gap-1.5 text-sm font-medium text-[#64748B] hover:text-[#0F172A] transition-colors mb-6 group"
       >
         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-        Voltar ao Dashboard
+        {t("business.back_to_dashboard")}
       </Link>
 
       {/* ===== Header ===== */}
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-2">
-          Criar Novo Negócio
+          {t("business.new_title")}
         </h1>
         <p className="text-sm text-[#64748B] max-w-lg">
-          Crie um perfil digital para seu negócio. Em poucos minutos você terá uma página pronta com QR Code.
+          {t("business.new_description")}
         </p>
       </div>
 
@@ -359,16 +359,15 @@ export default function NewBusinessPage() {
               <AlertCircle className="w-5 h-5 text-amber-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-amber-800 text-sm">Limite do plano atingido</p>
+              <p className="font-semibold text-amber-800 text-sm">{t("business.plan_limit_title")}</p>
               <p className="text-amber-600 text-xs mt-1 leading-relaxed">
-                Você já possui {usage.businesses} negócio(s) no plano {tier === "free" ? "Grátis" : "atual"}. 
-                Faça upgrade para criar mais negócios.
+                {t("business.plan_limit_desc", { count: String(usage.businesses), plan: tier === "free" ? t("common.free") : tier })}
               </p>
             </div>
             <Link href="/dashboard/billing">
               <Button variant="outline" size="sm" className="shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100 bg-white/50 backdrop-blur-sm text-xs font-semibold">
                 <Crown className="w-3.5 h-3.5 mr-1" />
-                Fazer Upgrade
+                {t("business.upgrade")}
               </Button>
             </Link>
           </div>
@@ -404,7 +403,7 @@ export default function NewBusinessPage() {
                   ${step === s.number ? "text-indigo-600" : "text-[#94A3B8]"}
                 `}
               >
-                {s.label}
+                {s.number === 1 ? t("common.category") : t("business.details")}
               </span>
             </div>
 
@@ -433,9 +432,9 @@ export default function NewBusinessPage() {
           )}
 
           <div>
-            <h2 className="text-lg font-bold text-[#0F172A]">Qual o tipo do seu negócio?</h2>
+            <h2 className="text-lg font-bold text-[#0F172A]">{t("business.category_question")}</h2>
             <p className="text-sm text-[#64748B] mt-1">
-              Escolha a categoria que melhor descreve seu negócio.
+              {t("business.category_question_desc")}
             </p>
           </div>
 
@@ -448,7 +447,7 @@ export default function NewBusinessPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar categoria..."
+              placeholder={t("business.category_search_placeholder")}
               className="w-full h-11 pl-10 pr-10 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all shadow-sm"
             />
             {searchQuery && (
@@ -534,13 +533,13 @@ export default function NewBusinessPage() {
                 <Search className="w-7 h-7 text-[#94A3B8]" />
               </div>
               <p className="text-sm font-medium text-[#64748B]">
-                Nenhuma categoria encontrada para &ldquo;{searchQuery}&rdquo;
+                {t("business.no_category_found", { query: searchQuery })}
               </p>
               <button
                 onClick={() => setSearchQuery("")}
                 className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
               >
-                Limpar busca
+                {t("business.clear_search")}
               </button>
             </div>
           )}
@@ -557,7 +556,7 @@ export default function NewBusinessPage() {
               className="text-sm text-[#64748B] hover:text-[#0F172A] font-medium transition-colors flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Alterar
+              {t("business.change_category")}
             </button>
             <span className="text-[#94A3B8]">/</span>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700">
@@ -573,17 +572,17 @@ export default function NewBusinessPage() {
 
           <GlassCard className="p-6 sm:p-8">
             <h2 className="text-lg font-bold text-[#0F172A] mb-1">
-              Informações do Negócio
+              {t("business.business_info")}
             </h2>
             <p className="text-sm text-[#64748B] mb-6">
-              Preencha os dados básicos para começar.
+              {t("business.business_info_desc")}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Business Name */}
               <div className="space-y-1.5">
                 <label htmlFor="name" className="block text-sm font-semibold text-[#0F172A]">
-                  Nome do negócio <span className="text-red-400">*</span>
+                  {t("business.name_label")} <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -594,7 +593,7 @@ export default function NewBusinessPage() {
                     type="text"
                     value={name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    placeholder="Ex: Restaurante do João"
+                    placeholder={t("business.name_placeholder_new")}
                     required
                     className="w-full h-11 pl-10 pr-4 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all shadow-sm"
                     autoFocus
@@ -606,14 +605,14 @@ export default function NewBusinessPage() {
               {name && (
                 <div className="space-y-1.5">
                   <label htmlFor="slug" className="block text-sm font-semibold text-[#0F172A]">
-                    Link personalizado
+                    {t("business.custom_link")}
                   </label>
                   <div className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-sm">
                     <span className="text-[#94A3B8] font-medium">meuqr.com.br/q/</span>
                     <span className="text-[#0F172A] font-bold">{slug}</span>
                   </div>
                   <p className="text-xs text-[#94A3B8]">
-                    Este será o link da sua página. Gerado automaticamente.
+                    {t("business.custom_link_desc")}
                   </p>
                 </div>
               )}
@@ -621,7 +620,7 @@ export default function NewBusinessPage() {
               {/* WhatsApp */}
               <div className="space-y-1.5">
                 <label htmlFor="whatsapp" className="block text-sm font-semibold text-[#0F172A]">
-                  WhatsApp <span className="text-[#94A3B8] font-normal">(opcional)</span>
+                  {t("common.phone")} <span className="text-[#94A3B8] font-normal">{t("business.optional_tag")}</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -640,20 +639,20 @@ export default function NewBusinessPage() {
                   />
                 </div>
                 <p className="text-xs text-[#94A3B8]">
-                  Clientes vão usar este número para falar com você pelo WhatsApp.
+                  {t("business.whatsapp_desc")}
                 </p>
               </div>
 
               {/* Description */}
               <div className="space-y-1.5">
                 <label htmlFor="description" className="block text-sm font-semibold text-[#0F172A]">
-                  Descrição <span className="text-[#94A3B8] font-normal">(opcional)</span>
+                  {t("common.description")} <span className="text-[#94A3B8] font-normal">{t("business.optional_tag")}</span>
                 </label>
                 <textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Fale sobre seu negócio em poucas palavras..."
+                  placeholder={t("business.description_placeholder_new")}
                   rows={3}
                   className="w-full rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all shadow-sm resize-none"
                 />
@@ -670,11 +669,10 @@ export default function NewBusinessPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-[#0F172A]">
-                      Página gerada automaticamente
+                      {t("business.page_auto_generated")}
                     </p>
                     <p className="text-xs text-[#64748B] mt-0.5 leading-relaxed">
-                      Após criar, você escolherá um modelo de página compatível com &ldquo;{selectedCategoryLabel}&rdquo; 
-                      e seu QR Code será gerado automaticamente.
+                      {t("business.page_auto_generated_desc", { category: selectedCategoryLabel })}
                     </p>
                   </div>
                 </div>
@@ -695,8 +693,7 @@ export default function NewBusinessPage() {
                   onClick={resetStep}
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  Voltar
+                  <ArrowLeft className="w-4 h-4" />                      {t("common.back")}
                 </button>
                 <Button
                   type="submit"
@@ -706,11 +703,11 @@ export default function NewBusinessPage() {
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Criando...
+                      {t("business.creating_btn")}
                     </>
                   ) : (
                     <>
-                      Criar Negócio
+                      {t("business.create_business_btn")}
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </>
                   )}
@@ -723,15 +720,15 @@ export default function NewBusinessPage() {
           <div className="mt-6 flex items-center justify-center gap-6 text-xs text-[#94A3B8]">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              Sem compromisso
+              {t("business.trust_no_commitment")}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              Cancele quando quiser
+              {t("business.trust_cancel_anytime")}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              Suporte via WhatsApp
+              {t("business.trust_whatsapp_support")}
             </span>
           </div>
         </div>

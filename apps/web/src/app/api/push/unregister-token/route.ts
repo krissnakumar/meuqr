@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { ERR, API_SUCCESS } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -23,14 +24,14 @@ export async function POST(request: NextRequest) {
     // 1. Get authenticated session user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+      return NextResponse.json({ error: ERR.UNAUTHORIZED }, { status: 401 });
     }
 
     const body = await request.json();
     const { expoPushToken } = body;
 
     if (!expoPushToken) {
-      return NextResponse.json({ error: "Parâmetro expoPushToken é obrigatório." }, { status: 400 });
+      return NextResponse.json({ error: ERR.MISSING_PUSH_TOKEN }, { status: 400 });
     }
 
     // 2. Set token to inactive
@@ -42,12 +43,12 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Token unregistration error:", error);
-      return NextResponse.json({ error: "Erro ao desativar token de push." }, { status: 500 });
+      return NextResponse.json({ error: ERR.UNREGISTER_PUSH_TOKEN_ERROR }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, message: "Token de push desativado com sucesso." });
+    return NextResponse.json({ success: true, message: API_SUCCESS.PUSH_TOKEN_DISABLED });
   } catch (err) {
     console.error("Push Unregister exception:", err);
-    return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

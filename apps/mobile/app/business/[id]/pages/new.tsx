@@ -15,6 +15,7 @@ import { supabase } from "../../../../src/lib/supabase";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, ChevronRight, FileText } from "lucide-react-native";
 import { getAllBusinessTemplates } from "@meuqr/shared";
+import { useTranslation } from "../../../../src/lib/i18n-provider";
 
 function getLocalString(val: any): string {
   if (!val) return "";
@@ -26,6 +27,7 @@ export default function NewPageScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const businessId = id as string;
+  const { t } = useTranslation();
 
   const [step, setStep] = useState<"template" | "details">("template");
   const [title, setTitle] = useState("");
@@ -74,7 +76,7 @@ export default function NewPageScreen() {
 
   async function handleCreate() {
     if (!title || !slug) {
-      Alert.alert("Erro", "Preencha o título e o link personalizado.");
+      Alert.alert(t("errors.generic"), t("business.fill_title_and_slug"));
       return;
     }
 
@@ -142,11 +144,11 @@ export default function NewPageScreen() {
         destination_url: `https://meuqr.com.br/${businessId}/${slug}`,
       });
 
-      Alert.alert("Sucesso!", "Sua página e QR Code foram criados!", [
+      Alert.alert(t("success.created"), t("business.page_created"), [
         { text: "OK", onPress: () => router.push(`/business/${businessId}`) },
       ]);
     } catch (err: any) {
-      Alert.alert("Erro ao criar página", err.message || "Erro desconhecido.");
+      Alert.alert(t("business.page_create_error"), err.message || t("errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -168,16 +170,16 @@ export default function NewPageScreen() {
         >
           <ArrowLeft size={20} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nova Página</Text>
+        <Text style={styles.headerTitle}>{t("business.new_page")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {step === "template" ? (
           <View>
-            <Text style={styles.stepTitle}>Selecione um Modelo</Text>
+            <Text style={styles.stepTitle}>{t("business.select_template_title")}</Text>
             <Text style={styles.stepSubtitle}>
-              Escolha um dos modelos profissionais para começar com dados prontos.
+              {t("business.select_template_desc")}
             </Text>
 
             <View style={styles.templateList}>
@@ -214,9 +216,9 @@ export default function NewPageScreen() {
                   <FileText size={24} color="#4B5563" />
                 </View>
                 <View style={styles.templateInfo}>
-                  <Text style={styles.templateName}>Modelo Em Branco</Text>
+                  <Text style={styles.templateName}>{t("business.blank_template")}</Text>
                   <Text style={styles.templateDesc}>
-                    Crie uma página do zero com suas próprias seções e itens.
+                    {t("business.blank_template_desc")}
                   </Text>
                 </View>
                 <ChevronRight size={20} color="#9CA3AF" />
@@ -225,23 +227,23 @@ export default function NewPageScreen() {
           </View>
         ) : (
           <View>
-            <Text style={styles.stepTitle}>Detalhes da Página</Text>
+            <Text style={styles.stepTitle}>{t("business.page_details")}</Text>
             <Text style={styles.stepSubtitle}>
-              Defina o título da página e o endereço de acesso exclusivo.
+              {t("business.page_details_desc")}
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Título da Página *</Text>
+              <Text style={styles.label}>{t("business.page_title_label")}</Text>
               <TextInput
                 style={styles.input}
                 value={title}
                 onChangeText={handleTitleChange}
-                placeholder="Ex: Cardápio Principal"
+                placeholder={t("business.page_title_placeholder")}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Endereço Personalizado *</Text>
+              <Text style={styles.label}>{t("business.custom_address_label")}</Text>
               <View style={styles.slugRow}>
                 <Text style={styles.slugPrefix}>meuqr.com.br/...</Text>
                 <TextInput
@@ -257,12 +259,12 @@ export default function NewPageScreen() {
 
             {selectedTemplate && (
               <View style={styles.infoCard}>
-                <Text style={styles.infoTitle}>Modelo Selecionado:</Text>
+                <Text style={styles.infoTitle}>{t("business.selected_template")}</Text>
                 <Text style={styles.infoValue}>
                   {getLocalString(selectedTemplate.name)}
                 </Text>
                 <Text style={styles.infoText}>
-                  Isso irá criar automaticamente {selectedTemplate.sections.length} seções e preencher com produtos de demonstração que você poderá editar livremente depois!
+                  {t("business.template_sections_info", { count: selectedTemplate.sections.length })}
                 </Text>
               </View>
             )}
@@ -275,7 +277,7 @@ export default function NewPageScreen() {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.createButtonText}>Criar Página e QR Code</Text>
+                <Text style={styles.createButtonText}>{t("business.create_page_qr")}</Text>
               )}
             </TouchableOpacity>
           </View>

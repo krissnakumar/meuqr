@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getOrCreateClient, createNotification, supabaseAdmin } from "@/lib/notifications";
+import { ERR } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     if (!businessId || !customerName || !customerPhone || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
-        { error: "Dados obrigatórios faltando ou inválidos." },
+        { error: ERR.MISSING_ORDER_DATA },
         { status: 400 }
       );
     }
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Order creation error:", error);
-      return NextResponse.json({ error: "Erro ao criar pedido." }, { status: 500 });
+      return NextResponse.json({ error: ERR.CREATE_ORDER_ERROR }, { status: 500 });
     }
 
     // 3. Dispatch new order notification
@@ -95,6 +96,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, order });
   } catch (err) {
     console.error("Order API internal error:", err);
-    return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

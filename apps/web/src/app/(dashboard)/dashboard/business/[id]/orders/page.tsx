@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button, GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -50,6 +51,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
 
 export default function OrdersPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const businessId = params.id as string;
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -118,7 +120,7 @@ export default function OrdersPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando pedidos...</p>
+        <p className="text-sm font-medium text-gray-500">{t('business.loading_orders')}</p>
       </div>
     );
   }

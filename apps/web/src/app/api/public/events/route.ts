@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
 import { getOrCreateClient, createNotification, supabaseAdmin } from "@/lib/notifications";
+import { ERR } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
     const ip = getClientIp(request);
     const limitRes = checkRateLimit(ip, RATE_LIMIT_CONFIGS.tracking);
     if (!limitRes.allowed) {
-      return NextResponse.json({ error: "Muitas solicitações. Tente novamente mais tarde." }, { status: 429 });
+      return NextResponse.json({ error: ERR.TOO_MANY_SOLICITATIONS }, { status: 429 });
     }
 
     // 2. Parse event payload
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!businessId || !eventType) {
-      return NextResponse.json({ error: "Dados obrigatórios faltando." }, { status: 400 });
+      return NextResponse.json({ error: ERR.MISSING_REQUIRED_DATA }, { status: 400 });
     }
 
     // Validate business exists
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (!business) {
-      return NextResponse.json({ error: "Negócio não encontrado." }, { status: 404 });
+      return NextResponse.json({ error: ERR.BUSINESS_NOT_FOUND }, { status: 404 });
     }
 
     // 3. Resolve Client profile if name/phone is provided
@@ -165,6 +166,6 @@ export async function POST(request: NextRequest) {
 
   } catch (err) {
     console.error("Public Event API exception:", err);
-    return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

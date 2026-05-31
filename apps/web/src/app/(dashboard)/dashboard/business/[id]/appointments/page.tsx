@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { 
   GlassCard, 
   GlassCardContent, 
@@ -24,6 +25,8 @@ import { toast } from "sonner";
 
 export default function AppointmentsPage() {
   const { t } = useTranslation();
+  const params = useParams();
+  const businessId = params.id as string;
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,22 +41,10 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
     loadAppointments();
-  }, []);
+  }, [businessId]);
 
   async function loadAppointments() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: businesses } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("owner_id", user.id);
-
-      if (!businesses || businesses.length === 0) return;
-
-      const businessIds = businesses.map(b => b.id);
-
       const { data, error } = await supabase
         .from("appointments")
         .select(`
@@ -61,7 +52,7 @@ export default function AppointmentsPage() {
           appointment_services (name, duration_minutes, price),
           staff_members (name)
         `)
-        .in("business_id", businessIds)
+        .eq("business_id", businessId)
         .order("appointment_date", { ascending: true })
         .order("start_time", { ascending: true });
 
@@ -69,7 +60,7 @@ export default function AppointmentsPage() {
       setAppointments(data || []);
     } catch (err: any) {
       console.error(err);
-      toast.error("Erro ao carregar agendamentos");
+      toast.error(t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -99,19 +90,6 @@ export default function AppointmentsPage() {
 
     setCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      // Pegar o primeiro negócio do usuário logado (simplificado)
-      const { data: businesses } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("owner_id", user.id)
-        .limit(1);
-
-      if (!businesses || businesses.length === 0) throw new Error("Negócio não encontrado");
-      const businessId = businesses[0].id;
-
       const payload = {
         businessId,
         customerName: newCustomerName,
@@ -165,33 +143,32 @@ export default function AppointmentsPage() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+        <div>            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <Calendar className="w-6 h-6 text-indigo-600" />
-            Agendamentos
+            {t('business.appointments_title')}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Gerencie suas reservas, horários e equipe.</p>
+          <p className="text-sm text-gray-500 mt-1">{t('business.appointments_desc')}</p>
         </div>
         <Button 
           onClick={() => setShowNewModal(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
         >
           <CalendarCheck className="w-4 h-4 mr-2" />
-          Nova Reserva
+          {t('business.new_appointment')}
         </Button>
       </div>
 
       <GlassCard>
         <GlassCardHeader>
-          <GlassCardTitle>Próximos Agendamentos</GlassCardTitle>
+          <GlassCardTitle>{t('business.appointments_upcoming')}</GlassCardTitle>
         </GlassCardHeader>
         <GlassCardContent>
           {loading ? (
-            <div className="py-10 text-center text-gray-400">Carregando...</div>
+            <div className="py-10 text-center text-gray-400">{t('common.loading')}</div>
           ) : appointments.length === 0 ? (
             <div className="py-10 text-center">
               <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">Nenhum agendamento encontrado.</p>
+              <p className="text-gray-500">{t('business.appointment_none')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -278,7 +255,7 @@ export default function AppointmentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-800">Nova Reserva Manual</h2>
+              <h2 className="text-lg font-bold text-slate-800">{t('business.new_appointment_manual')}</h2>
               <button onClick={() => setShowNewModal(false)} className="text-gray-400 hover:text-gray-600">
                 <XCircle className="w-5 h-5" />
               </button>
@@ -286,32 +263,32 @@ export default function AppointmentsPage() {
             
             <form onSubmit={handleCreateReservation} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Nome do Cliente *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t('business.appointment_customer_name')}</label>
                 <input 
                   type="text" 
                   required
                   value={newCustomerName}
                   onChange={(e) => setNewCustomerName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:outline-none"
-                  placeholder="Ex: Carlos Silva"
+                  placeholder={t('business.appointment_customer_name_placeholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Telefone / WhatsApp *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t('common.phone')} *</label>
                 <input 
                   type="tel" 
                   required
                   value={newCustomerPhone}
                   onChange={(e) => setNewCustomerPhone(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:outline-none"
-                  placeholder="(11) 99999-9999"
+                  placeholder={t('business.appointment_phone_placeholder')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Data *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{t('business.appointment_date_label')}</label>
                   <input 
                     type="date" 
                     required
@@ -321,7 +298,7 @@ export default function AppointmentsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Horário *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{t('business.appointment_time_label')}</label>
                   <input 
                     type="time" 
                     required
@@ -333,22 +310,22 @@ export default function AppointmentsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Observações</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t('business.appointment_notes_label')}</label>
                 <textarea 
                   value={newNotes}
                   onChange={(e) => setNewNotes(e.target.value)}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:outline-none resize-none"
-                  placeholder="Adicione alguma nota..."
+                  placeholder={t('business.appointment_notes_placeholder')}
                 />
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setShowNewModal(false)}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button type="submit" disabled={creating} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                  {creating ? "Criando..." : "Confirmar Reserva"}
+                  {creating ? t('business.appointment_creating') : t('business.appointment_confirm_btn')}
                 </Button>
               </div>
             </form>

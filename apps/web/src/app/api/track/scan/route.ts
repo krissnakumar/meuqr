@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { trackScanSchema, detectDeviceType, detectBrowser } from "@meuqr/shared";
 import { z } from "zod";
 import { checkRateLimit, getClientIp, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
+import { ERR } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     const rateLimit = checkRateLimit(`scan:${ip}`, RATE_LIMIT_CONFIGS.tracking);
     if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: "Muitas requisições. Tente novamente mais tarde." },
+        { error: ERR.TOO_MANY_REQUESTS },
       { status: 429,
         headers: {
           "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)),
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Scan tracking error:", error);
-      return NextResponse.json({ error: "Failed to track scan" }, { status: 500 });
+      return NextResponse.json({ error: ERR.TRACK_SCAN_ERROR }, { status: 500 });
     }
 
     // Fire and forget - increment scan count
@@ -78,9 +79,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: data?.id });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid input", details: err.errors }, { status: 400 });
+      return NextResponse.json({ error: ERR.INVALID_INPUT, details: err.errors }, { status: 400 });
     }
     console.error("Scan tracking error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR_EN }, { status: 500 });
   }
 }

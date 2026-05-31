@@ -11,6 +11,7 @@ import {
 import { supabase } from "../../src/lib/supabase";
 import { QrCode, Store, Eye, MousePointerClick, ChevronRight, Plus, Sparkles, TrendingUp } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useTranslation } from "../../src/lib/i18n-provider";
 
 interface Business {
   id: string;
@@ -22,6 +23,7 @@ interface Business {
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [stats, setStats] = useState({
@@ -42,7 +44,7 @@ export default function DashboardScreen() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        setUsername(user.email?.split("@")[0] || "Usuário");
+        setUsername(user.email?.split("@")[0] || t("common.app_name"));
       }
 
       // Fetch user's businesses
@@ -102,16 +104,16 @@ export default function DashboardScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#1877F2" />
-        <Text style={styles.loadingText}>Carregando painel...</Text>
+        <Text style={styles.loadingText}>{t("dashboard.loading_info")}</Text>
       </View>
     );
   }
 
   const statsCards = [
-    { icon: Store, label: "Negócios", value: stats.businesses, color: "#1877F2" },
-    { icon: QrCode, label: "QR Codes", value: stats.qrCodes, color: "#31A24C" },
-    { icon: Eye, label: "Scans", value: stats.scans, color: "#1877F2" },
-    { icon: MousePointerClick, label: "Cliques", value: stats.clicks, color: "#31A24C" },
+    { icon: Store, label: t("dashboard.businesses"), value: stats.businesses, color: "#1877F2" },
+    { icon: QrCode, label: t("dashboard.qrcodes"), value: stats.qrCodes, color: "#31A24C" },
+    { icon: Eye, label: t("dashboard.scans"), value: stats.scans, color: "#1877F2" },
+    { icon: MousePointerClick, label: t("dashboard.whatsapp_clicks"), value: stats.clicks, color: "#31A24C" },
   ];
 
   return (
@@ -121,16 +123,16 @@ export default function DashboardScreen() {
       <View style={styles.headerCard}>
         <View style={styles.headerTag}>
           <Sparkles size={12} color="#FFFFFF" />
-          <Text style={styles.headerTagText}>Painel MeuQR</Text>
+          <Text style={styles.headerTagText}>{t("dashboard.title")}</Text>
         </View>
-        <Text style={styles.greeting}>Olá, <Text style={styles.usernameText}>{username}</Text>! 👋</Text>
-        <Text style={styles.subtitle}>Gerencie suas páginas, confira seus acessos e crie novos QR Codes em instantes.</Text>
+        <Text style={styles.greeting}>{t("common.welcome")}, <Text style={styles.usernameText}>{username}</Text>! 👋</Text>
+        <Text style={styles.subtitle}>{t("dashboard.subtitle")}</Text>
       </View>
 
       {/* ===== Stats Section Title ===== */}
       <View style={styles.sectionHeader}>
         <TrendingUp size={18} color="#1877F2" />
-        <Text style={styles.sectionTitle}>Estatísticas Gerais</Text>
+        <Text style={styles.sectionTitle}>{t("common.total")}</Text>
       </View>
 
       {/* ===== Stats Grid ===== */}
@@ -152,21 +154,21 @@ export default function DashboardScreen() {
       {/* ===== Business List Title ===== */}
       <View style={styles.sectionHeader}>
         <Store size={18} color="#1877F2" />
-        <Text style={styles.sectionTitle}>Seus Negócios</Text>
+        <Text style={styles.sectionTitle}>{t("dashboard.businesses")}</Text>
       </View>
 
       {/* ===== Business List ===== */}
       {businesses.length === 0 ? (
         <View style={styles.emptyCard}>
           <Store size={36} color="#D1D5DB" />
-          <Text style={styles.emptyTitle}>Nenhum estabelecimento</Text>
-          <Text style={styles.emptyText}>Cadastre o primeiro negócio para gerar um QR Code inteligente.</Text>
+          <Text style={styles.emptyTitle}>{t("dashboard.no_businesses")}</Text>
+          <Text style={styles.emptyText}>{t("dashboard.no_businesses_desc")}</Text>
           <TouchableOpacity
             style={styles.emptyButton}
             onPress={() => router.push("/business/new")}
           >
             <Plus size={16} color="#FFFFFF" />
-            <Text style={styles.emptyButtonText}>Começar</Text>
+            <Text style={styles.emptyButtonText}>{t("common.start_free")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -207,7 +209,7 @@ export default function DashboardScreen() {
           onPress={() => router.push("/business/new")}
         >
           <Plus size={20} color="#FFFFFF" />
-          <Text style={styles.createButtonText}>Cadastrar Novo Negócio</Text>
+          <Text style={styles.createButtonText}>{t("dashboard.create_business")}</Text>
         </TouchableOpacity>
       )}
 

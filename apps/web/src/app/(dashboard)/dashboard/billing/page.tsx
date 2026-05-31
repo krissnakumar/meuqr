@@ -5,6 +5,7 @@ import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, B
 import { supabase } from "@/lib/supabase";
 import { PLANS } from "@meuqr/shared";
 import { useTranslation } from "@/lib/i18n-provider";
+import { toast } from "sonner";
 import {
   Loader2,
   CheckCircle2,
@@ -20,6 +21,7 @@ export default function BillingPage() {
   const [currentTier, setCurrentTier] = useState<string>("free");
   const [annual, setAnnual] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [upgrading, setUpgrading] = useState<string | null>(null);
 
   useEffect(() => {
     loadSubscription();
@@ -45,11 +47,46 @@ export default function BillingPage() {
     }
   }
 
+  const handleUpgrade = async (planKey: string) => {
+    setUpgrading(planKey);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error(t("errors.session_expired"));
+
+      const { data: businesses, error: fetchError } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("owner_id", user.id)
+        .limit(1);
+
+      if (fetchError) throw fetchError;
+
+      if (businesses && businesses.length > 0) {
+        const { error: updateError } = await supabase
+          .from("businesses")
+          .update({ subscription_tier: planKey })
+          .eq("id", businesses[0].id);
+
+        if (updateError) throw updateError;
+        
+        setCurrentTier(planKey);
+        toast.success(t('success.updated'));
+      } else {
+        toast.error(t('errors.generic'));
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(t('errors.generic'));
+    } finally {
+      setUpgrading(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-        <p className="text-sm font-medium text-[#64748B]">Carregando planos...</p>
+        <p className="text-sm font-medium text-[#64748B]">{t('business.loading_plans')}</p>
       </div>
     );
   }
@@ -62,8 +99,8 @@ export default function BillingPage() {
 
   const tierLabels: Record<string, string> = {
     free: t("pricing.free_name"),
-    pro: "Pro",
-    business: "Business",
+    pro: t("pricing.pro_name"),
+    business: t("pricing.biz_name"),
   };
 
   const tierBadgeVariant: Record<string, "default" | "accent" | "secondary" | "outline" | "muted" | "indigo" | "emerald" | "amber" | "rose"> = {
@@ -130,7 +167,7 @@ export default function BillingPage() {
               : "text-[#94A3B8] hover:text-[#64748B]"
           }`}
         >
-          Mensal
+          {t('pricing.monthly')}
         </button>
         <button
           onClick={() => setAnnual(true)}
@@ -140,7 +177,7 @@ export default function BillingPage() {
               : "text-[#94A3B8] hover:text-[#64748B]"
           }`}
         >
-          Anual
+          {t('pricing.yearly')}
           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
             ECONOMIZE 17%
           </span>
@@ -168,7 +205,7 @@ export default function BillingPage() {
                     variant="indigo"
                     className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap"
                   >
-                    Plano Atual
+                    {t('pricing.current_plan')}
                   </Badge>
                 )}
 
@@ -207,13 +244,13 @@ export default function BillingPage() {
                     )}
                   </div>
                   {plan.key === "free" && (
-                    <p className="text-xs text-[#94A3B8] mt-1">Para começar • Sem compromisso</p>
+                    <p className="text-xs text-[#94A3B8] mt-1">{t('pricing.free_tagline')}</p>
                   )}
                   {plan.key === "pro" && (
-                    <p className="text-xs text-indigo-600 font-medium mt-1">Mais popular • Recomendado</p>
+                    <p className="text-xs text-indigo-600 font-medium mt-1">{t('pricing.pro_tagline')}</p>
                   )}
                   {plan.key === "business" && (
-                    <p className="text-xs text-amber-600 font-medium mt-1">Para equipes • Completo</p>
+                    <p className="text-xs text-amber-600 font-medium mt-1">{t('pricing.biz_tagline')}</p>
                   )}
                 </GlassCardHeader>
 
@@ -312,14 +349,28 @@ export default function BillingPage() {
                   </ul>
 
                   {!isCurrent && plan.key !== "free" && (
-                    <Button variant="default" className="w-full shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-200">
-                      {t("business.upgrade")}
-                      <ArrowRight className="w-4 h-4 ml-1.5" />
+                    <Button 
+                      variant="default" 
+                      onClick={() => handleUpgrade(plan.key)}
+                      disabled={upgrading === plan.key}
+                      className="w-full shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-200"
+                    >
+                      {upgrading === plan.key ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {t('common.saving')}
+                        </>
+                      ) : (
+                        <>
+                          {t("business.upgrade")}
+                          <ArrowRight className="w-4 h-4 ml-1.5" />
+                        </>
+                      )}
                     </Button>
                   )}
 
                   {!isCurrent && plan.key === "free" && (
-                    <p className="text-center text-xs text-[#94A3B8]">Seu plano atual</p>
+                    <p className="text-center text-xs text-[#94A3B8]">{t('pricing.current_plan_free')}</p>
                   )}
                 </GlassCardContent>
               </GlassCard>

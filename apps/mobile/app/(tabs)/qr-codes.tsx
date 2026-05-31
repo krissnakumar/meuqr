@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { supabase } from "../../src/lib/supabase";
 import { QrCode, Share2 } from "lucide-react-native";
+import { useTranslation } from "../../src/lib/i18n-provider";
 
 interface QRCode {
   id: string;
@@ -21,6 +22,7 @@ interface QRCode {
 }
 
 export default function QRCodesScreen() {
+  const { t } = useTranslation();
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,15 +64,15 @@ export default function QRCodesScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>QR Codes</Text>
-        <Text style={styles.subtitle}>{qrCodes.length} QR code(s)</Text>
+        <Text style={styles.title}>{t("sidebar.qrcodes")}</Text>
+        <Text style={styles.subtitle}>{qrCodes.length} {t("business.qrcodes")}</Text>
       </View>
 
       {qrCodes.length === 0 ? (
         <View style={styles.empty}>
           <QrCode size={48} color="#D1D5DB" />
-          <Text style={styles.emptyTitle}>Nenhum QR code</Text>
-          <Text style={styles.emptyText}>Crie um negócio para gerar QR codes</Text>
+          <Text style={styles.emptyTitle}>{t("common.no_results")}</Text>
+          <Text style={styles.emptyText}>{t("dashboard.no_businesses_desc")}</Text>
         </View>
       ) : (
         qrCodes.map((qr) => (

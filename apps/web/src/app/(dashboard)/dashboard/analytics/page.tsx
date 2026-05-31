@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from "@meuqr/ui";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -30,6 +31,7 @@ interface AnalyticsStats {
 }
 
 export default function AnalyticsPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<AnalyticsStats>({
     totalScans: 0,
@@ -155,7 +157,7 @@ export default function AnalyticsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-        <p className="text-sm font-medium text-[#64748B]">Carregando analytics...</p>
+        <p className="text-sm font-medium text-[#64748B]">{t('business.loading_analytics')}</p>
       </div>
     );
   }

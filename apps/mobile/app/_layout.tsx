@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator } from "react-native";
 import { supabase } from "../src/lib/supabase";
 import { Session } from "@supabase/supabase-js";
+import { I18nProvider } from "../src/lib/i18n-provider";
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -49,13 +50,13 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <I18nProvider>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
       </Stack>
-    </>
+    </I18nProvider>
   );
 }

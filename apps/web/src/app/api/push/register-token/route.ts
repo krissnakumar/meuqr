@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { ERR } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -23,14 +24,14 @@ export async function POST(request: NextRequest) {
     // 1. Get authenticated session user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+      return NextResponse.json({ error: ERR.UNAUTHORIZED }, { status: 401 });
     }
 
     const body = await request.json();
     const { expoPushToken, platform, deviceName, businessId } = body;
 
     if (!expoPushToken || !platform) {
-      return NextResponse.json({ error: "Parâmetros expoPushToken e platform são obrigatórios." }, { status: 400 });
+      return NextResponse.json({ error: ERR.MISSING_PUSH_TOKEN_DATA }, { status: 400 });
     }
 
     // 2. Register/Update the device push token
@@ -52,12 +53,12 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Token registration error:", error);
-      return NextResponse.json({ error: "Erro ao registrar token de push." }, { status: 500 });
+      return NextResponse.json({ error: ERR.REGISTER_PUSH_TOKEN_ERROR }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, token });
   } catch (err) {
     console.error("Push Register exception:", err);
-    return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

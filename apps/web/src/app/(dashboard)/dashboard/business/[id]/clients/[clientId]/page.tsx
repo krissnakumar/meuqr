@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Badge } from "@meuqr/ui";
 import {
@@ -54,6 +55,7 @@ interface TimelineItem {
 export default function ClientDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useTranslation();
   const businessId = params.id as string;
   const clientId = params.clientId as string;
 
@@ -214,7 +216,7 @@ export default function ClientDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando timeline do cliente...</p>
+        <p className="text-sm font-medium text-gray-500">{t('common.loading')}</p>
       </div>
     );
   }

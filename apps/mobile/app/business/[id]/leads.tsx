@@ -22,6 +22,7 @@ import {
   Trash2,
   Search,
 } from "lucide-react-native";
+import { useTranslation } from "../../../src/lib/i18n-provider";
 
 interface LeadData {
   id: string;
@@ -35,6 +36,7 @@ interface LeadData {
 export default function LeadsScreen() {
   const router = useRouter();
   const { id: businessId } = useLocalSearchParams();
+  const { t } = useTranslation();
 
   const [leads, setLeads] = useState<LeadData[]>([]);
   const [search, setSearch] = useState("");
@@ -63,10 +65,10 @@ export default function LeadsScreen() {
   }
 
   async function deleteLead(leadId: string) {
-    Alert.alert("Excluir Lead", "Tem certeza que deseja excluir este lead?", [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(t("business.delete_lead"), t("business.delete_lead_confirm"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Excluir",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await supabase.from("leads").delete().eq("id", leadId);
@@ -101,7 +103,7 @@ export default function LeadsScreen() {
         >
           <ArrowLeft size={20} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Leads</Text>
+        <Text style={styles.headerTitle}>{t("business.leads")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -112,7 +114,7 @@ export default function LeadsScreen() {
           style={styles.searchInput}
           value={search}
           onChangeText={setSearch}
-          placeholder="Buscar leads..."
+          placeholder={t("business.search_leads")}
           placeholderTextColor="#9CA3AF"
         />
       </View>
@@ -132,9 +134,9 @@ export default function LeadsScreen() {
         {filteredLeads.length === 0 ? (
           <View style={styles.emptyState}>
             <Users size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>Nenhum Lead</Text>
+            <Text style={styles.emptyTitle}>{t("business.no_members")}</Text>
             <Text style={styles.emptyText}>
-              Leads capturados pelos formulários aparecerão aqui
+              {t("business.leads_captured_desc")}
             </Text>
           </View>
         ) : (

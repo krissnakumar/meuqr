@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -30,6 +31,7 @@ interface Lead {
 
 export default function LeadsPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const businessId = params.id as string;
 
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -86,7 +88,7 @@ export default function LeadsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando leads...</p>
+        <p className="text-sm font-medium text-gray-500">{t('business.loading_leads')}</p>
       </div>
     );
   }

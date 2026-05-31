@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
+import { useTranslation } from "@/lib/i18n-provider";
 import { toast } from "sonner";
 import PagesTreeView from "./_components/pages-tree-view";
 import EditBusinessInfo from "./_components/edit-business-info";
@@ -40,8 +41,8 @@ interface BusinessFull {
 
 const MANAGEMENT_LINKS = [
   {
-    label: "Analytics",
-    description: "Scans, cliques e métricas",
+    labelKey: "sidebar.analytics",
+    descKey: "analytics_desc",
     href: (id: string) => `/dashboard/business/${id}/analytics`,
     color: "from-blue-500 to-indigo-500",
     bg: "bg-blue-50",
@@ -52,8 +53,8 @@ const MANAGEMENT_LINKS = [
     icon: BarChart3,
   },
   {
-    label: "Pedidos",
-    description: "Gerenciar pedidos",
+    labelKey: "sidebar.orders",
+    descKey: "orders_desc",
     href: (id: string) => `/dashboard/business/${id}/orders`,
     color: "from-amber-500 to-orange-500",
     bg: "bg-amber-50",
@@ -64,8 +65,8 @@ const MANAGEMENT_LINKS = [
     icon: ShoppingCart,
   },
   {
-    label: "Leads",
-    description: "Contatos recebidos",
+    labelKey: "sidebar.customers",
+    descKey: "leads_desc",
     href: (id: string) => `/dashboard/business/${id}/leads`,
     color: "from-emerald-500 to-green-500",
     bg: "bg-emerald-50",
@@ -76,8 +77,8 @@ const MANAGEMENT_LINKS = [
     icon: MessageSquare,
   },
   {
-    label: "Clientes",
-    description: "Base de clientes e timeline",
+    labelKey: "sidebar.customers",
+    descKey: "clients_desc",
     href: (id: string) => `/dashboard/business/${id}/clients`,
     color: "from-indigo-500 to-violet-500",
     bg: "bg-indigo-50",
@@ -88,8 +89,8 @@ const MANAGEMENT_LINKS = [
     icon: Users,
   },
   {
-    label: "Orçamentos",
-    description: "Solicitações de clientes",
+    labelKey: "business.quotes",
+    descKey: "quote_requests_desc",
     href: (id: string) => `/dashboard/business/${id}/quote-requests`,
     color: "from-teal-500 to-emerald-500",
     bg: "bg-teal-50",
@@ -100,8 +101,8 @@ const MANAGEMENT_LINKS = [
     icon: ClipboardList,
   },
   {
-    label: "Equipe",
-    description: "Membros e permissões",
+    labelKey: "business.members",
+    descKey: "members_desc",
     href: (id: string) => `/dashboard/business/${id}/members`,
     color: "from-violet-500 to-purple-500",
     bg: "bg-violet-50",
@@ -118,6 +119,7 @@ export default function BusinessDetailPage() {
   const router = useRouter();
   const businessId = params.id as string;
 
+  const { t } = useTranslation();
   const [business, setBusiness] = useState<BusinessFull | null>(null);
   const [pages, setPages] = useState<any[]>([]);
   const [qrCodes, setQrCodes] = useState<any[]>([]);
@@ -140,15 +142,15 @@ export default function BusinessDetailPage() {
         .eq("id", businessId);
 
       if (error) {
-        toast.error("Erro ao salvar configurações de notificações: " + error.message);
+        toast.error(t("errors.generic") + " " + error.message);
         return;
       }
 
       setNotifSettings(updatedSettings);
-      toast.success("Configurações de notificações atualizadas!");
+      toast.success(t("success.saved"));
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao salvar configurações.");
+      toast.error(t("errors.generic"));
     }
   }
 
@@ -243,13 +245,13 @@ export default function BusinessDetailPage() {
   }
 
   async function deleteBusiness() {
-    if (!confirm("Tem certeza que deseja excluir este negócio?")) return;
+    if (!confirm(t("business.confirm_delete"))) return;
     const { error } = await supabase.from("businesses").delete().eq("id", businessId);
     if (error) {
-      toast.error("Erro ao excluir negócio");
+      toast.error(t("business.error_delete"));
       return;
     }
-    toast.success("Negócio excluído");
+    toast.success(t("business.success_delete"));
     router.push("/dashboard");
   }
 
@@ -415,10 +417,10 @@ export default function BusinessDetailPage() {
         <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
           <Store className="w-8 h-8 text-red-400" />
         </div>
-        <h2 className="text-lg font-bold text-slate-800 mb-1">Negócio não encontrado</h2>
-        <p className="text-sm text-gray-400 mb-6">Este negócio pode ter sido removido ou o link está incorreto.</p>
+        <h2 className="text-lg font-bold text-slate-800 mb-1">{t("business.not_found")}</h2>
+        <p className="text-sm text-gray-400 mb-6">{t("errors.not_found")}</p>
         <Link href="/dashboard">
-          <Button variant="outline">Voltar ao Dashboard</Button>
+          <Button variant="outline">{t("business.back_to_dashboard")}</Button>
         </Link>
       </div>
     );
@@ -432,7 +434,7 @@ export default function BusinessDetailPage() {
         className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-indigo-600 transition-colors group"
       >
         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-        Dashboard
+        {t("dashboard.title")}
       </Link>
 
       {/* ===== Header ===== */}
@@ -458,7 +460,7 @@ export default function BusinessDetailPage() {
                     {business.category.replace(/_/g, " ")}
                   </Badge>
                   <Badge variant={business.subscription_tier === "free" ? "amber" : "emerald"}>
-                    {business.subscription_tier === "free" ? "Grátis" : business.subscription_tier}
+                    {business.subscription_tier === "free" ? t("dashboard.free_plan") : business.subscription_tier}
                   </Badge>
                 </div>
               </div>
@@ -470,21 +472,20 @@ export default function BusinessDetailPage() {
                   href={`/${business.slug}`}
                   target="_blank"
                   className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600 hover:text-indigo-600 transition-all flex items-center gap-1.5 shadow-sm"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Ver página</span>
+                >                    <Eye className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{t("public.page")}</span>
                 </Link>
               )}
               <Link href={`/dashboard/business/${businessId}/setup`}>
                 <Button variant="default" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  Nova Página
+                  {t("business.add_page")}
                 </Button>
               </Link>
               <button
                 onClick={deleteBusiness}
                 className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all cursor-pointer"
-                title="Excluir negócio"
+                title={t("common.delete")}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -534,12 +535,23 @@ export default function BusinessDetailPage() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center">
                   <BarChart3 className="w-4 h-4 text-indigo-600" />
                 </div>
-                <GlassCardTitle>Gerenciamento</GlassCardTitle>
+                <GlassCardTitle>{t("dashboard.title")}</GlassCardTitle>
               </div>
             </GlassCardHeader>
             <GlassCardContent className="p-0">
               <div className="divide-y divide-slate-50">
-                {MANAGEMENT_LINKS.map((link, linkIndex) => {
+                {MANAGEMENT_LINKS.filter(link => {
+                  const cat = business.category || "other";
+                  const needsOrders = ["restaurant", "clothing_store", "supermarket", "pharmacy", "pet_shop"].includes(cat);
+                  const needsAppointments = ["salon", "medical_clinic", "gym", "pet_shop", "auto_repair"].includes(cat);
+                  const needsLeadsAndQuotes = ["real_estate", "auto_repair", "construction_materials", "hotel", "other"].includes(cat);
+
+                  if (link.labelKey === "sidebar.orders") return needsOrders;
+                  if (link.labelKey === "sidebar.appointments") return needsAppointments;
+                  if (link.descKey === "leads_desc") return needsLeadsAndQuotes;
+                  if (link.labelKey === "business.quotes") return needsLeadsAndQuotes;
+                  return true;
+                }).map((link, linkIndex) => {
                   const IconComponent = link.icon || BarChart3;
                   const count = link.countKey ? (() => {
                     switch (link.countKey) {
@@ -554,7 +566,7 @@ export default function BusinessDetailPage() {
 
                   return (
                     <Link
-                      key={link.label}
+                      key={link.href("temp")}
                       href={link.href(businessId)}
                       className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors group animate-fade-in-up"
                       style={{ animationDelay: `${linkIndex * 80}ms` }}
@@ -564,8 +576,8 @@ export default function BusinessDetailPage() {
                           <IconComponent className={`w-4 h-4 ${link.iconColor}`} />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{link.label}</p>
-                          <p className="text-xs text-gray-400">{link.description}</p>
+                          <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{t(link.labelKey)}</p>
+                          <p className="text-xs text-gray-400">{t(link.descKey)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -592,8 +604,8 @@ export default function BusinessDetailPage() {
                     <Sparkles className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-800">Usar modelo pronto</p>
-                    <p className="text-xs text-gray-400">Comece com um template otimizado</p>
+                    <p className="text-sm font-bold text-slate-800">{t("business.use_template")}</p>
+                    <p className="text-xs text-gray-400">{t("business.setup_desc")}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-indigo-400 shrink-0" />
                 </div>

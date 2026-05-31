@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GlassCard, GlassCardContent, Button, Input } from "@meuqr/ui";
-import { Settings, Save, Server, Shield, Globe, HardDrive } from "lucide-react";
+import { Settings, Save, Server, Shield, Globe, HardDrive, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [settings, setSettings] = useState({
     maintenanceMode: false,
     allowSignups: true,
@@ -16,14 +18,71 @@ export default function AdminSettingsPage() {
     allowedDomains: "*",
   });
 
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const { data, error } = await supabase
+          .from("system_settings")
+          .select("*")
+          .eq("id", "global")
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error("Failed to load settings:", error);
+          toast.error("Erro ao carregar configurações do sistema");
+        } else if (data) {
+          setSettings({
+            maintenanceMode: data.maintenance_mode ?? false,
+            allowSignups: data.allow_signups ?? true,
+            trialDays: String(data.trial_days ?? 14),
+            maxUploadSize: String(data.max_upload_size_mb ?? 50),
+            maxBusinessesPerUser: String(data.max_businesses_per_user ?? 1),
+            allowedDomains: data.allowed_domains ?? "*",
+          });
+        }
+      } catch (err) {
+        console.error("Unexpected error loading settings:", err);
+      } finally {
+        setInitialLoading(false);
+      }
+    }
+
+    fetchSettings();
+  }, []);
+
   const handleSave = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { error } = await supabase
+        .from("system_settings")
+        .upsert({
+          id: "global",
+          maintenance_mode: settings.maintenanceMode,
+          allow_signups: settings.allowSignups,
+          trial_days: parseInt(settings.trialDays) || 14,
+          max_upload_size_mb: parseInt(settings.maxUploadSize) || 50,
+          max_businesses_per_user: parseInt(settings.maxBusinessesPerUser) || 1,
+          allowed_domains: settings.allowedDomains,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
       toast.success("Configurações salvas com sucesso!");
-    }, 800);
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+      toast.error("Erro ao salvar configurações");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">

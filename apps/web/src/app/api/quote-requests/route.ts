@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getOrCreateClient, createNotification, supabaseAdmin } from "@/lib/notifications";
+import { ERR } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     if (!businessId || !customerName || !customerPhone || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
-        { error: "Dados obrigatórios faltando ou lista de itens vazia." },
+        { error: ERR.MISSING_QUOTE_DATA },
         { status: 400 }
       );
     }
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Quote Request creation error:", error);
-      return NextResponse.json({ error: "Erro ao criar solicitação de orçamento." }, { status: 500 });
+      return NextResponse.json({ error: ERR.CREATE_QUOTE_ERROR }, { status: 500 });
     }
 
     // 3. Dispatch new quote request notification
@@ -94,6 +95,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, quote });
   } catch (err) {
     console.error("Quote Request API internal error:", err);
-    return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

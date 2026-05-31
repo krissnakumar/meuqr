@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Input, Label } from "@meuqr/ui";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -18,6 +19,7 @@ import {
 
 export default function PageSettingsPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const businessId = params.id as string;
   const pageId = params.pageId as string;
 
@@ -98,7 +100,7 @@ export default function PageSettingsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando configurações...</p>
+        <p className="text-sm font-medium text-gray-500">{t('business.loading_settings')}</p>
       </div>
     );
   }

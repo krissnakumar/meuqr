@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "@meuqr/ui";
 import {
@@ -53,6 +54,7 @@ interface Business {
 }
 
 export default function NotificationsPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -254,7 +256,7 @@ export default function NotificationsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-[#1877F2]" />
-        <p className="text-sm font-medium text-gray-500">Carregando centro de notificações...</p>
+        <p className="text-sm font-medium text-gray-500">{t('business.loading_notifications')}</p>
       </div>
     );
   }

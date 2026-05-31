@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -35,6 +36,7 @@ interface QuoteRequest {
 
 export default function QuoteRequestsPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const businessId = params.id as string;
 
   const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
@@ -79,7 +81,7 @@ export default function QuoteRequestsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando orçamentos...</p>
+        <p className="text-sm font-medium text-gray-500">{t('business.loading_quotes')}</p>
       </div>
     );
   }

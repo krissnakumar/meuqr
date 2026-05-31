@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button, GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import {
   Store,
@@ -28,6 +29,7 @@ interface BusinessItem {
 }
 
 export default function BusinessesListPage() {
+  const { t } = useTranslation();
   const [businesses, setBusinesses] = useState<BusinessItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -92,7 +94,7 @@ export default function BusinessesListPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando negócios...</p>
+        <p className="text-sm font-medium text-gray-500">{t('business.loading_businesses')}</p>
       </div>
     );
   }

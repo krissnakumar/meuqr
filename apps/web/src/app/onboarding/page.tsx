@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Button } from "@meuqr/ui";
 import { BUSINESS_CATEGORIES } from "@meuqr/shared";
 import { QrCode, Loader2, Building, MapPin, Store, ArrowRight, ArrowLeft, Search, Sparkles, User, Check } from "lucide-react";
+import { useTranslation } from "@/lib/i18n-provider";
 import { toast } from "sonner";
 
 interface BrasilAPICNPJ {
@@ -55,13 +56,14 @@ function validateCPF(cpf: string) {
 }
 
 const steps = [
-  { key: 1, label: "Documentação", icon: Building },
-  { key: 2, label: "Identificação", icon: Store },
-  { key: 3, label: "Endereço", icon: MapPin },
+  { key: 1, keyName: "step_doc", icon: Building },
+  { key: 2, keyName: "step_id", icon: Store },
+  { key: 3, keyName: "step_address", icon: MapPin },
 ];
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -158,7 +160,7 @@ export default function OnboardingPage() {
   async function handleCnpjLookup() {
     const cleanCnpj = cnpj.replace(/\D/g, "");
     if (cleanCnpj.length !== 14) {
-      toast.error("CNPJ deve conter 14 dígitos.");
+      toast.error(t("onboarding.cnpj_invalid"));
       return;
     }
 
@@ -214,11 +216,11 @@ export default function OnboardingPage() {
         setBizCategory("other");
       }
 
-      toast.success("Empresa localizada com sucesso!");
+      toast.success(t("onboarding.cnpj_found"));
       setStep(2);
     } catch (err) {
       console.error(err);
-      toast.error("Não foi possível localizar o CNPJ. Preencha os dados no próximo passo.");
+      toast.error(t("onboarding.cnpj_not_found"));
       setStep(2);
     } finally {
       setSearchingCnpj(false);
@@ -229,10 +231,10 @@ export default function OnboardingPage() {
   function handleCpfNext() {
     const cleanCpf = cpf.replace(/\D/g, "");
     if (!validateCPF(cleanCpf)) {
-      toast.error("Insira um CPF válido.");
+      toast.error(t("onboarding.cpf_invalid"));
       return;
     }
-    toast.success("CPF validado com sucesso!");
+    toast.success(t("onboarding.cpf_valid"));
     setStep(2);
   }
 
@@ -246,14 +248,14 @@ export default function OnboardingPage() {
     setBizCep(formatted.slice(0, 9));
 
     if (cleanCep.length === 8) {
-      const toastId = toast.loading("Buscando CEP...");
+      const toastId = toast.loading(t("onboarding.cep_searching"));
       try {
         const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         
         if (data.erro) {
-          toast.error("CEP não localizado.", { id: toastId });
+          toast.error(t("onboarding.cep_not_found"), { id: toastId });
           return;
         }
 
@@ -265,16 +267,16 @@ export default function OnboardingPage() {
         setBizCity(data.localidade || "");
         setBizState(data.uf || "");
         
-        toast.success("Endereço preenchido automaticamente pelo CEP!", { id: toastId });
+        toast.success(t("onboarding.cep_filled"), { id: toastId });
       } catch (err) {
-        toast.error("Erro ao buscar CEP. Preencha manualmente.", { id: toastId });
+        toast.error(t("onboarding.cep_error"), { id: toastId });
       }
     }
   };
 
   async function handleOnboardingComplete() {
     if (!bizName || !bizSlug || !bizCategory) {
-      toast.error("Preencha todos os campos obrigatórios.");
+      toast.error(t("business.fill_required"));
       return;
     }
 
@@ -301,18 +303,18 @@ export default function OnboardingPage() {
 
       if (error) {
         if (error.code === "23505") {
-          toast.error("Este endereço (URL amigável) já está em uso por outro estabelecimento.");
+          toast.error(t("business.slug_taken"));
         } else {
-          toast.error("Erro ao cadastrar negócio: " + error.message);
+          toast.error(t("errors.generic") + " " + error.message);
         }
         return;
       }
 
-      toast.success("Setup concluído com sucesso!");
+      toast.success(t("onboarding.setup_success"));
       router.push("/dashboard");
     } catch (err: any) {
       console.error(err);
-      toast.error("Erro interno. Tente novamente.");
+      toast.error(t("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -324,7 +326,7 @@ export default function OnboardingPage() {
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
           <Loader2 className="w-6 h-6 text-white animate-spin" />
         </div>
-        <p className="text-sm font-medium text-[#64748B] animate-pulse">Preparando seu setup...</p>
+        <p className="text-sm font-medium text-[#64748B] animate-pulse">{t("common.preparing")}</p>
       </div>
     );
   }
@@ -370,7 +372,7 @@ export default function OnboardingPage() {
                       step >= s.key ? "text-[#0F172A]" : "text-[#94A3B8]"
                     }`}
                   >
-                    {s.label}
+                    {t(`onboarding.${s.keyName}`)}
                   </span>
                 </div>
                 {i < steps.length - 1 && (
@@ -396,9 +398,9 @@ export default function OnboardingPage() {
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200/50 flex items-center justify-center mx-auto mb-3 shadow-sm">
                   <Building className="w-6 h-6 text-indigo-500" />
                 </div>
-                <GlassCardTitle className="text-xl font-bold">Como deseja se cadastrar?</GlassCardTitle>
+                <GlassCardTitle className="text-xl font-bold">{t("onboarding.step_doc_title")}</GlassCardTitle>
                 <p className="text-sm text-[#64748B] mt-1.5">
-                  Selecione se você atua como Pessoa Jurídica (CNPJ) ou Autônomo/Pessoa Física (CPF).
+                  {t("onboarding.step_doc_desc")}
                 </p>
               </GlassCardHeader>
               <GlassCardContent className="space-y-6">
@@ -418,7 +420,7 @@ export default function OnboardingPage() {
                     }`}>
                       <Building className="w-4 h-4" />
                     </div>
-                    Pessoa Jurídica
+                    {t("onboarding.cnpj_option")}
                     <span className="block text-xs font-normal text-[#94A3B8] mt-0.5">CNPJ</span>
                   </button>
                   <button
@@ -435,7 +437,7 @@ export default function OnboardingPage() {
                     }`}>
                       <User className="w-4 h-4" />
                     </div>
-                    Pessoa Física
+                    {t("onboarding.cpf_option")}
                     <span className="block text-xs font-normal text-[#94A3B8] mt-0.5">CPF</span>
                   </button>
                 </div>
@@ -444,12 +446,12 @@ export default function OnboardingPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                        CNPJ do seu estabelecimento
+                        {t("onboarding.cnpj_label")}
                       </label>
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="00.000.000/0000-00"
+                          placeholder={t("onboarding.cnpj_placeholder")}
                           value={cnpj}
                           onChange={(e) => handleCnpjChange(e.target.value)}
                           className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -459,7 +461,7 @@ export default function OnboardingPage() {
                         </div>
                       </div>
                       <p className="text-xs text-[#94A3B8] mt-1.5">
-                        Preenchimento automático via consulta pública BrasilAPI.
+                        {t("onboarding.cnpj_hint")}
                       </p>
                     </div>
 
@@ -474,14 +476,14 @@ export default function OnboardingPage() {
                         ) : (
                           <Search className="w-4 h-4 mr-2" />
                         )}
-                        Buscar dados e Avançar
+                        {t("onboarding.cnpj_search_btn")}
                       </Button>
 
                       <button
                         onClick={() => setStep(2)}
                         className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 border border-slate-200 transition-all"
                       >
-                        Pular auto-preenchimento
+                        {t("onboarding.cnpj_skip")}
                         <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
@@ -490,12 +492,12 @@ export default function OnboardingPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                        Seu CPF
+                        {t("onboarding.cpf_label")}
                       </label>
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="000.000.000-00"
+                          placeholder={t("onboarding.cpf_placeholder")}
                           value={cpf}
                           onChange={(e) => handleCpfChange(e.target.value)}
                           className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -505,7 +507,7 @@ export default function OnboardingPage() {
                         </div>
                       </div>
                       <p className="text-xs text-[#94A3B8] mt-1.5">
-                        Por privacidade, dados de CPF são validados localmente.
+                        {t("onboarding.cpf_hint")}
                       </p>
                     </div>
 
@@ -513,7 +515,7 @@ export default function OnboardingPage() {
                       onClick={handleCpfNext}
                       className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl shadow-md shadow-indigo-200"
                     >
-                      Validar CPF e Continuar
+                      {t("onboarding.cpf_validate_btn")}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -532,20 +534,20 @@ export default function OnboardingPage() {
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200/50 flex items-center justify-center">
                     <Store className="w-4 h-4 text-indigo-500" />
                   </div>
-                  <GlassCardTitle className="text-lg">Sobre o seu Negócio</GlassCardTitle>
+                  <GlassCardTitle className="text-lg">{t("business.about_title")}</GlassCardTitle>
                 </div>
                 <p className="text-sm text-[#64748B] mt-1">
-                  Defina o nome comercial, sua categoria de atuação e crie seu endereço amigável na internet.
+                  {t("business.about_desc")}
                 </p>
               </GlassCardHeader>
               <GlassCardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                    Nome do Estabelecimento <span className="text-rose-500">*</span>
+                    {t("business.name_label")} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Ex: Pizzaria Bella Italia"
+                    placeholder={t("business.name_placeholder")}
                     value={bizName}
                     onChange={(e) => handleNameChange(e.target.value)}
                     className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -555,7 +557,7 @@ export default function OnboardingPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                    URL do Estabelecimento <span className="text-rose-500">*</span>
+                    {t("business.slug_label")} <span className="text-rose-500">*</span>
                   </label>
                   <div className="flex rounded-xl overflow-hidden border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
                     <span className="inline-flex items-center px-3.5 bg-slate-50 text-[#64748B] text-sm border-r border-slate-200">
@@ -563,7 +565,7 @@ export default function OnboardingPage() {
                     </span>
                     <input
                       type="text"
-                      placeholder="pizzaria-bella-italia"
+                      placeholder={t("business.slug_placeholder")}
                       value={bizSlug}
                       onChange={(e) => setBizSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
                       className="flex-1 h-11 px-3.5 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none"
@@ -575,7 +577,7 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                      Categoria <span className="text-rose-500">*</span>
+                      {t("common.category")} <span className="text-rose-500">*</span>
                     </label>
                     <select
                       value={bizCategory}
@@ -592,11 +594,11 @@ export default function OnboardingPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                      Telefone Comercial
+                      {t("business.phone_label")}
                     </label>
                     <input
                       type="text"
-                      placeholder="(11) 99999-8888"
+                      placeholder={t("business.phone_placeholder")}
                       value={bizPhone}
                       onChange={(e) => setBizPhone(e.target.value)}
                       className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -606,11 +608,11 @@ export default function OnboardingPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                    WhatsApp para Pedidos
+                    {t("business.whatsapp_label")}
                   </label>
                   <input
                     type="text"
-                    placeholder="(11) 99999-8888"
+                    placeholder={t("business.whatsapp_placeholder")}
                     value={bizWhatsapp}
                     onChange={(e) => setBizWhatsapp(e.target.value)}
                     className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -623,14 +625,14 @@ export default function OnboardingPage() {
                     className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 border border-slate-200 transition-all"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Voltar
+                    {t("common.back")}
                   </button>
                   <Button
                     onClick={() => setStep(3)}
                     disabled={!bizName || !bizSlug}
                     className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl shadow-md shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Próximo
+                    {t("common.next")}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -648,21 +650,21 @@ export default function OnboardingPage() {
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200/50 flex items-center justify-center">
                     <MapPin className="w-4 h-4 text-indigo-500" />
                   </div>
-                  <GlassCardTitle className="text-lg">Onde você fica?</GlassCardTitle>
+                  <GlassCardTitle className="text-lg">{t("onboarding.where_title")}</GlassCardTitle>
                 </div>
                 <p className="text-sm text-[#64748B] mt-1">
-                  Adicione seu endereço. Insira o CEP para que o endereço seja preenchido automaticamente.
+                  {t("onboarding.where_desc")}
                 </p>
               </GlassCardHeader>
               <GlassCardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-1">
                     <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                      CEP <span className="text-rose-500">*</span>
+                      {t("onboarding.cep_label")} <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
-                      placeholder="01234-567"
+                      placeholder={t("onboarding.cep_placeholder")}
                       value={bizCep}
                       onChange={(e) => handleCepChange(e.target.value)}
                       className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -671,11 +673,11 @@ export default function OnboardingPage() {
                   </div>
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                      Endereço (Rua, Número, Bairro)
+                      {t("onboarding.address_label")}
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: Av. Paulista, 1000 - Bela Vista"
+                      placeholder={t("onboarding.address_placeholder")}
                       value={bizAddress}
                       onChange={(e) => setBizAddress(e.target.value)}
                       className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -686,11 +688,11 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                      Cidade
+                      {t("common.city")}
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: São Paulo"
+                      placeholder={t("common.city_placeholder")}
                       value={bizCity}
                       onChange={(e) => setBizCity(e.target.value)}
                       className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -698,11 +700,11 @@ export default function OnboardingPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
-                      Estado (UF)
+                      {t("common.state")}
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: SP"
+                      placeholder={t("common.state_placeholder")}
                       value={bizState}
                       maxLength={2}
                       onChange={(e) => setBizState(e.target.value.toUpperCase())}
@@ -718,7 +720,7 @@ export default function OnboardingPage() {
                     className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-sm font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 border border-slate-200 transition-all disabled:opacity-50"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Voltar
+                    {t("common.back")}
                   </button>
                   <Button
                     onClick={handleOnboardingComplete}
@@ -730,7 +732,7 @@ export default function OnboardingPage() {
                     ) : (
                       <Sparkles className="w-4 h-4 mr-2" />
                     )}
-                    Concluir Setup!
+                    {t("onboarding.complete_setup")}
                   </Button>
                 </div>
               </GlassCardContent>
@@ -744,7 +746,7 @@ export default function OnboardingPage() {
             href="/login"
             className="text-sm text-[#64748B] hover:text-[#0F172A] transition-colors"
           >
-            Voltar para o login
+            {t("auth.back_to_login")}
           </Link>
         </div>
       </div>

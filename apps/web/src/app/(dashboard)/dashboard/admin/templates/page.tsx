@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText,
   Search,
@@ -14,6 +14,7 @@ import {
   Check,
   Building,
   Menu,
+  Loader2,
 } from "lucide-react";
 import {
   getAllBusinessTemplates,
@@ -21,17 +22,43 @@ import {
   getTemplateSectionCount,
   resolveText,
 } from "@meuqr/shared";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export default function AdminTemplatesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeTemplates, setActiveTemplates] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
 
   const templates = getAllBusinessTemplates();
 
-  // Categories present in templates
-  // Categories present in templates
+  useEffect(() => {
+    async function loadTemplateStatus() {
+      try {
+        const { data, error } = await supabase
+          .from("template_status")
+          .select("id, is_active");
+
+        if (error) throw error;
+        
+        if (data) {
+          const statusMap: Record<string, boolean> = {};
+          data.forEach(item => {
+            statusMap[item.id] = item.is_active;
+          });
+          setActiveTemplates(statusMap);
+        }
+      } catch (err) {
+        console.error("Failed to load template statuses:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadTemplateStatus();
+  }, []);
+
   const categories = [
     { value: "all", label: "Todas Categorias" },
     ...Array.from(new Set(templates.map(t => t.businessType))).sort().map(cat => ({
@@ -40,7 +67,6 @@ export default function AdminTemplatesPage() {
     })),
   ];
 
-  // Match search and category filters
   const filteredTemplates = templates.filter((tmpl) => {
     const ptName = resolveText(tmpl.name, "pt-BR").toLowerCase();
     const ptDesc = resolveText(tmpl.description, "pt-BR").toLowerCase();
@@ -63,11 +89,28 @@ export default function AdminTemplatesPage() {
     setTimeout(() => setCopiedId(null), 2000);
   }
 
-  function toggleTemplateStatus(id: string) {
-    setActiveTemplates((prev) => ({
-      ...prev,
-      [id]: prev[id] === false ? true : false,
-    }));
+  async function toggleTemplateStatus(id: string) {
+    const currentStatus = activeTemplates[id] !== false;
+    const newStatus = !currentStatus;
+
+    // Optimistic UI update
+    setActiveTemplates(prev => ({ ...prev, [id]: newStatus }));
+
+    try {
+      const { error } = await supabase
+        .from("template_status")
+        .upsert({ id, is_active: newStatus, updated_at: new Date().toISOString() });
+
+      if (error) {
+        throw error;
+      }
+      toast.success(`Template ${newStatus ? 'ativado' : 'desativado'} com sucesso.`);
+    } catch (err) {
+      console.error("Failed to update template status:", err);
+      // Revert UI
+      setActiveTemplates(prev => ({ ...prev, [id]: currentStatus }));
+      toast.error("Erro ao atualizar status do template.");
+    }
   }
 
   return (
@@ -83,7 +126,7 @@ export default function AdminTemplatesPage() {
             Gerenciamento global, auditoria de traduções e controle de ativação dos {templates.length} templates.
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all">
+        <button className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all" onClick={() => toast.info("Em breve: Criador visual de templates")}>
           <Plus className="w-4 h-4" /> Criar Novo Modelo
         </button>
       </div>
@@ -177,7 +220,13 @@ export default function AdminTemplatesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
-              {filteredTemplates.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
+                  </td>
+                </tr>
+              ) : filteredTemplates.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-gray-400">
                     Nenhum modelo encontrado correspondendo aos filtros.
@@ -266,7 +315,7 @@ export default function AdminTemplatesPage() {
                           <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Ver detalhes do template">
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Clonar template">
+                          <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Clonar template" onClick={() => toast.info("Em breve: Clonagem de templates")}>
                             <Copy className="w-4 h-4" />
                           </button>
                         </div>

@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Button, GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { getAllBusinessTemplates, type BusinessTemplate, resolveText, type LocalizedString } from "@meuqr/shared";
+import { useTranslation } from "@/lib/i18n-provider";
 import {
   Loader2,
   CheckCircle2,
@@ -25,6 +26,7 @@ export default function BusinessSetupPage() {
   const params = useParams();
   const businessId = params.id as string;
 
+  const { t } = useTranslation();
   const [business, setBusiness] = useState<any>(null);
   const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +149,7 @@ export default function BusinessSetupPage() {
       setStep("done");
     } catch (err: any) {
       console.error("Error cloning template:", err);
-      alert("Erro ao criar página. Tente novamente.");
+      alert(t("business.page_create_error"));
     } finally {
       setCloning(false);
     }
@@ -166,7 +168,7 @@ export default function BusinessSetupPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando configuração...</p>
+        <p className="text-sm font-medium text-gray-500">{t("business.setup_loading")}</p>
       </div>
     );
   }
@@ -179,7 +181,7 @@ export default function BusinessSetupPage() {
         className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Voltar
+        {t("common.back")}
       </Link>
 
       {/* Header */}
@@ -191,7 +193,7 @@ export default function BusinessSetupPage() {
           <h1 className="text-2xl font-bold text-slate-800">{business?.name}</h1>
           <p className="text-sm text-gray-400 flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-            Configuração inicial
+            {t("business.setup_initial")}
           </p>
         </div>
       </div>
@@ -199,10 +201,10 @@ export default function BusinessSetupPage() {
       {step === "goals" && (
         <div className="space-y-6">
           <h2 className="text-xl font-bold text-slate-800">
-            O que você deseja que seus clientes façam?
+            {t("business.setup_goal_title")}
           </h2>
           <p className="text-sm text-gray-500">
-            Escolha o objetivo principal da sua página digital.
+            {t("business.setup_goal_subtitle")}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
@@ -212,8 +214,8 @@ export default function BusinessSetupPage() {
               <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                 <Store className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-slate-800 mb-1">📦 Vender Produtos</h3>
-              <p className="text-sm text-gray-500">Catálogo digital, exibir preços e receber pedidos no WhatsApp.</p>
+              <h3 className="font-bold text-slate-800 mb-1">{t("business.setup_goal_sell")}</h3>
+              <p className="text-sm text-gray-500">{t("business.setup_goal_sell_desc")}</p>
             </button>
 
             <button
@@ -223,8 +225,8 @@ export default function BusinessSetupPage() {
               <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                 <CalendarDays className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-slate-800 mb-1">📅 Agendar Horários</h3>
-              <p className="text-sm text-gray-500">Para clínicas, salões e profissionais. Marcação direta.</p>
+              <h3 className="font-bold text-slate-800 mb-1">{t("business.setup_goal_book")}</h3>
+              <p className="text-sm text-gray-500">{t("business.setup_goal_book_desc")}</p>
             </button>
 
             <button
@@ -234,8 +236,8 @@ export default function BusinessSetupPage() {
               <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
                 <FileText className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-slate-800 mb-1">📋 Orçamentos B2B</h3>
-              <p className="text-sm text-gray-500">Para materiais de construção, serviços complexos e atacado.</p>
+              <h3 className="font-bold text-slate-800 mb-1">{t("business.setup_goal_quote")}</h3>
+              <p className="text-sm text-gray-500">{t("business.setup_goal_quote_desc")}</p>
             </button>
 
             <button
@@ -245,8 +247,8 @@ export default function BusinessSetupPage() {
               <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                 <Users className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-slate-800 mb-1">🎯 Capturar Leads</h3>
-              <p className="text-sm text-gray-500">Páginas de captura, formulários para seguros e imóveis.</p>
+              <h3 className="font-bold text-slate-800 mb-1">{t("business.setup_goal_lead")}</h3>
+              <p className="text-sm text-gray-500">{t("business.setup_goal_lead_desc")}</p>
             </button>
           </div>
         </div>
@@ -259,7 +261,7 @@ export default function BusinessSetupPage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <h2 className="text-lg font-bold text-slate-700">
-              Escolha um modelo para sua página
+              {t("business.setup_select_template")}
             </h2>
           </div>
 
@@ -270,11 +272,11 @@ export default function BusinessSetupPage() {
                   <CheckCircle2 className="w-5 h-5 text-indigo-600" />
                 </div>
                 <p className="text-sm text-slate-700 flex-1">
-                  Você já tem {pages.length} página(s) criada(s).
+                  {t("business.setup_pages_count", { count: String(pages.length) })}
                 </p>
                 <Link href={`/dashboard/business/${businessId}`}>
                   <Button variant="outline" size="sm" className="border-slate-200 hover:border-indigo-200">
-                    Ver páginas
+                    {t("business.setup_verify_pages")}
                   </Button>
                 </Link>
               </GlassCardContent>
@@ -287,7 +289,7 @@ export default function BusinessSetupPage() {
               <div>
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                  Recomendado para seu negócio
+                  {t("business.setup_recommended")}
                 </h3>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {recommendedTemplates.map((template) => (
@@ -307,11 +309,10 @@ export default function BusinessSetupPage() {
                                 {rt(template.name)}
                               </h3>
                               <p className="text-xs text-gray-400">
-                                {template.sections.length} seções
+                                {template.sections.length} {t("business.setup_sections")}
                               </p>
                             </div>
-                          </div>
-                          <Badge variant="indigo">Recomendado</Badge>
+                          </div>                              <Badge variant="indigo">{t("business.recommended")}</Badge>
                         </div>
 
                         <p className="text-sm text-gray-500 mb-4">
@@ -324,13 +325,13 @@ export default function BusinessSetupPage() {
                               <div className="w-1.5 h-1.5 rounded-full bg-indigo-400/40" />
                               {rt(sec.title)}
                               {sec.items.length > 0 && (
-                                <span className="text-gray-300">({sec.items.length} itens)</span>
+                                <span className="text-gray-300">({sec.items.length} {t("business.setup_items")})</span>
                               )}
                             </div>
                           ))}
                           {template.sections.length > 3 && (
                             <div className="text-xs text-gray-300 pl-3.5">
-                              +{template.sections.length - 3} seções
+                              +{template.sections.length - 3} {t("business.setup_sections")}
                             </div>
                           )}
                         </div>
@@ -345,7 +346,7 @@ export default function BusinessSetupPage() {
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <>
-                              Usar este modelo
+                              {t("business.use_template")}
                               <ArrowRight className="w-4 h-4 ml-1" />
                             </>
                           )}
@@ -364,7 +365,7 @@ export default function BusinessSetupPage() {
               onClick={() => setStep("done")}
               className="text-sm text-gray-400 hover:text-indigo-600 transition-colors font-medium"
             >
-              Pular esta etapa (criar manualmente depois)
+              {t("business.setup_skip")}
             </button>
           </div>
         </>
@@ -377,21 +378,21 @@ export default function BusinessSetupPage() {
               <CheckCircle2 className="w-10 h-10 text-emerald-600" />
             </div>
             <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              Negócio configurado!
+              {t("business.setup_done_title")}
             </h2>
             <p className="text-gray-500 mb-8 max-w-md mx-auto">
-              Sua página está pronta. Agora personalize, edite itens e compartilhe seu QR code.
+              {t("business.setup_done_desc")}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href={`/dashboard/business/${businessId}`}>
                 <Button variant="default" size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
-                  Gerenciar Negócio
+                  {t("business.setup_manage")}
                 </Button>
               </Link>
               <Link href={`/dashboard/business/${businessId}/qr`}>
                 <Button variant="default" size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200">
                   <QrCode className="w-5 h-5 mr-2" />
-                  Ver QR Code
+                  {t("business.setup_view_qr")}
                 </Button>
               </Link>
             </div>

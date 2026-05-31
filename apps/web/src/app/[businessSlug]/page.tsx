@@ -114,6 +114,7 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
     instagram: string | null;
     website: string | null;
     opening_hours: Record<string, string> | null;
+    notification_settings: any;
   } | null;
 
   if (!biz) {
@@ -153,12 +154,25 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
     .eq("is_visible", true)
     .order("sort_order");
 
+  let nearbyBusinesses: any[] = [];
+  if (biz.city) {
+    const { data: nearby } = await supabase
+      .from("businesses")
+      .select("id, name, slug, logo_url, category, city")
+      .eq("city", biz.city)
+      .eq("is_active", true)
+      .neq("id", biz.id)
+      .limit(4);
+    nearbyBusinesses = nearby || [];
+  }
+
   return (
     <PublicBusinessPageClient
       business={biz}
       page={page}
       pages={pagesList || []}
       sections={(sections as unknown as any[]) || []}
+      nearbyBusinesses={nearbyBusinesses}
     />
   );
 }

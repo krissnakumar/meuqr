@@ -3,9 +3,21 @@
 import Link from "next/link";
 import { QrCode, ArrowLeft, Home } from "lucide-react";
 import { useTranslation } from "@/lib/i18n-provider";
+import { useEffect, useState } from "react";
 
 export default function NotFound() {
   const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center px-4" />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center px-4">

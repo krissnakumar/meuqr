@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { supabase } from "../src/lib/supabase";
 import { QrCode } from "lucide-react-native";
+import { useTranslation } from "../src/lib/i18n-provider";
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,10 +21,11 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   async function handleAuth() {
     if (!email || !password) {
-      Alert.alert("Erro", "Preencha todos os campos");
+      Alert.alert(t("errors.generic"), t("validation.required"));
       return;
     }
 
@@ -45,12 +47,12 @@ export default function AuthScreen() {
         });
         if (error) throw error;
         Alert.alert(
-          "Conta criada!",
-          "Verifique seu email para confirmar o cadastro."
+          t("success.created"),
+          t("auth.register_success_desc", { email })
         );
       }
     } catch (error: any) {
-      Alert.alert("Erro", error.message);
+      Alert.alert(t("errors.generic"), error.message);
     } finally {
       setLoading(false);
     }
@@ -71,17 +73,17 @@ export default function AuthScreen() {
           </View>
           <Text style={styles.title}>MeuQR</Text>
           <Text style={styles.subtitle}>
-            {isLogin ? "Entre na sua conta" : "Crie sua conta grátis"}
+            {isLogin ? t("auth.login_subtitle") : t("auth.register_subtitle")}
           </Text>
         </View>
 
         <View style={styles.form}>
           {!isLogin && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nome completo</Text>
+              <Text style={styles.label}>{t("auth.name_label")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Seu nome"
+                placeholder={t("auth.name_placeholder")}
                 value={fullName}
                 onChangeText={setFullName}
                 autoCapitalize="words"
@@ -90,10 +92,10 @@ export default function AuthScreen() {
           )}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t("auth.email_label")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="seu@email.com"
+              placeholder={t("auth.email_placeholder")}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -102,10 +104,10 @@ export default function AuthScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Senha</Text>
+            <Text style={styles.label}>{t("auth.password_label")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Mínimo 6 caracteres"
+              placeholder={t("auth.password_min")}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -121,7 +123,7 @@ export default function AuthScreen() {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.buttonText}>
-                {isLogin ? "Entrar" : "Criar Conta"}
+                {isLogin ? t("auth.login_btn") : t("auth.register_btn")}
               </Text>
             )}
           </TouchableOpacity>
@@ -132,8 +134,8 @@ export default function AuthScreen() {
           >
             <Text style={styles.switchText}>
               {isLogin
-                ? "Não tem conta? Cadastre-se"
-                : "Já tem conta? Entre"}
+                ? t("auth.no_account") + " " + t("auth.signup_link")
+                : t("auth.has_account") + " " + t("auth.login_link")}
             </Text>
           </TouchableOpacity>
         </View>

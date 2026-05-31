@@ -23,6 +23,7 @@ import {
   Crown,
   Star,
 } from "lucide-react-native";
+import { useTranslation } from "../../../src/lib/i18n-provider";
 
 interface MemberData {
   id: string;
@@ -35,15 +36,16 @@ interface MemberData {
   user_name?: string;
 }
 
-const ROLE_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  owner: { label: "Proprietário", color: "#D97706", icon: Crown },
-  admin: { label: "Admin", color: "#3B82F6", icon: Shield },
-  staff: { label: "Colaborador", color: "#6B7280", icon: Star },
+const ROLE_CONFIG: Record<string, { labelKey: string; color: string; icon: any }> = {
+  owner: { labelKey: "business.role_owner", color: "#D97706", icon: Crown },
+  admin: { labelKey: "business.role_admin", color: "#3B82F6", icon: Shield },
+  staff: { labelKey: "business.role_staff", color: "#6B7280", icon: Star },
 };
 
 export default function MembersScreen() {
   const router = useRouter();
   const { id: businessId } = useLocalSearchParams();
+  const { t } = useTranslation();
 
   const [members, setMembers] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,25 +89,25 @@ export default function MembersScreen() {
       });
 
       if (error) {
-        Alert.alert("Erro", error.message);
+        Alert.alert(t("errors.generic"), error.message);
       } else {
-        Alert.alert("Convite enviado!", `Um convite foi enviado para ${inviteEmail}`);
+        Alert.alert(t("business.invite_sent"), t("business.invite_sent_desc", { email: inviteEmail }));
         setShowInviteModal(false);
         setInviteEmail("");
         loadMembers();
       }
     } catch (err: any) {
-      Alert.alert("Erro", err.message);
+      Alert.alert(t("errors.generic"), err.message);
     } finally {
       setSendingInvite(false);
     }
   }
 
   async function removeMember(memberId: string, name: string) {
-    Alert.alert("Remover Membro", `Remover ${name} da equipe?`, [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(t("business.remove_member"), t("business.remove_member_confirm", { name }), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Remover",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await supabase.from("business_members").delete().eq("id", memberId);
@@ -116,7 +118,7 @@ export default function MembersScreen() {
   }
 
   const displayedName = (m: MemberData) =>
-    m.user_name || m.user_email || m.invited_email || "Usuário";
+    m.user_name || m.user_email || m.invited_email || t("common.name");
 
   if (loading) {
     return (
@@ -136,7 +138,7 @@ export default function MembersScreen() {
         >
           <ArrowLeft size={20} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Equipe</Text>
+        <Text style={styles.headerTitle}>{t("business.members")}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setShowInviteModal(true)}
@@ -160,16 +162,16 @@ export default function MembersScreen() {
         {members.length === 0 ? (
           <View style={styles.emptyState}>
             <Users size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>Nenhum Membro</Text>
+            <Text style={styles.emptyTitle}>{t("business.no_members")}</Text>
             <Text style={styles.emptyText}>
-              Convide pessoas para gerenciar este negócio
+              {t("business.invite_people_desc")}
             </Text>
             <TouchableOpacity
               style={styles.inviteButton}
               onPress={() => setShowInviteModal(true)}
             >
               <UserPlus size={20} color="#FFFFFF" />
-              <Text style={styles.inviteButtonText}>Convidar Membro</Text>
+              <Text style={styles.inviteButtonText}>{t("business.invite_member")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -196,14 +198,14 @@ export default function MembersScreen() {
                       </Text>
                       {isPending && (
                         <View style={styles.pendingBadge}>
-                          <Text style={styles.pendingText}>Pendente</Text>
+                          <Text style={styles.pendingText}>{t("public.status_pending")}</Text>
                         </View>
                       )}
                     </View>
                     <View style={styles.roleRow}>
                       <RoleIcon size={12} color={roleCfg.color} />
                       <Text style={[styles.roleText, { color: roleCfg.color }]}>
-                        {roleCfg.label}
+                        {t(roleCfg.labelKey)}
                       </Text>
                     </View>
                   </View>
@@ -235,23 +237,23 @@ export default function MembersScreen() {
       <Modal visible={showInviteModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Convidar Membro</Text>
+            <Text style={styles.modalTitle}>{t("business.invite_member")}</Text>
             <Text style={styles.modalSubtitle}>
-              Envie um convite por email para gerenciar este negócio
+              {t("business.invite_people_desc")}
             </Text>
 
-            <Text style={styles.inputLabel}>Email</Text>
+            <Text style={styles.inputLabel}>{t("common.email")}</Text>
             <TextInput
               style={styles.modalInput}
               value={inviteEmail}
               onChangeText={setInviteEmail}
-              placeholder="email@exemplo.com"
+              placeholder={t("auth.email_placeholder")}
               keyboardType="email-address"
               autoCapitalize="none"
               autoFocus
             />
 
-            <Text style={styles.inputLabel}>Cargo</Text>
+            <Text style={styles.inputLabel}>{t("common.category")}</Text>
             <View style={styles.roleSelector}>
               <TouchableOpacity
                 style={[
@@ -270,7 +272,7 @@ export default function MembersScreen() {
                     inviteRole === "admin" && styles.roleOptionTextActive,
                   ]}
                 >
-                  Admin
+                  {t("business.role_admin")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -290,7 +292,7 @@ export default function MembersScreen() {
                     inviteRole === "staff" && styles.roleOptionTextActive,
                   ]}
                 >
-                  Colaborador
+                  {t("business.role_staff")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -303,7 +305,7 @@ export default function MembersScreen() {
                   setInviteEmail("");
                 }}
               >
-                <Text style={styles.modalCancelText}>Cancelar</Text>
+                <Text style={styles.modalCancelText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -316,7 +318,7 @@ export default function MembersScreen() {
                 {sendingInvite ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Convidar</Text>
+                  <Text style={styles.modalConfirmText}>{t("business.invite_member")}</Text>
                 )}
               </TouchableOpacity>
             </View>

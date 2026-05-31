@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { ERR, API_SUCCESS } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function PATCH(request: NextRequest) {
     // 1. Get authenticated session user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+      return NextResponse.json({ error: ERR.UNAUTHORIZED }, { status: 401 });
     }
 
     // 2. Read businessId from body or query params
@@ -31,7 +32,7 @@ export async function PATCH(request: NextRequest) {
     const businessId = body.businessId || request.nextUrl.searchParams.get("businessId");
 
     if (!businessId) {
-      return NextResponse.json({ error: "O parâmetro businessId é obrigatório." }, { status: 400 });
+      return NextResponse.json({ error: ERR.MISSING_BUSINESS_ID_ALT }, { status: 400 });
     }
 
     // Verify user membership or business ownership
@@ -51,7 +52,7 @@ export async function PATCH(request: NextRequest) {
         .maybeSingle();
 
       if (!member) {
-        return NextResponse.json({ error: "Acesso negado para este negócio." }, { status: 403 });
+        return NextResponse.json({ error: ERR.ACCESS_DENIED }, { status: 403 });
       }
     }
 
@@ -67,12 +68,12 @@ export async function PATCH(request: NextRequest) {
 
     if (error) {
       console.error("Failed to mark all notifications as read:", error);
-      return NextResponse.json({ error: "Erro ao atualizar notificações." }, { status: 500 });
+      return NextResponse.json({ error: ERR.UPDATE_NOTIFICATIONS_ERROR }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, message: "Todas as notificações marcadas como lidas." });
+    return NextResponse.json({ success: true, message: API_SUCCESS.NOTIFICATIONS_MARKED_READ });
   } catch (err) {
     console.error("Notifications Read All PATCH exception:", err);
-    return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

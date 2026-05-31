@@ -1,9 +1,54 @@
-export const dynamic = "force-dynamic";
+"use client";
 
-import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from "@meuqr/ui";
-import { Users, FileText, Settings, ShieldAlert, BarChart3, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { GlassCard, GlassCardContent } from "@meuqr/ui";
+import { Users, FileText, Settings, ShieldAlert, BarChart3, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+
 export default function AdminDashboardPage() {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeBusinesses: 0,
+    totalTemplates: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        // Fetch businesses count
+        const { count: businessesCount } = await supabase
+          .from("businesses")
+          .select("*", { count: "exact", head: true });
+
+        // Fetch active businesses count
+        const { count: activeBusinessesCount } = await supabase
+          .from("businesses")
+          .select("*", { count: "exact", head: true })
+          .eq("is_active", true);
+
+        // Fetch template statuses (we can count these or hardcode the known business templates count)
+        const { count: templatesCount } = await supabase
+          .from("template_status")
+          .select("*", { count: "exact", head: true });
+
+        setStats({
+          // As a proxy for total users if profiles RLS is restrictive, we use businesses count
+          // In a real scenario we'd query auth.users from an Edge Function
+          totalUsers: businessesCount || 0,
+          activeBusinesses: activeBusinessesCount || 0,
+          totalTemplates: templatesCount || 12 // Fallback to 12 if table is empty
+        });
+      } catch (err) {
+        console.error("Error loading admin stats:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadStats();
+  }, []);
 
   const adminLinks = [
     {
@@ -54,41 +99,47 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <GlassCard className="animate-fade-in-up">
-          <GlassCardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">Total de Usuários</p>
-              <p className="text-2xl font-bold text-gray-900">1,248</p>
-            </div>
-          </GlassCardContent>
-        </GlassCard>
-        <GlassCard className="animate-fade-in-up delay-1">
-          <GlassCardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
-              <BarChart3 className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">Negócios Ativos</p>
-              <p className="text-2xl font-bold text-gray-900">856</p>
-            </div>
-          </GlassCardContent>
-        </GlassCard>
-        <GlassCard className="animate-fade-in-up delay-2">
-          <GlassCardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase">Modelos de Negócio</p>
-              <p className="text-2xl font-bold text-gray-900">24</p>
-            </div>
-          </GlassCardContent>
-        </GlassCard>
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <GlassCard className="animate-fade-in-up">
+            <GlassCardContent className="p-5 flex items-center gap-4">
+              <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase">Total de Usuários / Negócios</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+              </div>
+            </GlassCardContent>
+          </GlassCard>
+          <GlassCard className="animate-fade-in-up delay-1">
+            <GlassCardContent className="p-5 flex items-center gap-4">
+              <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase">Negócios Ativos</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.activeBusinesses}</p>
+              </div>
+            </GlassCardContent>
+          </GlassCard>
+          <GlassCard className="animate-fade-in-up delay-2">
+            <GlassCardContent className="p-5 flex items-center gap-4">
+              <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase">Modelos Registrados</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalTemplates}</p>
+              </div>
+            </GlassCardContent>
+          </GlassCard>
+        </div>
+      )}
 
       {/* Admin Modules Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 animate-fade-in-up delay-3">

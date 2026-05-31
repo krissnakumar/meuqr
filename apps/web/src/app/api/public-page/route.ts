@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { checkRateLimit, getClientIp, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
+import { ERR } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
   const rateLimit = checkRateLimit(`public-page:${ip}`, RATE_LIMIT_CONFIGS.publicData);
   if (!rateLimit.allowed) {
     return NextResponse.json(
-      { error: "Muitas requisições. Tente novamente mais tarde." },
+      { error: ERR.TOO_MANY_REQUESTS },
       { status: 429,
         headers: {
           "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)),
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   if (!slug && !shortCode) {
     return NextResponse.json(
-      { error: "Provide either slug or shortCode parameter" },
+      { error: ERR.MISSING_SLUG_OR_SHORTCODE },
       { status: 400 }
     );
   }
@@ -57,14 +58,14 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (!qrCode) {
-        return NextResponse.json({ error: "QR code not found" }, { status: 404 });
+        return NextResponse.json({ error: ERR.QR_CODE_NOT_FOUND }, { status: 404 });
       }
 
       const page = qrCode.pages as any;
       const businessSlug = page?.businesses?.slug;
 
       if (!businessSlug) {
-        return NextResponse.json({ error: "Business not found" }, { status: 404 });
+        return NextResponse.json({ error: ERR.BUSINESS_NOT_FOUND_EN }, { status: 404 });
       }
 
       // Fetch full public data
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (err) {
     console.error("Public page error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR_EN }, { status: 500 });
   }
 }
 
@@ -96,7 +97,7 @@ async function fetchPublicPageData(
     .single();
 
   if (!business) {
-    return { error: "Business not found" };
+    return { error: ERR.BUSINESS_NOT_FOUND_EN };
   }
 
   // Get published pages

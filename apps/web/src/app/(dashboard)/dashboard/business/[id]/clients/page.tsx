@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import { Button, GlassCard, GlassCardContent, Badge } from "@meuqr/ui";
 import {
@@ -38,6 +39,7 @@ interface Client {
 
 export default function ClientsPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const businessId = params.id as string;
 
   const [clients, setClients] = useState<Client[]>([]);
@@ -112,7 +114,7 @@ export default function ClientsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando base de clientes...</p>
+        <p className="text-sm font-medium text-gray-500">{t('business.loading_clients')}</p>
       </div>
     );
   }

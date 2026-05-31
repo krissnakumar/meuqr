@@ -4,5 +4,6 @@ export * from "./constants";
 export * from "./templates";
 export * from "./utils";
 export * from "./templates/business-templates";
+export * from "./api-errors";
 export * from "./i18n";
 export * from "./i18n/types";

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button, GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Input, Label, Badge } from "@meuqr/ui";
+import { useTranslation } from "@/lib/i18n-provider";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -31,6 +32,7 @@ interface Member {
 
 export default function MembersPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const businessId = params.id as string;
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -152,7 +154,7 @@ export default function MembersPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
-        <p className="text-sm font-medium text-gray-500">Carregando equipe...</p>
+        <p className="text-sm font-medium text-gray-500">{t('common.loading')}</p>
       </div>
     );
   }

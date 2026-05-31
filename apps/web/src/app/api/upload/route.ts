@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { UPLOAD_LIMITS } from "@meuqr/shared";
 import { checkRateLimit, getClientIp, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
 import { validateUpload, sanitizeFileName, generateStoragePath } from "@/lib/upload";
+import { ERR, API_SUCCESS } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     const rateLimit = checkRateLimit(`upload:${ip}`, RATE_LIMIT_CONFIGS.fileUpload);
     if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: "Muitas requisições. Tente novamente mais tarde." },
+        { error: ERR.TOO_MANY_REQUESTS },
         {
           status: 429,
           headers: {
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+      return NextResponse.json({ error: ERR.NOT_AUTHENTICATED }, { status: 401 });
     }
 
     // Parse form data
@@ -54,11 +55,11 @@ export async function POST(request: NextRequest) {
     const businessId = formData.get("businessId") as string | null;
 
     if (!file) {
-      return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 });
+      return NextResponse.json({ error: ERR.NO_FILE }, { status: 400 });
     }
 
     if (!businessId) {
-      return NextResponse.json({ error: "businessId é obrigatório" }, { status: 400 });
+      return NextResponse.json({ error: ERR.MISSING_BUSINESS_ID }, { status: 400 });
     }
 
     // Verify the user owns this business
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     if (!business) {
       return NextResponse.json(
-        { error: "Negócio não encontrado ou sem permissão" },
+        { error: ERR.BUSINESS_NOT_FOUND_OR_NO_PERMISSION },
         { status: 403 }
       );
     }
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
-      return NextResponse.json({ error: "Erro ao fazer upload" }, { status: 500 });
+      return NextResponse.json({ error: ERR.UPLOAD_ERROR }, { status: 500 });
     }
 
     // Get public URL
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
       // File uploaded but metadata not saved — still return the URL
       return NextResponse.json({
         url: publicUrl,
-        warning: "Arquivo enviado, mas metadados não foram salvos.",
+        warning: API_SUCCESS.UPLOAD_WARNING,
       });
     }
 
@@ -143,6 +144,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error("Upload error:", err);
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

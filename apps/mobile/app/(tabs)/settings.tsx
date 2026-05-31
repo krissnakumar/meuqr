@@ -11,9 +11,11 @@ import {
 import { supabase } from "../../src/lib/supabase";
 import { LogOut, User, Mail, Shield, Globe, Check } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useTranslation } from "../../src/lib/i18n-provider";
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updatingLang, setUpdatingLang] = useState(false);
@@ -61,24 +63,24 @@ export default function SettingsScreen() {
       setProfile((prev: any) => ({ ...prev, language: newLang }));
       
       const messages: Record<string, string> = {
-        "pt-BR": "Idioma atualizado para Português!",
-        en: "Language updated to English!",
-        es: "¡Idioma actualizado a Español!",
+        "pt-BR": t("common.language_pt") + " ✓",
+        en: t("common.language_en") + " ✓",
+        es: t("common.language_es") + " ✓",
       };
       
-      Alert.alert("Idioma / Language", messages[newLang]);
+      Alert.alert(t("common.language"), messages[newLang]);
     } catch (err: any) {
-      Alert.alert("Erro", "Não foi possível atualizar o idioma.");
+      Alert.alert(t("errors.generic"), t("errors.generic"));
     } finally {
       setUpdatingLang(false);
     }
   }
 
   async function handleLogout() {
-    Alert.alert("Sair", "Tem certeza que deseja sair?", [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(t("auth.logout_title"), t("common.confirm_logout"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Sair",
+        text: t("auth.logout_btn"),
         style: "destructive",
         onPress: async () => {
           await supabase.auth.signOut();
@@ -101,7 +103,7 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Configurações</Text>
+        <Text style={styles.title}>{t("common.settings")}</Text>
       </View>
 
       {/* Profile Card */}
@@ -113,7 +115,7 @@ export default function SettingsScreen() {
             </Text>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{profile.full_name || "Usuário MeuQR"}</Text>
+            <Text style={styles.profileName}>{profile.full_name || t("common.app_name")}</Text>
             <Text style={styles.profileEmail}>{profile.email}</Text>
           </View>
         </View>
@@ -122,7 +124,7 @@ export default function SettingsScreen() {
       {/* Language Selector Section */}
       <View style={styles.sectionHeader}>
         <Globe size={16} color="#4B5563" />
-        <Text style={styles.sectionHeaderText}>Idioma / Language</Text>
+        <Text style={styles.sectionHeaderText}>{t("common.language")}</Text>
       </View>
       <View style={styles.section}>
         {[
@@ -157,12 +159,12 @@ export default function SettingsScreen() {
       {/* Account Section */}
       <View style={styles.sectionHeader}>
         <User size={16} color="#4B5563" />
-        <Text style={styles.sectionHeaderText}>Segurança</Text>
+        <Text style={styles.sectionHeaderText}>{t("common.settings")}</Text>
       </View>
       <View style={styles.section}>
         <TouchableOpacity style={styles.menuItem}>
           <Shield size={20} color="#111827" />
-          <Text style={styles.menuText}>Privacidade & Termos</Text>
+          <Text style={styles.menuText}>{t("common.privacy")} & {t("common.terms")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -172,7 +174,7 @@ export default function SettingsScreen() {
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <LogOut size={20} color="#EF4444" />
-        <Text style={styles.logoutText}>Sair da conta</Text>
+        <Text style={styles.logoutText}>{t("auth.logout_title")}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

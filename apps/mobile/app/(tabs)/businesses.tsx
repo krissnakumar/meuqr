@@ -10,6 +10,7 @@ import {
 import { supabase } from "../../src/lib/supabase";
 import { Store, Plus, ArrowRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useTranslation } from "../../src/lib/i18n-provider";
 
 interface Business {
   id: string;
@@ -20,6 +21,7 @@ interface Business {
 
 export default function BusinessesScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,15 +61,15 @@ export default function BusinessesScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Seus Negócios</Text>
-        <Text style={styles.subtitle}>{businesses.length} negócio(s)</Text>
+        <Text style={styles.title}>{t("business.title")}</Text>
+        <Text style={styles.subtitle}>{businesses.length} {t("dashboard.businesses")}</Text>
       </View>
 
       {businesses.length === 0 ? (
         <View style={styles.empty}>
           <Store size={48} color="#D1D5DB" />
-          <Text style={styles.emptyTitle}>Nenhum negócio</Text>
-          <Text style={styles.emptyText}>Crie seu primeiro negócio</Text>
+          <Text style={styles.emptyTitle}>{t("dashboard.no_businesses")}</Text>
+          <Text style={styles.emptyText}>{t("dashboard.no_businesses_desc")}</Text>
         </View>
       ) : (
         businesses.map((biz) => (
@@ -93,7 +95,7 @@ export default function BusinessesScreen() {
         onPress={() => router.push("/business/new")}
       >
         <Plus size={20} color="#FFFFFF" />
-        <Text style={styles.createButtonText}>Novo Negócio</Text>
+        <Text style={styles.createButtonText}>{t("business.new_title")}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

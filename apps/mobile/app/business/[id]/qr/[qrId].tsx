@@ -26,10 +26,12 @@ import {
   Monitor,
 } from "lucide-react-native";
 import QRCode from "react-native-qrcode-svg";
+import { useTranslation } from "../../../../src/lib/i18n-provider";
 
 export default function QRCodeDetailScreen() {
   const router = useRouter();
   const { id: businessId, qrId } = useLocalSearchParams();
+  const { t } = useTranslation();
 
   const [qrCode, setQrCode] = useState<any>(null);
   const [qrStyle, setQrStyle] = useState<any>(null);
@@ -89,7 +91,7 @@ export default function QRCodeDetailScreen() {
   async function copyToClipboard() {
     try {
       await Clipboard.setStringAsync(qrUrl);
-      Alert.alert("Copiado!", "Link copiado para a área de transferência.");
+      Alert.alert(t("common.copied"), t("common.qr_copied_desc"));
     } catch {}
   }
 
@@ -104,10 +106,10 @@ export default function QRCodeDetailScreen() {
   }
 
   async function deleteQR() {
-    Alert.alert("Excluir QR Code", "Tem certeza?", [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(t("common.qr_delete_title"), t("common.confirm_delete"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Excluir",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await supabase.from("qr_codes").delete().eq("id", qrId);
@@ -128,9 +130,9 @@ export default function QRCodeDetailScreen() {
   if (!qrCode) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.notFoundText}>QR Code não encontrado</Text>
+        <Text style={styles.notFoundText}>{t("errors.not_found")}</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backLink}>Voltar</Text>
+          <Text style={styles.backLink}>{t("common.back")}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -146,7 +148,7 @@ export default function QRCodeDetailScreen() {
         >
           <ArrowLeft size={20} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalhes do QR Code</Text>
+        <Text style={styles.headerTitle}>{t("common.qr_detail_title")}</Text>
         <TouchableOpacity onPress={deleteQR}>
           <Trash2 size={20} color="#EF4444" />
         </TouchableOpacity>
@@ -174,10 +176,10 @@ export default function QRCodeDetailScreen() {
               value={newTitle}
               onChangeText={setNewTitle}
               autoFocus
-              placeholder="Título do QR Code"
+              placeholder={t("common.qr_no_title")}
             />
             <TouchableOpacity style={styles.saveTitleBtn} onPress={saveTitle}>
-              <Text style={styles.saveTitleText}>Salvar</Text>
+              <Text style={styles.saveTitleText}>{t("common.save")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -189,9 +191,9 @@ export default function QRCodeDetailScreen() {
             }}
           >
             <Text style={styles.qrTitle}>
-              {qrCode.title || "Sem título"}
+              {qrCode.title || t("common.qr_no_title")}
             </Text>
-            <Text style={styles.editHint}>Editar</Text>
+            <Text style={styles.editHint}>{t("common.edit")}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -200,16 +202,15 @@ export default function QRCodeDetailScreen() {
       <View style={styles.actionsRow}>
         <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
           <Share2 size={20} color="#FFFFFF" />
-          <Text style={styles.actionText}>Compartilhar</Text>
+          <Text style={styles.actionText}>{t("common.share")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionButton, styles.actionSecondary]}
           onPress={copyToClipboard}
         >
-          <Copy size={20} color="#111827" />
-          <Text style={[styles.actionText, { color: "#111827" }]}>
-            Copiar Link
-          </Text>
+          <Copy size={20} color="#111827" />            <Text style={[styles.actionText, { color: "#111827" }]}>
+              {t("common.qr_copy_link")}
+            </Text>
         </TouchableOpacity>
       </View>
 
@@ -217,28 +218,28 @@ export default function QRCodeDetailScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <BarChart3 size={18} color="#111827" />
-          <Text style={styles.sectionTitle}>Estatísticas</Text>
+          <Text style={styles.sectionTitle}>{t("common.qr_statistics")}</Text>
         </View>
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>{qrCode.scan_count}</Text>
-            <Text style={styles.statLabel}>Total de Scans</Text>
+            <Text style={styles.statLabel}>{t("common.qr_total_scans")}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>{recentScans.length}</Text>
-            <Text style={styles.statLabel}>Scans Recentes</Text>
+            <Text style={styles.statLabel}>{t("common.qr_recent_scans")}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>
               {recentScans.filter((s) => s.device_type === "mobile").length}
             </Text>
-            <Text style={styles.statLabel}>Mobile</Text>
+            <Text style={styles.statLabel}>{t("common.qr_mobile")}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>
               {recentScans.filter((s) => s.device_type === "desktop").length}
             </Text>
-            <Text style={styles.statLabel}>Desktop</Text>
+            <Text style={styles.statLabel}>{t("common.qr_desktop")}</Text>
           </View>
         </View>
       </View>
@@ -247,32 +248,32 @@ export default function QRCodeDetailScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Globe size={18} color="#111827" />
-          <Text style={styles.sectionTitle}>Informações</Text>
+          <Text style={styles.sectionTitle}>{t("common.qr_info")}</Text>
         </View>
         <View style={styles.infoList}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Negócio</Text>
+            <Text style={styles.infoLabel}>{t("business.title")}</Text>
             <Text style={styles.infoValue}>{qrCode.businesses?.name}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Criado em</Text>
+            <Text style={styles.infoLabel}>{t("dashboard.created_at")}</Text>
             <Text style={styles.infoValue}>
               {new Date(qrCode.created_at).toLocaleDateString("pt-BR")}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Status</Text>
+            <Text style={styles.infoLabel}>{t("common.status")}</Text>
             <Text
               style={[
                 styles.infoValue,
                 qrCode.is_active ? { color: "#00C853" } : { color: "#EF4444" },
               ]}
             >
-              {qrCode.is_active ? "Ativo" : "Inativo"}
+              {qrCode.is_active ? t("common.active") : t("common.inactive")}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Link curto</Text>
+            <Text style={styles.infoLabel}>{t("common.qr_short_link")}</Text>
             <View style={styles.linkRow}>
               <Text style={[styles.infoValue, { color: "#00C853" }]}>
                 /q/{qrCode.short_code}
@@ -288,7 +289,7 @@ export default function QRCodeDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Smartphone size={18} color="#111827" />
-            <Text style={styles.sectionTitle}>Scans Recentes</Text>
+            <Text style={styles.sectionTitle}>{t("common.qr_recent_scans")}</Text>
           </View>
           {recentScans.map((scan) => (
             <View key={scan.id} style={styles.scanRow}>
@@ -301,7 +302,7 @@ export default function QRCodeDetailScreen() {
               </View>
               <View style={styles.scanInfo}>
                 <Text style={styles.scanDevice}>
-                  {scan.device_type || "Desconhecido"}
+                  {scan.device_type || t("common.qr_unknown_device")}
                   {scan.browser ? ` · ${scan.browser}` : ""}
                 </Text>
                 <Text style={styles.scanTime}>

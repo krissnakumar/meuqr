@@ -14,28 +14,30 @@ import {
 import { supabase } from "../../src/lib/supabase";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Store, Check, ChevronRight } from "lucide-react-native";
-
-const CATEGORIES = [
-  { value: "restaurant", label: "Restaurante", emoji: "🍽️" },
-  { value: "construction_materials", label: "Material de Construção", emoji: "🔨" },
-  { value: "salon", label: "Salão / Barbearia", emoji: "💇" },
-  { value: "pet_shop", label: "Pet Shop", emoji: "🐾" },
-  { value: "hotel", label: "Hotel", emoji: "🏨" },
-  { value: "real_estate", label: "Imobiliária", emoji: "🏠" },
-  { value: "event", label: "Evento", emoji: "🎉" },
-  { value: "clinic", label: "Clínica", emoji: "🏥" },
-  { value: "gym", label: "Academia", emoji: "💪" },
-  { value: "mechanic", label: "Mecânico", emoji: "🔧" },
-  { value: "freelancer", label: "Freelancer", emoji: "💼" },
-  { value: "church", label: "Igreja", emoji: "⛪" },
-  { value: "product_shelf", label: "Prateleira de Produto", emoji: "📦" },
-  { value: "other", label: "Outro", emoji: "📋" },
-];
+import { useTranslation } from "../../src/lib/i18n-provider";
 
 type Step = "category" | "info" | "confirm";
 
 export default function NewBusinessScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
+
+  const CATEGORIES = [
+    { value: "restaurant", label: t('categories.restaurant'), emoji: "🍽️" },
+    { value: "construction_materials", label: t('categories.construction_materials'), emoji: "🔨" },
+    { value: "salon", label: t('categories.salon'), emoji: "💇" },
+    { value: "pet_shop", label: t('categories.pet_shop'), emoji: "🐾" },
+    { value: "hotel", label: t('categories.hotel'), emoji: "🏨" },
+    { value: "real_estate", label: t('categories.real_estate'), emoji: "🏠" },
+    { value: "event", label: t('categories.event'), emoji: "🎉" },
+    { value: "clinic", label: t('categories.clinic'), emoji: "🏥" },
+    { value: "gym", label: t('categories.gym'), emoji: "💪" },
+    { value: "auto_repair", label: t('categories.auto_repair'), emoji: "🔧" },
+    { value: "freelancer", label: t('categories.freelancer'), emoji: "💼" },
+    { value: "church", label: t('categories.church'), emoji: "⛪" },
+    { value: "product_shelf", label: t('categories.product_shelf'), emoji: "📦" },
+    { value: "other", label: t('categories.other'), emoji: "📋" },
+  ];
   const [step, setStep] = useState<Step>("category");
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -64,7 +66,7 @@ export default function NewBusinessScreen() {
 
   async function handleCreate() {
     if (!name || !category) {
-      Alert.alert("Erro", "Preencha o nome e selecione uma categoria");
+      Alert.alert(t("errors.generic"), t("validation.required"));
       return;
     }
 
@@ -88,15 +90,15 @@ export default function NewBusinessScreen() {
 
       if (error) throw error;
 
-      Alert.alert("Sucesso!", "Negócio criado com sucesso!", [
+      Alert.alert(t("success.created"), t("business.success_create"), [
         {
-          text: "Ver Negócio",
+          text: t("business.details"),
           onPress: () => router.push(`/business/${business.id}`),
         },
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error: any) {
-      Alert.alert("Erro", error.message);
+      Alert.alert(t("errors.generic"), error.message);
     } finally {
       setLoading(false);
     }
@@ -104,9 +106,9 @@ export default function NewBusinessScreen() {
 
   function renderStepIndicator() {
     const steps: { key: Step; label: string }[] = [
-      { key: "category", label: "Categoria" },
-      { key: "info", label: "Informações" },
-      { key: "confirm", label: "Confirmar" },
+      { key: "category", label: t("common.category") },
+      { key: "info", label: t("business.business_info") },
+      { key: "confirm", label: t("common.confirm") },
     ];
 
     const currentIndex = steps.findIndex((s) => s.key === step);
@@ -174,7 +176,7 @@ export default function NewBusinessScreen() {
         >
           <ArrowLeft size={20} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Criar Negócio</Text>
+        <Text style={styles.headerTitle}>{t("business.new_title")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -184,9 +186,9 @@ export default function NewBusinessScreen() {
         {/* Step 1: Category Selection */}
         {step === "category" && (
           <View>
-            <Text style={styles.stepTitle}>Escolha a Categoria</Text>
+            <Text style={styles.stepTitle}>{t("business.category_question")}</Text>
             <Text style={styles.stepSubtitle}>
-              Selecione o tipo de negócio para começar
+              {t("business.category_question_desc")}
             </Text>
             <View style={styles.categoryGrid}>
               {CATEGORIES.map((cat) => (
@@ -216,23 +218,23 @@ export default function NewBusinessScreen() {
         {/* Step 2: Business Info */}
         {step === "info" && (
           <View>
-            <Text style={styles.stepTitle}>Informações do Negócio</Text>
+            <Text style={styles.stepTitle}>{t("business.business_info")}</Text>
             <Text style={styles.stepSubtitle}>
-              Preencha os dados básicos do seu negócio
+              {t("business.business_info_desc")}
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nome do negócio *</Text>
+              <Text style={styles.label}>{t("business.name_label")} *</Text>
               <TextInput
                 style={styles.input}
                 value={name}
                 onChangeText={handleNameChange}
-                placeholder="Ex: Restaurante do João"
+                placeholder={t("business.name_placeholder_new")}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Link personalizado</Text>
+              <Text style={styles.label}>{t("business.custom_link")}</Text>
               <View style={styles.slugRow}>
                 <Text style={styles.slugPrefix}>meuqr.com.br/</Text>
                 <TextInput
@@ -243,30 +245,30 @@ export default function NewBusinessScreen() {
                       t.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50)
                     )
                   }
-                  placeholder="meu-negocio"
+                  placeholder={t("business.slug_placeholder")}
                 />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Descrição</Text>
+              <Text style={styles.label}>{t("common.description")}</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={description}
                 onChangeText={setDescription}
-                placeholder="Fale sobre seu negócio..."
+                placeholder={t("business.description_placeholder_new")}
                 multiline
                 numberOfLines={3}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>WhatsApp (com DDD)</Text>
+              <Text style={styles.label}>{t("business.whatsapp_label")}</Text>
               <TextInput
                 style={styles.input}
                 value={whatsapp}
                 onChangeText={setWhatsapp}
-                placeholder="Ex: 5511999998888"
+                placeholder={t("business.whatsapp_placeholder")}
                 keyboardType="phone-pad"
               />
             </View>
@@ -275,13 +277,13 @@ export default function NewBusinessScreen() {
               style={[styles.nextButton, !name && { opacity: 0.5 }]}
               onPress={() => {
                 if (!name) {
-                  Alert.alert("Atenção", "Digite o nome do negócio");
+                  Alert.alert(t("errors.generic"), t("business.name_required"));
                   return;
                 }
                 setStep("confirm");
               }}
             >
-              <Text style={styles.nextButtonText}>Continuar</Text>
+              <Text style={styles.nextButtonText}>{t("common.next")}</Text>
               <ChevronRight size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -290,31 +292,31 @@ export default function NewBusinessScreen() {
         {/* Step 3: Confirm */}
         {step === "confirm" && (
           <View>
-            <Text style={styles.stepTitle}>Confirmar Dados</Text>
+            <Text style={styles.stepTitle}>{t("common.confirm")}</Text>
             <Text style={styles.stepSubtitle}>
-              Revise as informações antes de criar
+              {t("validation.required")}
             </Text>
 
             <View style={styles.confirmCard}>
               <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Nome</Text>
+                <Text style={styles.confirmLabel}>{t("common.name")}</Text>
                 <Text style={styles.confirmValue}>{name}</Text>
               </View>
               <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Categoria</Text>
+                <Text style={styles.confirmLabel}>{t("common.category")}</Text>
                 <Text style={styles.confirmValue}>
                   {CATEGORIES.find((c) => c.value === category)?.label}
                 </Text>
               </View>
               <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Link</Text>
+                <Text style={styles.confirmLabel}>{t("business.custom_link")}</Text>
                 <Text style={[styles.confirmValue, { color: "#00C853" }]}>
                   /{slug}
                 </Text>
               </View>
               {description ? (
                 <View style={styles.confirmRow}>
-                  <Text style={styles.confirmLabel}>Descrição</Text>
+                  <Text style={styles.confirmLabel}>{t("common.description")}</Text>
                   <Text style={styles.confirmValue} numberOfLines={2}>
                     {description}
                   </Text>
@@ -322,7 +324,7 @@ export default function NewBusinessScreen() {
               ) : null}
               {whatsapp ? (
                 <View style={styles.confirmRow}>
-                  <Text style={styles.confirmLabel}>WhatsApp</Text>
+                  <Text style={styles.confirmLabel}>{t("common.phone")}</Text>
                   <Text style={styles.confirmValue}>{whatsapp}</Text>
                 </View>
               ) : null}
@@ -333,7 +335,7 @@ export default function NewBusinessScreen() {
                 style={styles.editButton}
                 onPress={() => setStep("info")}
               >
-                <Text style={styles.editButtonText}>Editar</Text>
+                <Text style={styles.editButtonText}>{t("common.edit")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.createButton, loading && { opacity: 0.7 }]}
@@ -343,7 +345,7 @@ export default function NewBusinessScreen() {
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.createButtonText}>Criar Negócio</Text>
+                  <Text style={styles.createButtonText}>{t("business.create_business_btn")}</Text>
                 )}
               </TouchableOpacity>
             </View>

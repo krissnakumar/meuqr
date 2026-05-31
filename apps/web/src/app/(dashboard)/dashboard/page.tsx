@@ -20,6 +20,7 @@ import {
   Scan,
   Phone,
   DollarSign,
+  Globe,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n-provider";
 
@@ -35,6 +36,7 @@ interface DashboardData {
   totalScans: number;
   totalClicks: number;
   totalQrs: number;
+  recentActivity: any[];
 }
 
 export default function DashboardPage() {
@@ -46,6 +48,23 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboard();
   }, []);
+
+  // Format relative time helper
+  function formatRelativeTime(dateString: string) {
+    const rtf = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
+    const diffInMs = new Date(dateString).getTime() - Date.now();
+    const diffInMinutes = Math.round(diffInMs / (1000 * 60));
+    
+    if (Math.abs(diffInMinutes) < 60) {
+      return rtf.format(diffInMinutes, 'minute');
+    }
+    const diffInHours = Math.round(diffInMinutes / 60);
+    if (Math.abs(diffInHours) < 24) {
+      return rtf.format(diffInHours, 'hour');
+    }
+    const diffInDays = Math.round(diffInHours / 24);
+    return rtf.format(diffInDays, 'day');
+  }
 
   async function loadDashboard() {
     try {
@@ -66,6 +85,7 @@ export default function DashboardPage() {
       let scanCount = 0;
       let clickCount = 0;
       let qrCount = 0;
+      let recentScans: any[] = [];
 
       if (bizIds.length > 0) {
         const { count: qrCodes } = await supabase
@@ -93,6 +113,15 @@ export default function DashboardPage() {
             .select("*", { count: "exact", head: true })
             .in("qr_code_id", qrIds);
           clickCount = clicks || 0;
+
+          const { data: scansData } = await supabase
+            .from("scans")
+            .select("*")
+            .in("qr_code_id", qrIds)
+            .order("created_at", { ascending: false })
+            .limit(4);
+            
+          recentScans = scansData || [];
         }
       }
 
@@ -101,6 +130,7 @@ export default function DashboardPage() {
         totalScans: scanCount,
         totalClicks: clickCount,
         totalQrs: qrCount,
+        recentActivity: recentScans,
       });
     } catch (err) {
       console.error("Error loading dashboard:", err);
@@ -406,31 +436,30 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="p-4">
               <div className="divide-y divide-[#F1F5F9]">
-                <ActivityItem
-                  icon={<Scan className="w-3.5 h-3.5 text-indigo-500" />}
-                  title={t("dashboard.activity_scan")}
-                  time={t("dashboard.activity_ago_1m")}
-                  location={t("dashboard.activity_location_sp")}
-                  dotColor="bg-indigo-500"
-                />
-                <ActivityItem
-                  icon={<Phone className="w-3.5 h-3.5 text-emerald-500" />}
-                  title={t("dashboard.activity_click")}
-                  time={t("dashboard.activity_ago_10m")}
-                  location={t("dashboard.activity_location_rj")}
-                  dotColor="bg-emerald-500"
-                />
-                <ActivityItem
-                  icon={<Store className="w-3.5 h-3.5 text-violet-500" />}
-                  title={t("dashboard.activity_new_business")}
-                  time={t("dashboard.activity_now")}
-                  dotColor="bg-violet-500"
-                />
+                {(!data?.recentActivity || data.recentActivity.length === 0) ? (
+                  <div className="py-6 text-center flex flex-col items-center">
+                     <Scan className="w-6 h-6 text-slate-300 mb-2" />
+                     <p className="text-sm text-[#64748B]">Nenhuma atividade recente</p>
+                  </div>
+                ) : (
+                  data.recentActivity.map((scan) => (
+                    <ActivityItem
+                      key={scan.id}
+                      icon={<Scan className="w-3.5 h-3.5 text-indigo-500" />}
+                      title={scan.browser ? `Scan em ${scan.browser}` : t("dashboard.activity_scan")}
+                      time={formatRelativeTime(scan.created_at)}
+                      location={scan.city ? `${scan.city}${scan.country ? `, ${scan.country}` : ''}` : "Desconhecido"}
+                      dotColor="bg-indigo-500"
+                    />
+                  ))
+                )}
               </div>
 
-              <button className="w-full mt-4 pt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors text-center cursor-pointer">
-                {t("common.view_all")}
-              </button>
+              <Link href="/dashboard/analytics">
+                <button className="w-full mt-4 pt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors text-center cursor-pointer">
+                  {t("common.view_all")}
+                </button>
+              </Link>
             </CardContent>
           </Card>
 

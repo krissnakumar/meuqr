@@ -78,6 +78,7 @@ interface SectionItem {
   item_type: string;
   is_available: boolean;
   sort_order: number;
+  metadata?: any;
 }
 
 interface PageSection {
@@ -95,17 +96,19 @@ export function PublicBusinessPageClient({
   page,
   pages = [],
   sections,
+  nearbyBusinesses = [],
 }: {
   business: BusinessData;
   page: { id: string; title: string; slug: string };
   pages?: { id: string; title: string; slug: string }[];
   sections: PageSection[];
+  nearbyBusinesses?: any[];
 }) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
   
   // Cart & Order States
-  const [orderItems, setOrderItems] = useState<{ item: SectionItem; qty: number; quality: string }[]>([]);
+  const [orderItems, setOrderItems] = useState<{ item: SectionItem; qty: number; quality: string; selectedModifiers?: any[] }[]>([]);
   const [showOrderDrawer, setShowOrderDrawer] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -116,11 +119,20 @@ export function PublicBusinessPageClient({
   const [orderSuccess, setOrderSuccess] = useState(false);
 
   // B2B Quotes States
-  const [quoteItems, setQuoteItems] = useState<{ item: SectionItem; qty: number; quality: string }[]>([]);
+  const [quoteItems, setQuoteItems] = useState<{ item: SectionItem; qty: number; quality: string; selectedModifiers?: any[] }[]>([]);
   const [showQuoteDrawer, setShowQuoteDrawer] = useState(false);
   const [quoteNotes, setQuoteNotes] = useState("");
   const [submittingQuote, setSubmittingQuote] = useState(false);
   const [quoteSuccess, setQuoteSuccess] = useState(false);
+
+  // Modifiers Drawer States
+  const [modifierItem, setModifierItem] = useState<SectionItem | null>(null);
+  const [activeModifiers, setActiveModifiers] = useState<Record<string, any[]>>({});
+  const [modifierMode, setModifierMode] = useState<"order" | "quote">("order");
+
+  // Donation States
+  const [donationItem, setDonationItem] = useState<SectionItem | null>(null);
+  const [donationAmount, setDonationAmount] = useState<number | "">("");
 
   // Lead Form States
   const [leadName, setLeadName] = useState("");
@@ -136,6 +148,7 @@ export function PublicBusinessPageClient({
   const [bookingTime, setBookingTime] = useState("");
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingCustomFields, setBookingCustomFields] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Expand first section by default
@@ -153,6 +166,13 @@ export function PublicBusinessPageClient({
 
   // === Shopping Cart Functions ===
   function addToOrder(item: SectionItem) {
+    if (item.metadata?.modifiers?.length > 0) {
+      setModifierItem(item);
+      setModifierMode("order");
+      setActiveModifiers({});
+      return;
+    }
+    
     setOrderItems((prev) => {
       const existing = prev.find((i) => i.item.id === item.id);
       if (existing) {
@@ -160,7 +180,7 @@ export function PublicBusinessPageClient({
           i.item.id === item.id ? { ...i, qty: i.qty + 1 } : i
         );
       }
-      return [...prev, { item, qty: 1, quality: getDefaultQuality(item.name) }];
+      return [...prev, { item, qty: item.metadata?.min_quantity || 1, quality: getDefaultQuality(item.name) }];
     });
   }
 
@@ -177,17 +197,98 @@ export function PublicBusinessPageClient({
     });
   }
 
+  function setOrderQty(item: SectionItem, qty: number) {
+    setOrderItems((prev) => {
+      if (qty <= 0) return prev.filter((i) => i.item.id !== item.id);
+      const existing = prev.find((i) => i.item.id === item.id);
+      if (existing) {
+        return prev.map((i) => (i.item.id === item.id ? { ...i, qty } : i));
+      }
+      return [...prev, { item, qty: Math.max(qty, item.metadata?.min_quantity || 1), quality: getDefaultQuality(item.name) }];
+    });
+  }
+
   function removeFromOrder(itemId: string) {
     setOrderItems((prev) => prev.filter((i) => i.item.id !== itemId));
   }
 
   const totalOrder = orderItems.reduce(
-    (sum, i) => sum + (i.item.price || 0) * i.qty,
+    (sum, i) => {
+      let itemTotal = (i.item.price || 0) * i.qty;
+      if (i.selectedModifiers) {
+        i.selectedModifiers.forEach(modOpt => {
+          itemTotal += (modOpt.price || 0) * i.qty;
+        });
+      }
+      return sum + itemTotal;
+    },
     0
   );
 
+  function confirmModifiers() {
+    if (!modifierItem) return;
+
+    // Convert activeModifiers (Record of mod.name -> selected option names) 
+    // into an array of full option objects with prices
+    const selectedOptions: any[] = [];
+    const itemMods = modifierItem.metadata?.modifiers || [];
+    
+    // Validation: Check required modifiers
+    for (const mod of itemMods) {
+      if (mod.required && (!activeModifiers[mod.name] || activeModifiers[mod.name].length === 0)) {
+        alert(`Por favor, selecione uma opção para: ${mod.name}`);
+        return;
+      }
+      
+      const selectedNames = activeModifiers[mod.name] || [];
+      selectedNames.forEach(optName => {
+        const optionDetails = mod.options.find((o: any) => o.name === optName);
+        if (optionDetails) {
+          selectedOptions.push({ modifierName: mod.name, ...optionDetails });
+        }
+      });
+    }
+
+    if (modifierMode === "order") {
+      setOrderItems((prev) => [
+        ...prev,
+        { item: modifierItem, qty: modifierItem.metadata?.min_quantity || 1, quality: getDefaultQuality(modifierItem.name), selectedModifiers: selectedOptions },
+      ]);
+    } else {
+      setQuoteItems((prev) => [
+        ...prev,
+        { item: modifierItem, qty: modifierItem.metadata?.min_quantity || 1, quality: getDefaultQuality(modifierItem.name), selectedModifiers: selectedOptions },
+      ]);
+    }
+
+    setModifierItem(null);
+    setActiveModifiers({});
+  }
+
+  function confirmDonation() {
+    if (!donationItem || !donationAmount || Number(donationAmount) <= 0) return;
+    
+    // We add it to the cart as a normal item, but we override its price!
+    const customItem = { ...donationItem, price: Number(donationAmount) };
+    
+    setOrderItems((prev) => [
+      ...prev,
+      { item: customItem, qty: 1, quality: "Padrão" },
+    ]);
+    
+    setDonationItem(null);
+    setDonationAmount("");
+  }
+
   // === Quote List Functions ===
   function addToQuote(item: SectionItem) {
+    if (item.metadata?.modifiers?.length > 0) {
+      setModifierItem(item);
+      setModifierMode("quote");
+      setActiveModifiers({});
+      return;
+    }
+
     setQuoteItems((prev) => {
       const existing = prev.find((i) => i.item.id === item.id);
       if (existing) {
@@ -195,7 +296,7 @@ export function PublicBusinessPageClient({
           i.item.id === item.id ? { ...i, qty: i.qty + 1 } : i
         );
       }
-      return [...prev, { item, qty: 1, quality: getDefaultQuality(item.name) }];
+      return [...prev, { item, qty: item.metadata?.min_quantity || 1, quality: getDefaultQuality(item.name) }];
     });
   }
 
@@ -209,6 +310,17 @@ export function PublicBusinessPageClient({
       return prev.map((i) =>
         i.item.id === item.id ? { ...i, qty: i.qty - 1 } : i
       );
+    });
+  }
+
+  function setQuoteQty(item: SectionItem, qty: number) {
+    setQuoteItems((prev) => {
+      if (qty <= 0) return prev.filter((i) => i.item.id !== item.id);
+      const existing = prev.find((i) => i.item.id === item.id);
+      if (existing) {
+        return prev.map((i) => (i.item.id === item.id ? { ...i, qty } : i));
+      }
+      return [...prev, { item, qty, quality: getDefaultQuality(item.name) }];
     });
   }
 
@@ -321,9 +433,20 @@ export function PublicBusinessPageClient({
 
       if (!res.ok) throw new Error("Erro ao processar pedido.");
 
-      setOrderSuccess(true);
+      const itemsList = orderItems.map((oi) => `• ${oi.qty}x ${oi.item.name} - R$ ${(oi.item.price! * oi.qty).toFixed(2)}`).join("\n");
+      const waMsg = `*Novo Pedido - ${business.name}*\n` +
+        `---------------------------------\n` +
+        `👤 *Cliente:* ${customerName}\n` +
+        `📞 *Telefone:* ${customerPhone}\n` +
+        `💳 *Pagamento:* ${paymentMethod}\n` +
+        (orderNotes ? `📝 *Observações:* ${orderNotes}\n` : "") +
+        `---------------------------------\n` +
+        `🛒 *Itens do pedido:*\n${itemsList}\n` +
+        `---------------------------------\n` +
+        `💰 *Total:* R$ ${totalOrder.toFixed(2)}`;
 
       setTimeout(() => {
+        handleWhatsAppRedirect(waMsg);
         setOrderItems([]);
         setShowOrderDrawer(false);
         setOrderSuccess(false);
@@ -462,6 +585,19 @@ export function PublicBusinessPageClient({
     trackClick("booking", page.id);
 
     try {
+      let finalNotes = quoteNotes;
+      let waCustomFields = "";
+
+      if (Object.keys(bookingCustomFields).length > 0) {
+        finalNotes += "\n\nCustom Fields:\n" + Object.entries(bookingCustomFields)
+          .map(([key, val]) => `${key}: ${val}`)
+          .join("\n");
+        
+        waCustomFields = Object.entries(bookingCustomFields)
+          .map(([key, val]) => `*${key}:* ${val}`)
+          .join("\n") + "\n";
+      }
+
       const payload = {
         businessId: business.id,
         customerName,
@@ -469,7 +605,7 @@ export function PublicBusinessPageClient({
         customerEmail,
         appointmentDate: bookingDate,
         appointmentTime: bookingTime + ":00", // pad seconds
-        notes: quoteNotes // reusing notes state
+        notes: finalNotes // reusing notes state + custom fields
       };
 
       const res = await fetch("/api/appointments", {
@@ -487,6 +623,7 @@ export function PublicBusinessPageClient({
         `📞 *Telefone:* ${customerPhone}\n` +
         `📅 *Data:* ${bookingDate.split('-').reverse().join('/')}\n` +
         `⏰ *Horário:* ${bookingTime}\n` +
+        waCustomFields +
         `Gostaria de confirmar minha solicitação.`;
 
       setTimeout(() => {
@@ -497,6 +634,7 @@ export function PublicBusinessPageClient({
         setCustomerPhone("");
         setBookingDate("");
         setBookingTime("");
+        setBookingCustomFields({});
         setQuoteNotes("");
       }, 2000);
 
@@ -761,6 +899,70 @@ export function PublicBusinessPageClient({
                               {item.description}
                             </p>
                           )}
+                          
+                          {/* Polymorphic Metadata Presentation */}
+                          {item.metadata && (
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              {(business.category === "salon" || business.category === "clinic") && (
+                                <>
+                                  {item.metadata.duration_minutes && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                      <Clock className="w-3 h-3" />
+                                      {item.metadata.duration_minutes} min
+                                    </span>
+                                  )}
+                                  {item.metadata.preparation_instructions && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded" title={item.metadata.preparation_instructions}>
+                                      ⚠️ Requer Preparo
+                                    </span>
+                                  )}
+                                  {item.metadata.accepted_insurances && Array.isArray(item.metadata.accepted_insurances) && item.metadata.accepted_insurances.length > 0 && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                                      🏥 Aceita Convênio
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                              
+                              {business.category === "real_estate" && (
+                                <>
+                                  {item.metadata.bedrooms > 0 && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                      🛏️ {item.metadata.bedrooms} Quartos
+                                    </span>
+                                  )}
+                                  {item.metadata.bathrooms > 0 && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                      🚿 {item.metadata.bathrooms} Banheiros
+                                    </span>
+                                  )}
+                                  {item.metadata.area_sqm > 0 && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                      📏 {item.metadata.area_sqm} m²
+                                    </span>
+                                  )}
+                                </>
+                              )}
+
+                              {item.metadata.dietary && Array.isArray(item.metadata.dietary) && item.metadata.dietary.map((diet: string) => (
+                                <span key={diet} className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded shadow-sm">
+                                  {diet === 'vegan' ? '🌱 Vegano' : diet === 'vegetarian' ? '🧀 Vegetariano' : diet === 'gluten_free' ? '🌾 Sem Glúten' : diet === 'spicy' ? '🌶️ Apimentado' : diet}
+                                </span>
+                              ))}
+
+                              {item.metadata.min_quantity && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded shadow-sm">
+                                  Mínimo: {item.metadata.min_quantity} {item.metadata.unit_type || 'un'}
+                                </span>
+                              )}
+
+                              {item.metadata.modifiers && item.metadata.modifiers.length > 0 && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+                                  Opções Disponíveis
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="text-right shrink-0 flex flex-col items-end justify-between min-h-[60px]">
                           {item.price !== null && item.price > 0 ? (
@@ -791,9 +993,14 @@ export function PublicBusinessPageClient({
                                     >
                                       <Minus className="w-3.5 h-3.5" />
                                     </button>
-                                    <span className="text-xs font-bold text-gray-800 min-w-[14px] text-center">
-                                      {quoteItem.qty}
-                                    </span>
+                                    <input
+                                      type="number"
+                                      step={item.metadata?.unit_type ? "0.01" : "1"}
+                                      min="0"
+                                      value={quoteItem.qty}
+                                      onChange={(e) => setQuoteQty(item, parseFloat(e.target.value) || 0)}
+                                      className="w-10 text-xs font-bold text-gray-800 text-center bg-transparent border-none focus:ring-0 p-0"
+                                    />
                                     <button
                                       onClick={() => addToQuote(item)}
                                       className="p-1 hover:bg-gray-100 rounded-full text-gray-400 active:scale-90 transition-transform"
@@ -810,48 +1017,81 @@ export function PublicBusinessPageClient({
                                     <Plus className="w-4 h-4" />
                                   </button>
                                 )
-                              ) : (
-                                // General Menu Orders
-                                item.price && item.price > 0 ? (
-                                  cartItem ? (
-                                    <div className="flex items-center gap-1.5 bg-white border border-[#00C853]/30 rounded-full p-1 mt-1 shadow-sm shrink-0">
-                                      <button
-                                        onClick={() => decrementQty(item)}
-                                        className="p-1 hover:bg-gray-100 rounded-full text-gray-400 active:scale-90 transition-transform"
-                                      >
-                                        <Minus className="w-3.5 h-3.5" />
-                                      </button>
-                                      <span className="text-xs font-bold text-gray-800 min-w-[14px] text-center">
-                                        {cartItem.qty}
-                                      </span>
+                              ) : (business.category === "salon" || business.category === "clinic") ? (
+                                  <button
+                                    onClick={() => {
+                                      setBookingCustomFields(prev => ({ ...prev, Servico: item.name }));
+                                      setShowBookingDrawer(true);
+                                    }}
+                                    className="mt-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm"
+                                  >
+                                    Agendar
+                                  </button>
+                                ) : business.category === "real_estate" ? (
+                                  <button
+                                    onClick={() => handleWhatsAppRedirect(`Olá! Gostaria de agendar uma visita para o imóvel: ${item.name}`)}
+                                    className="mt-1 bg-[#111827] hover:bg-gray-800 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm"
+                                  >
+                                    Agendar Visita
+                                  </button>
+                                ) : (business.category === "church" || business.category === "nonprofit") ? (
+                                  <button
+                                    onClick={() => {
+                                      setDonationItem(item);
+                                      setDonationAmount(item.price || "");
+                                    }}
+                                    className="mt-1 bg-[#D4AF37] hover:bg-[#c29e2f] text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm"
+                                  >
+                                    Contribuir
+                                  </button>
+                                ) : (
+                                  // General Menu Orders
+                                  item.price && item.price > 0 ? (
+                                    cartItem ? (
+                                      <div className="flex items-center gap-1.5 bg-white border border-[#00C853]/30 rounded-full p-1 mt-1 shadow-sm shrink-0">
+                                        <button
+                                          onClick={() => decrementQty(item)}
+                                          className="p-1 hover:bg-gray-100 rounded-full text-gray-400 active:scale-90 transition-transform"
+                                        >
+                                          <Minus className="w-3.5 h-3.5" />
+                                        </button>
+                                        <input
+                                            type="number"
+                                            step={item.metadata?.unit_type ? "0.01" : "1"}
+                                            min="0"
+                                            value={cartItem.qty}
+                                            onChange={(e) => setOrderQty(item, parseFloat(e.target.value) || 0)}
+                                            className="w-10 text-xs font-bold text-[#00C853] text-center bg-transparent border-none focus:ring-0 p-0"
+                                          />
+                                        <button
+                                          onClick={() => addToOrder(item)}
+                                          className="p-1 hover:bg-[#00C853]/15 rounded-full text-[#00C853] active:scale-90 transition-transform"
+                                        >
+                                          <Plus className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    ) : (
                                       <button
                                         onClick={() => addToOrder(item)}
-                                        className="p-1 hover:bg-[#00C853]/15 rounded-full text-[#00C853] active:scale-90 transition-transform"
+                                        className="mt-1 flex items-center justify-center bg-[#00C853] text-white w-7 h-7 rounded-full hover:bg-[#00B34A] shadow-sm transition-all active:scale-95 shrink-0"
+                                        title="Pedir"
                                       >
-                                        <Plus className="w-3.5 h-3.5" />
+                                        <Plus className="w-4 h-4" />
                                       </button>
-                                    </div>
+                                    )
                                   ) : (
-                                    <button
-                                      onClick={() => addToOrder(item)}
-                                      className="mt-1 flex items-center justify-center bg-[#00C853] text-white w-7 h-7 rounded-full hover:bg-[#00B34A] shadow-sm transition-all active:scale-95 shrink-0"
-                                      title="Pedir"
-                                    >
-                                      <Plus className="w-4 h-4" />
-                                    </button>
-                                  )
-                                ) : (
-                                  // Direct info button if no price
-                                  business.whatsapp && (
-                                    <button
-                                      onClick={() => handleWhatsAppRedirect(`Olá! Gostaria de mais informações sobre: ${item.name}`)}
-                                      className="mt-1 flex items-center gap-1 text-xs text-[#00C853] font-medium"
-                                    >
-                                      <MessageCircle className="w-3 h-3" /> Falar
-                                    </button>
+                                    // Direct info button if no price
+                                    business.whatsapp && (
+                                      <button
+                                        onClick={() => handleWhatsAppRedirect(`Olá! Gostaria de agendar: ${item.name}`)}
+                                        className="mt-1 flex items-center gap-1 text-xs text-[#00C853] font-medium"
+                                      >
+                                        <MessageCircle className="w-3 h-3" /> Falar
+                                      </button>
+                                    )
                                   )
                                 )
-                              )}
+                              }
                             </>
                           )}
                         </div>
@@ -1012,6 +1252,147 @@ export function PublicBusinessPageClient({
           </button>
         </div>
       )}
+      {/* DONATION DRAWER */}
+      {donationItem && (
+        <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setDonationItem(null)} />
+          <div className="bg-white rounded-t-[30px] p-6 max-h-[85vh] overflow-y-auto w-full max-w-lg mx-auto shadow-2xl z-10 relative animate-drawer-slide flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 shrink-0">
+              <h2 className="text-lg font-bold text-[#111827] flex items-center gap-2">
+                <Heart className="w-5 h-5 text-[#D4AF37]" /> {donationItem.name}
+              </h2>
+              <button
+                onClick={() => setDonationItem(null)}
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-6 overflow-y-auto flex-1 flex flex-col items-center justify-center space-y-6">
+              <div className="text-center">
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">Qual o valor da sua contribuição?</h3>
+                <div className="relative inline-flex items-center">
+                  <span className="absolute left-4 text-gray-400 font-bold text-xl">R$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    value={donationAmount}
+                    onChange={(e) => setDonationAmount(e.target.value ? parseFloat(e.target.value) : "")}
+                    className="w-full text-center text-4xl font-black text-[#111827] bg-gray-50 border border-gray-200 rounded-2xl py-6 pl-12 pr-6 focus:outline-none focus:ring-4 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
+                    placeholder="0,00"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-2 w-full">
+                {[10, 20, 50, 100].map(amount => (
+                  <button
+                    key={amount}
+                    onClick={() => setDonationAmount(amount)}
+                    className="flex-1 min-w-[70px] bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors"
+                  >
+                    R$ {amount}
+                  </button>
+                ))}
+              </div>
+              
+              {donationItem.description && (
+                <p className="text-xs text-gray-500 text-center max-w-sm mt-4 bg-gray-50 p-3 rounded-xl">
+                  {donationItem.description}
+                </p>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-gray-100 shrink-0">
+              <button
+                onClick={confirmDonation}
+                disabled={!donationAmount || Number(donationAmount) <= 0}
+                className="w-full bg-[#D4AF37] hover:bg-[#c29e2f] text-white py-4 rounded-xl font-bold text-base transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Heart className="w-5 h-5 fill-white/20" /> Confirmar Contribuição
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODIFIERS DRAWER */}
+      {modifierItem && (
+        <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setModifierItem(null)} />
+          <div className="bg-white rounded-t-[30px] p-6 max-h-[85vh] overflow-y-auto w-full max-w-lg mx-auto shadow-2xl z-10 relative animate-drawer-slide flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 shrink-0">
+              <h2 className="text-lg font-bold text-[#111827] flex items-center gap-2 line-clamp-1">
+                {modifierItem.name}
+              </h2>
+              <button
+                onClick={() => setModifierItem(null)}
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 overflow-y-auto flex-1 space-y-6">
+              {modifierItem.metadata?.modifiers?.map((mod: any, mIdx: number) => (
+                <div key={mIdx}>
+                  <div className="flex items-center justify-between mb-3 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                    <h3 className="text-sm font-bold text-gray-800">{mod.name}</h3>
+                    {mod.required ? (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-1 rounded">Obrigatório</span>
+                    ) : (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Opcional</span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {mod.options?.map((opt: any, oIdx: number) => {
+                      const isSelected = activeModifiers[mod.name]?.includes(opt.name);
+                      return (
+                        <label key={oIdx} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isSelected || false}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setActiveModifiers(prev => {
+                                  const currentModSelections = prev[mod.name] || [];
+                                  if (checked) {
+                                    return { ...prev, [mod.name]: [...currentModSelections, opt.name] };
+                                  } else {
+                                    return { ...prev, [mod.name]: currentModSelections.filter(n => n !== opt.name) };
+                                  }
+                                });
+                              }}
+                              className="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                            />
+                            <span className="text-sm font-medium text-gray-700">{opt.name}</span>
+                          </div>
+                          {opt.price > 0 && (
+                            <span className="text-xs font-bold text-gray-500">+ R$ {opt.price.toFixed(2)}</span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t border-gray-100 shrink-0">
+              <button
+                onClick={confirmModifiers}
+                className="w-full bg-[#111827] hover:bg-gray-800 text-white py-3.5 rounded-xl font-bold text-sm transition-all shadow-md"
+              >
+                Adicionar {modifierMode === "order" ? "ao Pedido" : "à Cotação"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SHOPPING CART CHECKOUT DRAWER */}
       {showOrderDrawer && (
@@ -1036,7 +1417,19 @@ export function PublicBusinessPageClient({
                 <div key={oi.item.id} className="flex items-center justify-between py-3">
                   <div className="min-w-0 pr-2">
                     <p className="text-sm font-bold text-gray-800">{oi.item.name}</p>
-                    <p className="text-xs text-gray-400">R$ ${(oi.item.price || 0).toFixed(2)} cada</p>
+                    {oi.selectedModifiers && oi.selectedModifiers.length > 0 && (
+                      <div className="mt-0.5 space-y-0.5">
+                        {oi.selectedModifiers.map((mod: any, idx: number) => (
+                          <p key={idx} className="text-[10px] text-gray-500 flex justify-between pr-4">
+                            <span>+ {mod.name}</span>
+                            {mod.price > 0 && <span>R$ {mod.price.toFixed(2)}</span>}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      R$ {(oi.item.price || 0).toFixed(2)} {oi.item.metadata?.unit_type ? `/ ${oi.item.metadata.unit_type}` : 'cada'}
+                    </p>
                     {business.category?.includes("constru") && (
                       <div className="mt-1.5 flex items-center gap-1">
                         <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Qualidade:</span>
@@ -1062,7 +1455,14 @@ export function PublicBusinessPageClient({
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="text-xs font-bold text-gray-800 px-1">{oi.qty}</span>
+                      <input
+                        type="number"
+                        step={oi.item.metadata?.unit_type ? "0.01" : "1"}
+                        min="0"
+                        value={oi.qty}
+                        onChange={(e) => setOrderQty(oi.item, parseFloat(e.target.value) || 0)}
+                        className="w-12 text-xs font-bold text-gray-800 text-center bg-transparent border-none focus:ring-0 p-0"
+                      />
                       <button
                         onClick={() => addToOrder(oi.item)}
                         className="p-1 hover:bg-gray-100 rounded text-[#00C853]"
@@ -1242,7 +1642,14 @@ export function PublicBusinessPageClient({
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="text-xs font-bold text-gray-800 px-1">{qi.qty}</span>
+                      <input
+                        type="number"
+                        step={qi.item.metadata?.unit_type ? "0.01" : "1"}
+                        min="0"
+                        value={qi.qty}
+                        onChange={(e) => setQuoteQty(qi.item, parseFloat(e.target.value) || 0)}
+                        className="w-12 text-xs font-bold text-gray-800 text-center bg-transparent border-none focus:ring-0 p-0"
+                      />
                       <button
                         onClick={() => addToQuote(qi.item)}
                         className="p-1 hover:bg-gray-100 rounded text-[#111827]"
@@ -1374,8 +1781,39 @@ export function PublicBusinessPageClient({
         </div>
       )}
 
+      {/* Nearby Businesses */}
+      {nearbyBusinesses && nearbyBusinesses.length > 0 && (
+        <div className="px-6 py-8 mt-4 border-t border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-indigo-500" /> 
+            Descubra Perto de Você
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {nearbyBusinesses.map((biz) => (
+              <a
+                key={biz.id}
+                href={`/${biz.slug}`}
+                className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all group"
+              >
+                {biz.logo_url ? (
+                  <img src={biz.logo_url} alt={biz.name} className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-400 shrink-0">
+                    {biz.name.charAt(0)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <h4 className="font-semibold text-gray-800 text-sm group-hover:text-indigo-600 transition-colors truncate">{biz.name}</h4>
+                  <p className="text-xs text-gray-500 capitalize truncate">{biz.category ? biz.category.replace("_", " ") : biz.city}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
-      <div className="text-center py-6 mt-8">
+      <div className="text-center py-6 mt-2">
         <a
           href="https://meuqr.com.br"
           className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
@@ -1448,6 +1886,44 @@ export function PublicBusinessPageClient({
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
+
+              {/* Dynamic Custom Fields */}
+              {business.notification_settings?.form_schemas?.appointments?.map((field: any) => (
+                <div key={field.id}>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">
+                    {field.label} {field.required && "*"}
+                  </label>
+                  {field.type === "textarea" ? (
+                    <textarea
+                      required={field.required}
+                      value={bookingCustomFields[field.label] || ""}
+                      onChange={(e) => setBookingCustomFields(p => ({...p, [field.label]: e.target.value}))}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                      rows={3}
+                    />
+                  ) : field.type === "select" ? (
+                    <select
+                      required={field.required}
+                      value={bookingCustomFields[field.label] || ""}
+                      onChange={(e) => setBookingCustomFields(p => ({...p, [field.label]: e.target.value}))}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    >
+                      <option value="">Selecione...</option>
+                      {field.options?.map((opt: string) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type === "phone" ? "tel" : field.type === "date" ? "date" : field.type === "email" ? "email" : "text"}
+                      required={field.required}
+                      value={bookingCustomFields[field.label] || ""}
+                      onChange={(e) => setBookingCustomFields(p => ({...p, [field.label]: e.target.value}))}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  )}
+                </div>
+              ))}
               
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">Observações (Opcional)</label>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { ERR } from "@meuqr/shared";
 
 export async function POST(req: Request) {
   try {
@@ -7,7 +8,7 @@ export async function POST(req: Request) {
 
     if (!businessId || !customerName || !customerPhone || !appointmentDate || !appointmentTime) {
       return NextResponse.json(
-        { error: "Dados incompletos para agendamento" },
+        { error: ERR.MISSING_APPOINTMENT_DATA },
         { status: 400 }
       );
     }
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("API Error (Appointments):", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: ERR.INTERNAL_SERVER_ERROR_EN },
       { status: 500 }
     );
   }

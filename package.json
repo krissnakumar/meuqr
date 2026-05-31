@@ -14,7 +14,9 @@
     "db:seed": "pnpm --filter @meuqr/supabase db:seed",
     "mobile:start": "pnpm --filter @meuqr/mobile start",
     "mobile:ios": "pnpm --filter @meuqr/mobile ios",
-    "mobile:android": "pnpm --filter @meuqr/mobile android"
+    "mobile:android": "pnpm --filter @meuqr/mobile android",
+    "audit:i18n": "bash scripts/i18n-audit.sh",
+    "audit:i18n:quick": "bash scripts/i18n-audit.sh --quick"
   },
   "engines": {
     "node": ">=18.0.0",

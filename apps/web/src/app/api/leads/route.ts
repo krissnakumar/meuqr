@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getOrCreateClient, createNotification, supabaseAdmin } from "@/lib/notifications";
+import { ERR } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     if (!businessId || !name) {
       return NextResponse.json(
-        { error: "Dados obrigatórios faltando (businessId e name são necessários)." },
+        { error: ERR.MISSING_LEAD_DATA },
         { status: 400 }
       );
     }
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Lead creation error:", error);
-      return NextResponse.json({ error: "Erro ao registrar lead." }, { status: 500 });
+      return NextResponse.json({ error: ERR.CREATE_LEAD_ERROR }, { status: 500 });
     }
 
     // 3. Dispatch new lead notification
@@ -94,6 +95,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, lead });
   } catch (err) {
     console.error("Leads API internal error:", err);
-    return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

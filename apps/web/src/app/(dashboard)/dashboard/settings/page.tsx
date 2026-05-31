@@ -106,7 +106,7 @@ export default function SettingsPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error(t("session_expired"));
+        toast.error(t('errors.session_expired'));
         return;
       }
 
@@ -203,7 +203,7 @@ export default function SettingsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-        <p className="text-sm font-medium text-[#64748B]">Carregando configurações...</p>
+        <p className="text-sm font-medium text-[#64748B]">{t('business.loading_settings')}</p>
       </div>
     );
   }
@@ -238,13 +238,13 @@ export default function SettingsPage() {
               <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
                 <User className="w-4 h-4 text-indigo-600" />
               </div>
-              <GlassCardTitle className="text-lg">Perfil do Usuário</GlassCardTitle>
+              <GlassCardTitle className="text-lg">{t('settings.profile_title')}</GlassCardTitle>
             </div>
           </GlassCardHeader>
           <GlassCardContent className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-6 items-start">
               <div className="w-full sm:w-32 shrink-0">
-                <Label className="text-sm font-medium text-[#0F172A] mb-2 block">Sua Foto</Label>
+                <Label className="text-sm font-medium text-[#0F172A] mb-2 block">{t('settings.your_photo')}</Label>
                 <ImageUpload 
                   value={avatarUrl}
                   onChange={(file: File) => {
@@ -255,7 +255,7 @@ export default function SettingsPage() {
                     reader.readAsDataURL(file);
                   }}
                   shape="rounded"
-                  label="Upload foto"
+                  label={t('settings.upload_photo')}
                   className="w-24 h-24 sm:w-full sm:h-auto"
                 />
               </div>
@@ -363,25 +363,25 @@ export default function SettingsPage() {
                             onChange={(e) => handleBusinessChange(biz.id, "category", e.target.value)}
                             className="w-full h-10 px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all shadow-sm"
                           >
-                            <option value="restaurant">Restaurante</option>
-                            <option value="pizzeria">Pizzaria</option>
-                            <option value="burger_shop">Hamburgueria</option>
-                            <option value="bakery">Padaria</option>
-                            <option value="coffee_shop">Cafeteria</option>
-                            <option value="bar_pub">Bar</option>
-                            <option value="construction_materials">Construção</option>
-                            <option value="hardware_store">Ferramentas</option>
-                            <option value="clothing_store">Vestuário</option>
-                            <option value="salon">Salão</option>
-                            <option value="pet_shop">Pet Shop</option>
-                            <option value="hotel">Hotel</option>
-                            <option value="real_estate">Imobiliária</option>
-                            <option value="auto_repair">Oficina</option>
-                            <option value="supermarket">Mercado</option>
-                            <option value="school">Escola</option>
-                            <option value="freelancer">Freelancer</option>
-                            <option value="pharmacy">Farmácia</option>
-                            <option value="other">Outro</option>
+                            <option value="restaurant">{t('categories.restaurant')}</option>
+                            <option value="pizzeria">{t('categories.pizzeria')}</option>
+                            <option value="burger_shop">{t('categories.burger_shop')}</option>
+                            <option value="bakery">{t('categories.bakery')}</option>
+                            <option value="coffee_shop">{t('categories.coffee_shop')}</option>
+                            <option value="bar_pub">{t('categories.bar_pub')}</option>
+                            <option value="construction_materials">{t('categories.construction_materials')}</option>
+                            <option value="hardware_store">{t('categories.hardware_store')}</option>
+                            <option value="clothing_store">{t('categories.clothing_store')}</option>
+                            <option value="salon">{t('categories.salon')}</option>
+                            <option value="pet_shop">{t('categories.pet_shop')}</option>
+                            <option value="hotel">{t('categories.hotel')}</option>
+                            <option value="real_estate">{t('categories.real_estate')}</option>
+                            <option value="auto_repair">{t('categories.auto_repair')}</option>
+                            <option value="supermarket">{t('categories.supermarket')}</option>
+                            <option value="school">{t('categories.school')}</option>
+                            <option value="freelancer">{t('categories.freelancer')}</option>
+                            <option value="pharmacy">{t('categories.pharmacy')}</option>
+                            <option value="other">{t('categories.other')}</option>
                           </select>
                         </div>
 

@@ -41,6 +41,11 @@
           "cameraPermission": "Permita o MeuQR acessar sua câmera para escanear QR codes."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-expo-project-id"
+      }
+    }
   }
 }

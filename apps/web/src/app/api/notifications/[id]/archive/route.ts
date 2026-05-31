@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { ERR } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function PATCH(request: NextRequest, { params }: RouteProps) {
     // 1. Get authenticated session user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+      return NextResponse.json({ error: ERR.UNAUTHORIZED }, { status: 401 });
     }
 
     // 2. Fetch the notification to identify its business scope
@@ -40,7 +41,7 @@ export async function PATCH(request: NextRequest, { params }: RouteProps) {
       .maybeSingle();
 
     if (!notification) {
-      return NextResponse.json({ error: "Notificação não encontrada." }, { status: 404 });
+      return NextResponse.json({ error: ERR.NOTIFICATION_NOT_FOUND }, { status: 404 });
     }
 
     // Verify user membership or business ownership
@@ -60,7 +61,7 @@ export async function PATCH(request: NextRequest, { params }: RouteProps) {
         .maybeSingle();
 
       if (!member) {
-        return NextResponse.json({ error: "Acesso negado para este negócio." }, { status: 403 });
+        return NextResponse.json({ error: ERR.ACCESS_DENIED }, { status: 403 });
       }
     }
 
@@ -75,12 +76,12 @@ export async function PATCH(request: NextRequest, { params }: RouteProps) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: "Erro ao arquivar notificação." }, { status: 500 });
+      return NextResponse.json({ error: ERR.ARCHIVE_NOTIFICATION_ERROR }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, notification: updated });
   } catch (err) {
     console.error("Notifications Archive PATCH exception:", err);
-    return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ error: ERR.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

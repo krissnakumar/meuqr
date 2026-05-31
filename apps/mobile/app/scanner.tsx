@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { supabase } from "../src/lib/supabase";
 import { Scan, QrCode, ArrowLeft } from "lucide-react-native";
+import { useTranslation } from "../src/lib/i18n-provider";
 
 export default function ScannerScreen() {
   const router = useRouter();
@@ -72,7 +73,7 @@ export default function ScannerScreen() {
           return;
         }
 
-        Alert.alert("QR Code não encontrado", "Este QR code não está registrado no MeuQR.", [
+        Alert.alert(t("errors.not_found"), t("public.qr_scanner_prompt"), [
           { text: "OK", onPress: () => resetScanner() },
         ]);
         return;
@@ -82,12 +83,12 @@ export default function ScannerScreen() {
       if (business?.slug) {
         Linking.openURL(`https://meuqr.com.br/${business.slug}`);
       } else {
-        Alert.alert("Negócio não encontrado", "Não foi possível encontrar este negócio.");
+        Alert.alert(t("business.not_found"), t("business.not_found"));
         resetScanner();
       }
     } catch (err) {
       console.error(err);
-      Alert.alert("Erro", "Não foi possível processar este QR code.");
+      Alert.alert(t("errors.generic"), t("errors.generic"));
       resetScanner();
     } finally {
       setLoading(false);
@@ -112,21 +113,21 @@ export default function ScannerScreen() {
       <View style={styles.container}>
         <View style={styles.permissionContainer}>
           <QrCode size={64} color="#D1D5DB" />
-          <Text style={styles.permissionTitle}>Permissão necessária</Text>
+          <Text style={styles.permissionTitle}>{t("errors.unauthorized")}</Text>
           <Text style={styles.permissionText}>
-            Precisamos de acesso à câmera para escanear QR codes.
+            {t("public.qr_scanner_prompt")}
           </Text>
           <TouchableOpacity
             style={styles.permissionButton}
             onPress={requestPermission}
           >
-            <Text style={styles.permissionButtonText}>Permitir Câmera</Text>
+            <Text style={styles.permissionButtonText}>{t("common.yes_continue")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.backButtonText}>Voltar</Text>
+            <Text style={styles.backButtonText}>{t("common.back")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -152,7 +153,7 @@ export default function ScannerScreen() {
             >
               <ArrowLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
-            <Text style={styles.topBarTitle}>Escanear QR Code</Text>
+            <Text style={styles.topBarTitle}>{t("public.qr_scanner_prompt")}</Text>
             <View style={{ width: 40 }} />
           </View>
 
@@ -175,14 +176,14 @@ export default function ScannerScreen() {
           {/* Bottom */}
           <View style={styles.bottomArea}>
             <Text style={styles.bottomText}>
-              Aponte para um QR Code MeuQR
+              {t("public.qr_scanner_prompt")}
             </Text>
             {!scanning && (
               <TouchableOpacity
                 style={styles.rescanButton}
                 onPress={resetScanner}
               >
-                <Text style={styles.rescanButtonText}>Escanear novamente</Text>
+                <Text style={styles.rescanButtonText}>{t("public.scanned_success")}</Text>
               </TouchableOpacity>
             )}
           </View>
