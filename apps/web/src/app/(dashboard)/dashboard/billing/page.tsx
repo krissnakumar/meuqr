@@ -65,19 +65,21 @@ export default function BillingPage() {
         const businessId = businesses[0].id;
 
         if (planKey === "free") {
-          // Downgrade to free directly
-          const { error: updateError } = await supabase
-            .from("businesses")
-            .update({ subscription_tier: "free" })
-            .eq("id", businessId);
+          // Downgrade to free via secure backend API
+          const res = await fetch("/api/billing/downgrade", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ businessId }),
+          });
 
-          if (updateError) throw updateError;
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Erro ao fazer downgrade");
           
           setCurrentTier("free");
           toast.success(t('success.updated'));
         } else {
-          // Redirect to checkout for paid plans (MercadoPago)
-          const res = await fetch("/api/checkout-mp", {
+          // Redirect to checkout for paid plans (Stripe)
+          const res = await fetch("/api/checkout", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ planKey, businessId }),
