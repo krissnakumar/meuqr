@@ -1,4 +1,5 @@
-export { supabaseAdmin } from "./supabase-admin";
+import { supabaseAdmin } from "./supabase-admin";
+export { supabaseAdmin };
 
 export const notificationTemplates: Record<string, Record<string, { title: string; message: string }>> = {
   new_order: {

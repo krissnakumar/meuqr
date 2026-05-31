@@ -1,12 +1,9 @@
-"use client";
+export const dynamic = "force-dynamic";
 
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from "@meuqr/ui";
 import { Users, FileText, Settings, ShieldAlert, BarChart3, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
 export default function AdminDashboardPage() {
-  const router = useRouter();
 
   const adminLinks = [
     {
