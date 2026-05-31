@@ -36,20 +36,24 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ children, initialLang }: I18nProviderProps) {
-  const [lang, setLangState] = useState<Language>(initialLang || getSavedLanguage());
+  // Always initialize with pt-BR on server and first client render to prevent hydration mismatches
+  const [lang, setLangState] = useState<Language>(initialLang || DEFAULT_LANGUAGE);
   const bundles: Partial<Record<Language, LocaleBundle>> = LOCALE_BUNDLES;
 
-  // Listen for language changes from other tabs
+  // Load saved language preference on mount and listen for multi-tab sync
   useEffect(() => {
+    const saved = getSavedLanguage();
+    if (saved !== lang) {
+      setLangState(saved);
+    }
+
     const handler = () => {
-      const saved = getSavedLanguage();
-      if (saved !== lang) {
-        setLangState(saved);
-      }
+      const updated = getSavedLanguage();
+      setLangState(updated);
     };
     window.addEventListener(LANGUAGE_CHANGE_EVENT, handler);
     return () => window.removeEventListener(LANGUAGE_CHANGE_EVENT, handler);
-  }, [lang]);
+  }, []);
 
   const setLang = useCallback((newLang: Language) => {
     setLangState(newLang);
