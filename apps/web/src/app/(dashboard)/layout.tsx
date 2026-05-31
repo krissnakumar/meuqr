@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname, useParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, usePathname, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Button, ErrorBoundary, LanguageSelector } from "@meuqr/ui";
@@ -86,6 +86,8 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
   primaryBusiness: { id: string, category: string, subscription_tier?: string } | null;
 }) {
   const { t, lang, setLang } = useTranslation();
+  const searchParams = useSearchParams();
+  const activeFilter = searchParams.get("filter") || "";
 
   const getSidebarItems = () => {
     const groups: SidebarGroup[] = [];
@@ -103,9 +105,9 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
       // Clear mainItems and place business-centric sidebar for selected business
       mainItems.length = 0;
       mainItems.push({ href: `/dashboard/business/${id}`, icon: LayoutDashboard, label: "Overview", match: `/dashboard/business/${id}$` });
-      mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Pages", match: "/pages" });
+      mainItems.push({ href: `/dashboard/business/${id}/pages?filter=content`, icon: FileText, label: "Pages", match: "filter=content" });
       mainItems.push({ href: `/dashboard/business/${id}/qr`, icon: QrCode, label: "QR Codes", match: "/qr" });
-      mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: ShoppingCart, label: "Products / Menu / Services", match: "/products" });
+      mainItems.push({ href: `/dashboard/business/${id}/pages?filter=menus`, icon: ShoppingCart, label: "Products / Menu / Services", match: "filter=menus" });
       mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
       mainItems.push({ href: `/dashboard/business/${id}/leads`, icon: Users, label: "Leads", match: "/leads" });
       mainItems.push({ href: `/dashboard/business/${id}/analytics`, icon: BarChart3, label: "Analytics", match: "/analytics" });
@@ -128,6 +130,12 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
 
   const isActive = (item: SidebarItem) => {
     if (item.match === "/dashboard$") return pathname === "/dashboard";
+    if (item.match === "filter=content") {
+      return pathname.endsWith("/pages") && (activeFilter === "content" || activeFilter === "");
+    }
+    if (item.match === "filter=menus") {
+      return pathname.endsWith("/pages") && activeFilter === "menus";
+    }
     return pathname.includes(item.match);
   };
 
@@ -382,7 +390,13 @@ export default function DashboardLayout({
 }) {
   return (
     <I18nProvider>
-      <DashboardContent>{children}</DashboardContent>
+      <Suspense fallback={
+        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+          <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }>
+        <DashboardContent>{children}</DashboardContent>
+      </Suspense>
     </I18nProvider>
   );
 }

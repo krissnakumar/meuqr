@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useTranslation } from "@/lib/i18n-provider";
@@ -61,8 +61,22 @@ interface PageData {
 }
 
 export default function PagesDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <PagesDashboardContent />
+    </Suspense>
+  );
+}
+
+function PagesDashboardContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeTabFilter = searchParams.get("filter") || "all";
   const businessId = params.id as string;
   const { t } = useTranslation();
 
@@ -94,6 +108,16 @@ export default function PagesDashboard() {
   const [createdQr, setCreatedQr] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  const displayedPages = pages.filter(p => {
+    if (activeTabFilter === "content") {
+      return ["home", "appointments", "custom"].includes(p.page_type);
+    }
+    if (activeTabFilter === "menus") {
+      return ["menu", "products", "services"].includes(p.page_type);
+    }
+    return true;
+  });
 
   useEffect(() => {
     loadData();
@@ -509,18 +533,60 @@ export default function PagesDashboard() {
       {/* ===== Pages List Table ===== */}
       <GlassCard>
         <GlassCardHeader className="pb-3 border-b border-slate-100">
-          <div className="flex items-center justify-between">
-            <GlassCardTitle className="text-base font-black text-slate-700">Todas as Páginas Ativas</GlassCardTitle>
-            <Badge variant="indigo">{pages.length} Páginas</Badge>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <GlassCardTitle className="text-base font-black text-slate-700">
+                {activeTabFilter === "content" 
+                  ? "Páginas de Conteúdo & Agendamento" 
+                  : activeTabFilter === "menus" 
+                  ? "Cardápios, Catálogos & Serviços" 
+                  : "Todas as Páginas & Menus Ativos"}
+              </GlassCardTitle>
+              <p className="text-xs text-gray-400 mt-0.5 font-medium">Gerencie os links e layouts de exibição pública.</p>
+            </div>
+            
+            {/* Segmented Filter Control */}
+            <div className="flex items-center gap-1 bg-slate-50 border border-slate-100 p-1 rounded-xl shrink-0">
+              <Link 
+                href={`/dashboard/business/${businessId}/pages`}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  activeTabFilter === "all" 
+                    ? "bg-white text-slate-800 shadow-sm" 
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Todas ({pages.length})
+              </Link>
+              <Link 
+                href={`/dashboard/business/${businessId}/pages?filter=content`}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  activeTabFilter === "content" 
+                    ? "bg-indigo-600 text-white shadow-sm" 
+                    : "text-slate-500 hover:text-indigo-600"
+                }`}
+              >
+                Páginas ({pages.filter(p => ["home", "appointments", "custom"].includes(p.page_type)).length})
+              </Link>
+              <Link 
+                href={`/dashboard/business/${businessId}/pages?filter=menus`}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  activeTabFilter === "menus" 
+                    ? "bg-amber-500 text-white shadow-sm" 
+                    : "text-slate-500 hover:text-amber-600"
+                }`}
+              >
+                Cardápios ({pages.filter(p => ["menu", "products", "services"].includes(p.page_type)).length})
+              </Link>
+            </div>
           </div>
         </GlassCardHeader>
         <GlassCardContent className="p-0">
-          {pages.length === 0 ? (
+          {displayedPages.length === 0 ? (
             <div className="py-16 text-center">
               <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4 text-slate-400">
                 <Globe className="w-8 h-8" />
               </div>
-              <p className="text-slate-800 font-bold mb-1">Nenhuma página criada</p>
+              <p className="text-slate-800 font-bold mb-1">Nenhuma página criada nesta categoria</p>
               <p className="text-xs text-gray-400 max-w-sm mx-auto mb-6">Comece agora mesmo usando nosso assistente rápido de criação de páginas.</p>
               <Button onClick={() => setShowWizard(true)} className="bg-indigo-600 text-white font-bold">
                 Criar Minha Primeira Página
@@ -540,7 +606,7 @@ export default function PagesDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {pages.map((p) => {
+                  {displayedPages.map((p) => {
                     const pageQr = qrCodes.find(q => q.page_id === p.id);
                     const scanCount = pageQr ? pageQr.scan_count : 0;
                     const publicUrl = `/b/${business?.slug}/${p.slug}`;
