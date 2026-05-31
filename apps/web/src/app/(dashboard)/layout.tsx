@@ -149,7 +149,7 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
                 const label = item.label ?? (item.key ? t(item.key) : "");
                 return (
                   <Link
-                    key={item.href}
+                    key={`${label}-${item.href}`}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
                     className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
