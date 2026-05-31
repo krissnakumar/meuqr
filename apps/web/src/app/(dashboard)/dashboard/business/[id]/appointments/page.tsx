@@ -140,6 +140,17 @@ export default function AppointmentsPage() {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending": return { bg: "bg-amber-500", color: "text-amber-500" };
+      case "confirmed": return { bg: "bg-emerald-500", color: "text-emerald-500" };
+      case "completed": return { bg: "bg-indigo-500", color: "text-indigo-500" };
+      case "cancelled": return { bg: "bg-rose-500", color: "text-rose-500" };
+      case "no_show": return { bg: "bg-slate-500", color: "text-slate-500" };
+      default: return { bg: "bg-gray-500", color: "text-gray-500" };
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex items-center justify-between">
@@ -167,84 +178,119 @@ export default function AppointmentsPage() {
             <div className="py-10 text-center text-gray-400">{t('common.loading')}</div>
           ) : appointments.length === 0 ? (
             <div className="py-10 text-center">
-              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">{t('business.appointment_none')}</p>
+              <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-slate-300" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-700 mb-2">{t('business.appointment_none')}</h3>
+              <p className="text-sm text-gray-400">Quando os clientes agendarem horários, eles aparecerão aqui.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    <th className="py-3 px-4">Cliente</th>
-                    <th className="py-3 px-4">Serviço & Equipe</th>
-                    <th className="py-3 px-4">Data & Hora</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {appointments.map((apt) => (
-                    <tr key={apt.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="py-4 px-4">
-                        <div className="font-semibold text-slate-800">{apt.customer_name}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                          {apt.customer_phone}
+            <div className="space-y-4">
+              {appointments.map((apt) => {
+                const statusColor = getStatusColor(apt.status);
+                
+                return (
+                  <GlassCard key={apt.id} className="overflow-hidden relative">
+                    <div className={`absolute top-0 left-0 w-1 h-full ${statusColor.bg}`} />
+                    <GlassCardContent className="p-6 ml-3">
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-indigo-600" />
+                              <span className="font-bold text-indigo-700">
+                                {new Date(apt.appointment_date).toLocaleDateString('pt-BR')} às {apt.start_time.slice(0,5)}
+                              </span>
+                            </div>
+                            {getStatusBadge(apt.status)}
+                          </div>
+
+                          <div className="mt-4">
+                            <h3 className="text-lg font-bold text-slate-800">
+                              {apt.customer_name}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mt-1">
+                              <button
+                                onClick={() => openWhatsApp(apt.customer_phone, apt.customer_name, new Date(apt.appointment_date).toLocaleDateString('pt-BR'), apt.start_time.slice(0,5))}
+                                className="flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 font-medium transition-colors bg-emerald-50 px-2 py-1 rounded-md"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                {apt.customer_phone}
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="text-sm font-medium text-slate-700">{apt.appointment_services?.name || "Serviço Removido"}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                          <User className="w-3 h-3" /> {apt.staff_members?.name || "Sem Profissional"}
+
+                        <div className="text-right bg-slate-50 p-3 rounded-xl border border-slate-100 min-w-[200px]">
+                          <div className="flex items-center gap-2 justify-end text-slate-600 mb-1">
+                            <CalendarCheck className="w-4 h-4" />
+                            <span className="font-medium text-sm">{apt.appointment_services?.name || "Serviço Removido"}</span>
+                          </div>
+                          <div className="flex items-center gap-2 justify-end text-slate-500 mt-2">
+                            <User className="w-3.5 h-3.5" />
+                            <span className="text-xs">{apt.staff_members?.name || "Sem Profissional"}</span>
+                          </div>
                         </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="text-sm text-slate-700 flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-                          {new Date(apt.appointment_date).toLocaleDateString('pt-BR')}
+                      </div>
+
+                      {apt.notes && (
+                        <div className="mt-4 p-3 bg-amber-50 border border-amber-100 text-amber-800 text-sm rounded-lg flex gap-2 items-start">
+                          <span className="font-bold shrink-0">Observação:</span>
+                          <p>{apt.notes}</p>
                         </div>
-                        <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-1">
-                          <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                          {apt.start_time.slice(0,5)} - {apt.end_time.slice(0,5)}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        {getStatusBadge(apt.status)}
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
-                            onClick={() => openWhatsApp(apt.customer_phone, apt.customer_name, new Date(apt.appointment_date).toLocaleDateString('pt-BR'), apt.start_time.slice(0,5))}
-                            className="p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
-                            title="Confirmar via WhatsApp"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </button>
-                          
+                      )}
+
+                      {/* Actions */}
+                      {apt.status !== "cancelled" && apt.status !== "completed" && apt.status !== "no_show" && (
+                        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap gap-2">
                           {apt.status === "pending" && (
-                            <button 
-                              onClick={() => updateStatus(apt.id, 'confirmed')}
-                              className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
-                              title="Confirmar Agendamento"
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => updateStatus(apt.id, "confirmed")}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Confirmar Agendamento
+                            </Button>
+                          )}
+                          {apt.status === "confirmed" && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => updateStatus(apt.id, "completed")}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Marcar como Concluído
+                            </Button>
                           )}
                           
-                          {(apt.status === "pending" || apt.status === "confirmed") && (
-                            <button 
-                              onClick={() => updateStatus(apt.id, 'cancelled')}
-                              className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                              title="Cancelar Agendamento"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateStatus(apt.id, "no_show")}
+                            className="text-slate-600 border-slate-200 hover:bg-slate-50"
+                          >
+                            <User className="w-4 h-4 mr-2" />
+                            Não Compareceu
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => updateStatus(apt.id, "cancelled")}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <XCircle className="w-4 h-4 mr-2" />
+                            Cancelar
+                          </Button>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      )}
+                    </GlassCardContent>
+                  </GlassCard>
+                );
+              })}
             </div>
           )}
         </GlassCardContent>

@@ -18,6 +18,13 @@ import {
   CalendarDays,
   FileText,
   Users,
+  Utensils,
+  HeartPulse,
+  Wrench,
+  Building,
+  GraduationCap,
+  PartyPopper,
+  PawPrint
 } from "lucide-react";
 import Link from "next/link";
 
@@ -31,8 +38,8 @@ export default function BusinessSetupPage() {
   const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cloning, setCloning] = useState(false);
-  const [step, setStep] = useState<"goals" | "templates" | "done">("goals");
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [step, setStep] = useState<"categories" | "templates" | "done">("categories");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -65,10 +72,20 @@ export default function BusinessSetupPage() {
     return resolveText(text, lang as any);
   }
 
+  const categoryMap: Record<string, string[]> = {
+    food: ["restaurant", "pizzeria", "burger_shop", "bakery", "coffee_shop", "acai_sorveteria", "bar_pub", "food_truck"],
+    retail: ["construction_materials", "hardware_store", "paint_store", "electrical_supplies", "plumbing_supplies", "furniture_store", "clothing_store", "shoe_store", "cosmetics_store", "supermarket", "cellphone_store", "florist", "pharmacy", "pet_shop"],
+    health: ["medical_clinic", "dental_clinic", "physiotherapy", "salon", "barber_shop", "nail_studio", "spa", "gym", "veterinary"],
+    services: ["auto_repair", "motorcycle_repair", "car_wash", "cleaning_services", "laundry", "electronics_repair", "print_shop", "delivery_business", "freelancer", "photographer"],
+    real_estate: ["real_estate", "car_dealership"],
+    education: ["school", "daycare", "church"],
+    events: ["event", "party_rental", "hotel", "travel_agency"]
+  };
+
   const allTemplates = getAllBusinessTemplates();
 
   const recommendedTemplates = allTemplates.filter(
-    (t) => selectedGoal ? t.formType === selectedGoal : t.businessType === business?.category
+    (t) => selectedCategory ? categoryMap[selectedCategory]?.includes(t.businessType) : t.businessType === business?.category
   );
 
   function templateSlug(template: BusinessTemplate): string {
@@ -127,6 +144,7 @@ export default function BusinessSetupPage() {
             name: rt(item.name),
             description: item.description ? rt(item.description) : null,
             price: item.price || null,
+            image_url: item.image || null,
             sort_order: idx,
           }));
 
@@ -198,58 +216,38 @@ export default function BusinessSetupPage() {
         </div>
       </div>
 
-      {step === "goals" && (
+      {step === "categories" && (
         <div className="space-y-6">
           <h2 className="text-xl font-bold text-slate-800">
-            {t("business.setup_goal_title")}
+            Qual é a categoria do seu negócio?
           </h2>
           <p className="text-sm text-gray-500">
-            {t("business.setup_goal_subtitle")}
+            Escolha uma categoria para vermos os templates mais adequados.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={() => { setSelectedGoal("order"); setStep("templates"); }}
-              className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
-            >
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <Store className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-slate-800 mb-1">{t("business.setup_goal_sell")}</h3>
-              <p className="text-sm text-gray-500">{t("business.setup_goal_sell_desc")}</p>
-            </button>
-
-            <button
-              onClick={() => { setSelectedGoal("booking"); setStep("templates"); }}
-              className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
-            >
-              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                <CalendarDays className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-slate-800 mb-1">{t("business.setup_goal_book")}</h3>
-              <p className="text-sm text-gray-500">{t("business.setup_goal_book_desc")}</p>
-            </button>
-
-            <button
-              onClick={() => { setSelectedGoal("quote"); setStep("templates"); }}
-              className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
-            >
-              <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-slate-800 mb-1">{t("business.setup_goal_quote")}</h3>
-              <p className="text-sm text-gray-500">{t("business.setup_goal_quote_desc")}</p>
-            </button>
-
-            <button
-              onClick={() => { setSelectedGoal("lead"); setStep("templates"); }}
-              className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group"
-            >
-              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                <Users className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-slate-800 mb-1">{t("business.setup_goal_lead")}</h3>
-              <p className="text-sm text-gray-500">{t("business.setup_goal_lead_desc")}</p>
-            </button>
+            {[
+              { id: "food", name: "Alimentação & Restaurantes", icon: <Utensils className="w-6 h-6" />, color: "bg-red-50 text-red-600 group-hover:bg-red-600" },
+              { id: "retail", name: "Varejo & Lojas", icon: <Store className="w-6 h-6" />, color: "bg-blue-50 text-blue-600 group-hover:bg-blue-600" },
+              { id: "health", name: "Saúde & Beleza", icon: <HeartPulse className="w-6 h-6" />, color: "bg-pink-50 text-pink-600 group-hover:bg-pink-600" },
+              { id: "services", name: "Serviços & Manutenção", icon: <Wrench className="w-6 h-6" />, color: "bg-orange-50 text-orange-600 group-hover:bg-orange-600" },
+              { id: "real_estate", name: "Imóveis & Veículos", icon: <Building className="w-6 h-6" />, color: "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600" },
+              { id: "education", name: "Educação & Institucional", icon: <GraduationCap className="w-6 h-6" />, color: "bg-purple-50 text-purple-600 group-hover:bg-purple-600" },
+              { id: "events", name: "Eventos & Lazer", icon: <PartyPopper className="w-6 h-6" />, color: "bg-yellow-50 text-yellow-600 group-hover:bg-yellow-600" },
+            ].map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => { setSelectedCategory(cat.id); setStep("templates"); }}
+                className="p-6 text-left rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-indigo-500 hover:shadow-md transition-all group flex items-center gap-4"
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:text-white transition-colors ${cat.color}`}>
+                  {cat.icon}
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800 mb-1">{cat.name}</h3>
+                  <p className="text-xs text-gray-500">Ver templates para {cat.name.toLowerCase()}</p>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -257,7 +255,7 @@ export default function BusinessSetupPage() {
       {step === "templates" && (
         <>
           <div className="flex items-center gap-4 mb-4">
-            <button onClick={() => setStep("goals")} className="text-gray-400 hover:text-indigo-600">
+            <button onClick={() => setStep("categories")} className="text-gray-400 hover:text-indigo-600">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <h2 className="text-lg font-bold text-slate-700">

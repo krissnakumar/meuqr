@@ -478,38 +478,38 @@ const RAW_BUSINESS_TEMPLATES: any[] = [
       {
         title: "Cimento e Argamassa",
         items: [
-          { name: "Cimento CP-II 50kg", description: "Cimento Portland CP-II-E 32", price: 29.9, unit: "saco", isFeatured: true },
-          { name: "Cimento CP-IV 50kg", description: "Cimento Pozolânico", price: 27.9 },
-          { name: "Argamassa AC-I 20kg", description: "Argamassa para assentamento", price: 15.9 },
-          { name: "Argamassa AC-II 20kg", description: "Argamassa para revestimento", price: 17.9 },
+          { name: "Cimento CP-II 50kg", description: "Cimento Portland CP-II-E 32", price: 29.9, unit: "saco", isFeatured: true, image: "https://images.unsplash.com/photo-1541888087401-44dc921e1d0f?auto=format&fit=crop&q=80&w=200" },
+          { name: "Cimento CP-IV 50kg", description: "Cimento Pozolânico", price: 27.9, image: "https://images.unsplash.com/photo-1541888087401-44dc921e1d0f?auto=format&fit=crop&q=80&w=200" },
+          { name: "Argamassa AC-I 20kg", description: "Argamassa para assentamento", price: 15.9, image: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&q=80&w=200" },
+          { name: "Argamassa AC-II 20kg", description: "Argamassa para revestimento", price: 17.9, image: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&q=80&w=200" },
           { name: "Rejunte 1kg", description: "Rejunte cerâmico colorido", price: 6.9 },
         ],
       },
       {
         title: "Agregados",
         items: [
-          { name: "Areia Média", description: "Areia lavada média", price: 85.0, unit: "m³" },
-          { name: "Areia Fina", description: "Areia lavada fina", price: 90.0, unit: "m³" },
-          { name: "Brita 1", description: "Pedra britada nº 1", price: 95.0, unit: "m³" },
-          { name: "Pedra Rachão", description: "Pedra bruta", price: 80.0, unit: "m³" },
+          { name: "Areia Média", description: "Areia lavada média", price: 85.0, unit: "m³", image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=200" },
+          { name: "Areia Fina", description: "Areia lavada fina", price: 90.0, unit: "m³", image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=200" },
+          { name: "Brita 1", description: "Pedra britada nº 1", price: 95.0, unit: "m³", image: "https://images.unsplash.com/photo-1584463623578-4ebae2278cb7?auto=format&fit=crop&q=80&w=200" },
+          { name: "Pedra Rachão", description: "Pedra bruta", price: 80.0, unit: "m³", image: "https://images.unsplash.com/photo-1584463623578-4ebae2278cb7?auto=format&fit=crop&q=80&w=200" },
           { name: "Seixo Rolado", description: "Pedra decorativa", price: 120.0, unit: "m³" },
         ],
       },
       {
         title: "Blocos e Tijolos",
         items: [
-          { name: "Tijolo Baiano 8F", description: "Tijolo cerâmico 8 furos", price: 1.2, unit: "unidade" },
-          { name: "Tijolo Baiano 6F", description: "Tijolo cerâmico 6 furos", price: 1.0, unit: "unidade" },
-          { name: "Bloco de Concreto 14x19x39", description: "Bloco estrutural", price: 3.5, unit: "unidade" },
-          { name: "Tijolo Maciço", description: "Tijolo maciço cerâmico", price: 1.8, unit: "unidade" },
+          { name: "Tijolo Baiano 8F", description: "Tijolo cerâmico 8 furos", price: 1.2, unit: "unidade", image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=200" },
+          { name: "Tijolo Baiano 6F", description: "Tijolo cerâmico 6 furos", price: 1.0, unit: "unidade", image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=200" },
+          { name: "Bloco de Concreto 14x19x39", description: "Bloco estrutural", price: 3.5, unit: "unidade", image: "https://images.unsplash.com/photo-1581092335397-9583eb92d232?auto=format&fit=crop&q=80&w=200" },
+          { name: "Tijolo Maciço", description: "Tijolo maciço cerâmico", price: 1.8, unit: "unidade", image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=200" },
           { name: "Laje Treliçada H8", description: "Laje com vigotas e lajotas", price: 45.0, unit: "m²" },
         ],
       },
       {
         title: "Acabamento",
         items: [
-          { name: "Piso Cerâmico 45×45", description: "Piso esmaltado", price: 25.9, unit: "m²" },
-          { name: "Porcelanato 60×60", description: "Porcelanato acetinado", price: 49.9, unit: "m²" },
+          { name: "Piso Cerâmico 45×45", description: "Piso esmaltado", price: 25.9, unit: "m²", image: "https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?auto=format&fit=crop&q=80&w=200" },
+          { name: "Porcelanato 60×60", description: "Porcelanato acetinado", price: 49.9, unit: "m²", image: "https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?auto=format&fit=crop&q=80&w=200" },
           { name: "Revestimento 30×60", description: "Revestimento para parede", price: 32.9, unit: "m²" },
           { name: "Rodapé Cerâmico 7cm", description: "Rodapé de cerâmica", price: 4.5, unit: "m" },
         ],
@@ -517,9 +517,9 @@ const RAW_BUSINESS_TEMPLATES: any[] = [
       {
         title: "Tintas",
         items: [
-          { name: "Tinta Acrílica 18L", description: "Branco neve fosco", price: 189.9 },
-          { name: "Tinta Acrílica 3.6L", description: "Branco neve fosco", price: 59.9 },
-          { name: "Esmalte Sintético 3.6L", description: "Brilhante", price: 89.9 },
+          { name: "Tinta Acrílica 18L", description: "Branco neve fosco", price: 189.9, image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=200" },
+          { name: "Tinta Acrílica 3.6L", description: "Branco neve fosco", price: 59.9, image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=200" },
+          { name: "Esmalte Sintético 3.6L", description: "Brilhante", price: 89.9, image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=200" },
           { name: "Massa Corrida 25kg", description: "Massa para parede", price: 39.9 },
           { name: "Selador 18L", description: "Selador acrílico", price: 149.9 },
         ],
@@ -527,9 +527,9 @@ const RAW_BUSINESS_TEMPLATES: any[] = [
       {
         title: "Ferramentas",
         items: [
-          { name: "Furadeira de Impacto", description: "Furadeira 500W", price: 149.9 },
-          { name: "Esmerilhadeira 4.5", description: "127V ou 220V", price: 129.9 },
-          { name: "Fita Métrica 5m", description: "Fita de aço 5 metros", price: 12.9 },
+          { name: "Furadeira de Impacto", description: "Furadeira 500W", price: 149.9, image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&q=80&w=200" },
+          { name: "Esmerilhadeira 4.5", description: "127V ou 220V", price: 129.9, image: "https://images.unsplash.com/photo-1581092335878-2d9ff86ca2bf?auto=format&fit=crop&q=80&w=200" },
+          { name: "Fita Métrica 5m", description: "Fita de aço 5 metros", price: 12.9, image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=200" },
           { name: "Nível a Laser", description: "Nível autoeletrônico", price: 89.9 },
         ],
       },

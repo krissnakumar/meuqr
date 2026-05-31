@@ -173,7 +173,7 @@ export interface BusinessTemplateItem {
   price?: number;
   unit?: string;
   whatsappMessage?: LocalizedString;
-  imagePlaceholder?: string;
+  image?: string;
   isFeatured?: boolean;
 }
 

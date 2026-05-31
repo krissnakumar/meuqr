@@ -23,6 +23,15 @@ import {
   ClipboardList,
   Eye,
   Plus,
+  Calendar,
+  Utensils,
+  Truck,
+  DollarSign,
+  Stethoscope,
+  HeartPulse,
+  Package,
+  FileText,
+  Gift
 } from "lucide-react";
 
 interface BusinessFull {
@@ -39,80 +48,45 @@ interface BusinessFull {
   default_language?: string;
 }
 
-const MANAGEMENT_LINKS = [
-  {
-    labelKey: "sidebar.analytics",
-    descKey: "analytics_desc",
-    href: (id: string) => `/dashboard/business/${id}/analytics`,
-    color: "from-blue-500 to-indigo-500",
-    bg: "bg-blue-50",
-    iconBg: "from-blue-50 to-indigo-50",
-    iconColor: "text-blue-600",
-    countKey: null as string | null,
-    fallbackColor: "bg-blue-100 text-blue-700",
-    icon: BarChart3,
-  },
-  {
-    labelKey: "sidebar.orders",
-    descKey: "orders_desc",
-    href: (id: string) => `/dashboard/business/${id}/orders`,
-    color: "from-amber-500 to-orange-500",
-    bg: "bg-amber-50",
-    iconBg: "from-amber-50 to-orange-50",
-    iconColor: "text-amber-600",
-    countKey: "totalOrders" as const,
-    fallbackColor: "bg-amber-100 text-amber-700",
-    icon: ShoppingCart,
-  },
-  {
-    labelKey: "sidebar.customers",
-    descKey: "leads_desc",
-    href: (id: string) => `/dashboard/business/${id}/leads`,
-    color: "from-emerald-500 to-green-500",
-    bg: "bg-emerald-50",
-    iconBg: "from-emerald-50 to-green-50",
-    iconColor: "text-emerald-600",
-    countKey: "totalLeads" as const,
-    fallbackColor: "bg-emerald-100 text-emerald-700",
-    icon: MessageSquare,
-  },
-  {
-    labelKey: "sidebar.customers",
-    descKey: "clients_desc",
-    href: (id: string) => `/dashboard/business/${id}/clients`,
-    color: "from-indigo-500 to-violet-500",
-    bg: "bg-indigo-50",
-    iconBg: "from-indigo-50 to-violet-50",
-    iconColor: "text-indigo-600",
-    countKey: "totalClients" as const,
-    fallbackColor: "bg-indigo-100 text-indigo-700",
-    icon: Users,
-  },
-  {
-    labelKey: "business.quotes",
-    descKey: "quote_requests_desc",
-    href: (id: string) => `/dashboard/business/${id}/quote-requests`,
-    color: "from-teal-500 to-emerald-500",
-    bg: "bg-teal-50",
-    iconBg: "from-teal-50 to-emerald-50",
-    iconColor: "text-teal-600",
-    countKey: "totalQuoteRequests" as const,
-    fallbackColor: "bg-teal-100 text-teal-700",
-    icon: ClipboardList,
-  },
-  {
-    labelKey: "business.members",
-    descKey: "members_desc",
-    href: (id: string) => `/dashboard/business/${id}/members`,
-    color: "from-violet-500 to-purple-500",
-    bg: "bg-violet-50",
-    iconBg: "from-violet-50 to-purple-50",
-    iconColor: "text-violet-600",
-    countKey: "totalMembers" as const,
-    fallbackColor: "bg-violet-100 text-violet-700",
-    icon: Users,
-  },
-];
+const getManagementLinks = (cat: string, id: string) => {
+  const isFood = ["restaurant", "pizzeria", "burger_shop", "bakery", "coffee_shop", "acai_sorveteria", "bar_pub", "food_truck"].includes(cat);
+  const isClinic = ["medical_clinic", "physiotherapy"].includes(cat);
+  const isDentist = ["dental_clinic"].includes(cat);
+  const isConstruction = ["construction_materials", "hardware_store", "paint_store"].includes(cat);
+  const isBeauty = ["salon", "barber_shop", "nail_studio", "spa"].includes(cat);
+
+  const links = [];
+
+  if (isFood) {
+    links.push({ label: "Menu", descKey: "menu_desc", href: `/dashboard/business/${id}/pages`, color: "from-blue-500 to-indigo-500", bg: "bg-blue-50", iconBg: "from-blue-50 to-indigo-50", iconColor: "text-blue-600", countKey: null, icon: FileText });
+    links.push({ label: "Orders", descKey: "orders_desc", href: `/dashboard/business/${id}/orders`, color: "from-amber-500 to-orange-500", bg: "bg-amber-50", iconBg: "from-amber-50 to-orange-50", iconColor: "text-amber-600", countKey: "totalOrders" as const, icon: Package });
+    links.push({ label: "Fidelidade", descKey: "loyalty_desc", href: `/dashboard/business/${id}/loyalty`, color: "from-pink-500 to-rose-500", bg: "bg-pink-50", iconBg: "from-pink-50 to-rose-50", iconColor: "text-pink-600", countKey: null, icon: Gift });
+    links.push({ label: "Customers", descKey: "clients_desc", href: `/dashboard/business/${id}/clients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
+  } else if (isClinic || isDentist) {
+    links.push({ label: "Appointments", descKey: "appointments_desc", href: `/dashboard/business/${id}/appointments`, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50", iconBg: "from-emerald-50 to-green-50", iconColor: "text-emerald-600", countKey: null, icon: Calendar });
+    links.push({ label: "Patients", descKey: "patients_desc", href: `/dashboard/business/${id}/patients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
+    links.push({ label: "Doctors", descKey: "doctors_desc", href: `/dashboard/business/${id}/doctors`, color: "from-teal-500 to-emerald-500", bg: "bg-teal-50", iconBg: "from-teal-50 to-emerald-50", iconColor: "text-teal-600", countKey: null, icon: Stethoscope });
+  } else if (isConstruction) {
+    links.push({ label: "Product Catalog", descKey: "catalog_desc", href: `/dashboard/business/${id}/pages`, color: "from-blue-500 to-indigo-500", bg: "bg-blue-50", iconBg: "from-blue-50 to-indigo-50", iconColor: "text-blue-600", countKey: null, icon: FileText });
+    links.push({ label: "Quote Requests", descKey: "quote_requests_desc", href: `/dashboard/business/${id}/quote-requests`, color: "from-teal-500 to-emerald-500", bg: "bg-teal-50", iconBg: "from-teal-50 to-emerald-50", iconColor: "text-teal-600", countKey: "totalQuoteRequests" as const, icon: ClipboardList });
+    links.push({ label: "Orders", descKey: "orders_desc", href: `/dashboard/business/${id}/orders`, color: "from-amber-500 to-orange-500", bg: "bg-amber-50", iconBg: "from-amber-50 to-orange-50", iconColor: "text-amber-600", countKey: "totalOrders" as const, icon: Package });
+  } else if (isBeauty) {
+    links.push({ label: "Appointments", descKey: "appointments_desc", href: `/dashboard/business/${id}/appointments`, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50", iconBg: "from-emerald-50 to-green-50", iconColor: "text-emerald-600", countKey: null, icon: Calendar });
+    links.push({ label: "Fidelidade", descKey: "loyalty_desc", href: `/dashboard/business/${id}/loyalty`, color: "from-pink-500 to-rose-500", bg: "bg-pink-50", iconBg: "from-pink-50 to-rose-50", iconColor: "text-pink-600", countKey: null, icon: Gift });
+    links.push({ label: "Clients", descKey: "clients_desc", href: `/dashboard/business/${id}/clients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
+    links.push({ label: "Professionals", descKey: "professionals_desc", href: `/dashboard/business/${id}/professionals`, color: "from-purple-500 to-fuchsia-500", bg: "bg-purple-50", iconBg: "from-purple-50 to-fuchsia-50", iconColor: "text-purple-600", countKey: null, icon: Users });
+  } else {
+    // Generic
+    links.push({ label: "Pages", descKey: "pages_desc", href: `/dashboard/business/${id}/pages`, color: "from-blue-500 to-indigo-500", bg: "bg-blue-50", iconBg: "from-blue-50 to-indigo-50", iconColor: "text-blue-600", countKey: null, icon: FileText });
+    links.push({ label: "Orders", descKey: "orders_desc", href: `/dashboard/business/${id}/orders`, color: "from-amber-500 to-orange-500", bg: "bg-amber-50", iconBg: "from-amber-50 to-orange-50", iconColor: "text-amber-600", countKey: "totalOrders" as const, icon: Package });
+    links.push({ label: "Leads", descKey: "leads_desc", href: `/dashboard/business/${id}/leads`, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50", iconBg: "from-emerald-50 to-green-50", iconColor: "text-emerald-600", countKey: "totalLeads" as const, icon: MessageSquare });
+  }
+
+  // Always append Analytics
+  links.push({ label: "Analytics", descKey: "analytics_desc", href: `/dashboard/business/${id}/analytics`, color: "from-slate-500 to-gray-500", bg: "bg-slate-50", iconBg: "from-slate-50 to-gray-50", iconColor: "text-slate-600", countKey: null, icon: BarChart3 });
+
+  return links;
+};
 
 export default function BusinessDetailPage() {
   const params = useParams();
@@ -540,18 +514,7 @@ export default function BusinessDetailPage() {
             </GlassCardHeader>
             <GlassCardContent className="p-0">
               <div className="divide-y divide-slate-50">
-                {MANAGEMENT_LINKS.filter(link => {
-                  const cat = business.category || "other";
-                  const needsOrders = ["restaurant", "clothing_store", "supermarket", "pharmacy", "pet_shop"].includes(cat);
-                  const needsAppointments = ["salon", "medical_clinic", "gym", "pet_shop", "auto_repair"].includes(cat);
-                  const needsLeadsAndQuotes = ["real_estate", "auto_repair", "construction_materials", "hotel", "other"].includes(cat);
-
-                  if (link.labelKey === "sidebar.orders") return needsOrders;
-                  if (link.labelKey === "sidebar.appointments") return needsAppointments;
-                  if (link.descKey === "leads_desc") return needsLeadsAndQuotes;
-                  if (link.labelKey === "business.quotes") return needsLeadsAndQuotes;
-                  return true;
-                }).map((link, linkIndex) => {
+                {getManagementLinks(business.category || "other", businessId).map((link, linkIndex) => {
                   const IconComponent = link.icon || BarChart3;
                   const count = link.countKey ? (() => {
                     switch (link.countKey) {
@@ -566,8 +529,8 @@ export default function BusinessDetailPage() {
 
                   return (
                     <Link
-                      key={link.href("temp")}
-                      href={link.href(businessId)}
+                      key={link.href}
+                      href={link.href}
                       className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors group animate-fade-in-up"
                       style={{ animationDelay: `${linkIndex * 80}ms` }}
                     >
@@ -576,7 +539,7 @@ export default function BusinessDetailPage() {
                           <IconComponent className={`w-4 h-4 ${link.iconColor}`} />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{t(link.labelKey)}</p>
+                          <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{link.label}</p>
                           <p className="text-xs text-gray-400">{t(link.descKey)}</p>
                         </div>
                       </div>

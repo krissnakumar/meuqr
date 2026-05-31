@@ -23,6 +23,12 @@ import {
   LayoutTemplate,
   Megaphone,
   Calendar,
+  Utensils,
+  Truck,
+  DollarSign,
+  Stethoscope,
+  HeartPulse,
+  Gift
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
@@ -41,52 +47,80 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
   const getSidebarItems = () => {
     const groups: { title?: string; items: any[] }[] = [];
 
-    groups.push({
-      items: [
-        { href: "/dashboard", icon: LayoutDashboard, key: "sidebar.overview", match: "/dashboard$" },
-        { href: "/dashboard/business", icon: Store, key: "dashboard.businesses", match: "/dashboard/business$" },
-      ]
-    });
+    // Base Group 1
+    const mainItems = [
+      { href: "/dashboard", icon: LayoutDashboard, key: "sidebar.overview", match: "/dashboard$" },
+      { href: "/dashboard/business", icon: Store, key: "dashboard.businesses", match: "/dashboard/business$" },
+    ];
 
     if (primaryBusiness) {
       const id = primaryBusiness.id;
       const cat = primaryBusiness.category;
       
-      const needsOrders = ["restaurant", "clothing_store", "supermarket", "pharmacy", "pet_shop"].includes(cat);
-      const needsAppointments = ["salon", "medical_clinic", "gym", "pet_shop", "auto_repair"].includes(cat);
-      const needsLeadsAndQuotes = ["real_estate", "auto_repair", "construction_materials", "hotel", "other"].includes(cat);
+      const isFood = ["restaurant", "pizzeria", "burger_shop", "bakery", "coffee_shop", "acai_sorveteria", "bar_pub", "food_truck"].includes(cat);
+      const isConstruction = ["construction_materials", "hardware_store", "paint_store"].includes(cat);
+      const isClinic = ["medical_clinic", "physiotherapy"].includes(cat);
+      const isDentist = ["dental_clinic"].includes(cat);
+      const isBeauty = ["salon", "barber_shop", "nail_studio", "spa"].includes(cat);
 
-      const businessItems = [];
-      businessItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, key: "sidebar.pages", match: "/pages" });
+      // Industry specific modules
+      if (isFood) {
+        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Menu", match: "/pages" });
+        mainItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, label: "Orders", match: "/orders" });
+        mainItems.push({ href: `/dashboard/business/${id}/tables`, icon: Utensils, label: "Tables", match: "/tables" });
+        mainItems.push({ href: `/dashboard/business/${id}/delivery`, icon: Truck, label: "Delivery", match: "/delivery" });
+        mainItems.push({ href: `/dashboard/business/${id}/loyalty`, icon: Gift, label: "Fidelidade", match: "/loyalty" });
+      } else if (isConstruction) {
+        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Product Catalog", match: "/pages" });
+        mainItems.push({ href: `/dashboard/business/${id}/quotes`, icon: FileText, label: "Quote Requests", match: "/quotes" });
+        mainItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, label: "WhatsApp Orders", match: "/orders" });
+        mainItems.push({ href: `/dashboard/business/${id}/pricing`, icon: DollarSign, label: "Bulk Pricing", match: "/pricing" });
+      } else if (isClinic) {
+        mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
+        mainItems.push({ href: `/dashboard/business/${id}/doctors`, icon: Stethoscope, label: "Doctors", match: "/doctors" });
+        mainItems.push({ href: `/dashboard/business/${id}/patients`, icon: Users, label: "Patients", match: "/patients" });
+        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: HeartPulse, label: "Treatments", match: "/pages" });
+      } else if (isDentist) {
+        mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
+        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Dental Procedures", match: "/pages" });
+        mainItems.push({ href: `/dashboard/business/${id}/treatment-plans`, icon: FileText, label: "Treatment Plans", match: "/treatment-plans" });
+        mainItems.push({ href: `/dashboard/business/${id}/follow-ups`, icon: HeartPulse, label: "Follow-ups", match: "/follow-ups" });
+      } else if (isBeauty) {
+        mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
+        mainItems.push({ href: `/dashboard/business/${id}/professionals`, icon: Users, label: "Professionals", match: "/professionals" });
+        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Services", match: "/pages" });
+        mainItems.push({ href: `/dashboard/business/${id}/loyalty`, icon: Gift, label: "Fidelidade", match: "/loyalty" });
+      } else {
+        // Generic Fallback
+        const needsOrders = ["supermarket", "cellphone_store", "florist", "pharmacy", "pet_shop", "clothing_store", "shoe_store", "cosmetics_store", "furniture_store", "electrical_supplies", "plumbing_supplies"].includes(cat);
+        const needsAppointments = ["gym", "veterinary", "auto_repair", "motorcycle_repair", "car_wash"].includes(cat);
 
-      if (needsOrders) {
-        businessItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, key: "sidebar.orders", match: "/orders" });
-      }
-      if (needsAppointments) {
-        businessItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, key: "sidebar.appointments", match: "/appointments" });
-      }
-      if (needsLeadsAndQuotes) {
-        businessItems.push({ href: `/dashboard/business/${id}/leads`, icon: Users, key: "sidebar.leads", match: "/leads" });
-        businessItems.push({ href: `/dashboard/business/${id}/quote-requests`, icon: FileText, key: "business.quotes", match: "/quote-requests" });
-      }
-      businessItems.push({ href: `/dashboard/business/${id}/forms`, icon: FileText, key: "business.forms", match: "/forms" });
+        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, key: "sidebar.pages", match: "/pages" });
+        
+        if (needsAppointments) {
+          mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, key: "sidebar.appointments", match: "/appointments" });
+        }
+        
+        mainItems.push({ href: `/dashboard/business/${id}/leads`, icon: Users, key: "sidebar.leads", match: "/leads" });
 
-      groups.push({
-        title: "Gestão do Negócio",
-        items: businessItems
-      });
+        if (needsOrders) {
+          mainItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, key: "sidebar.orders", match: "/orders" });
+        }
+      }
+      
+      mainItems.push({ href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" });
+      mainItems.push({ href: "/dashboard/analytics", icon: BarChart3, key: "sidebar.analytics", match: "/dashboard/analytics" });
+      mainItems.push({ href: "/dashboard/settings", icon: Settings, key: "sidebar.settings", match: "/dashboard/settings" });
+
+      groups.push({ items: mainItems });
+
+    } else {
+      // Global fallback if no primary business selected
+      mainItems.push({ href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" });
+      mainItems.push({ href: "/dashboard/analytics", icon: BarChart3, key: "sidebar.analytics", match: "/dashboard/analytics" });
+      mainItems.push({ href: "/dashboard/settings", icon: Settings, key: "sidebar.settings", match: "/dashboard/settings" });
+      groups.push({ items: mainItems });
     }
-
-    groups.push({
-      title: "Conta & Ferramentas",
-      items: [
-        { href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" },
-        { href: "/dashboard/analytics", icon: BarChart3, key: "sidebar.analytics", match: "/dashboard/analytics" },
-        { href: "/dashboard/notifications", icon: Bell, key: "sidebar.notifications", match: "/dashboard/notifications" },
-        { href: "/dashboard/settings", icon: Settings, key: "sidebar.settings", match: "/dashboard/settings" },
-        { href: "/dashboard/billing", icon: ShoppingCart, key: "sidebar.billing", match: "/dashboard/billing" }
-      ]
-    });
 
     return groups;
   };
@@ -143,7 +177,7 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
               )}
               {group.items.map((item) => {
                 const active = isActive(item);
-                const label = t(item.key);
+                const label = item.label || t(item.key);
                 return (
                   <Link
                     key={item.href}
