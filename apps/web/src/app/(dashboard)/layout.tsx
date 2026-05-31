@@ -341,7 +341,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               <QrCode className="w-4 h-4 text-white" />
             </div>
             <span className="text-base font-bold text-[#0F172A]">MeuQR</span>
-            <SubscriptionBadge tier={primaryBusiness?.subscription_tier} />
           </Link>
           <NotificationBell />
         </header>
@@ -352,7 +351,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             <nav className="flex items-center gap-2 text-sm text-[#64748B]">
               <span className="font-semibold text-[#0F172A]">{t("sidebar.home")}</span>
             </nav>
-            <SubscriptionBadge tier={primaryBusiness?.subscription_tier} />
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
