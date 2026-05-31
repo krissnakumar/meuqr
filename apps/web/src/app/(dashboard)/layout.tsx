@@ -28,7 +28,9 @@ import {
   DollarSign,
   Stethoscope,
   HeartPulse,
-  Gift
+  Gift,
+  Crown,
+  Zap
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
@@ -47,13 +49,41 @@ type SidebarGroup = {
   items: SidebarItem[];
 };
 
+function SubscriptionBadge({ tier }: { tier: string | undefined }) {
+  const normTier = (tier || "free").toLowerCase();
+
+  if (normTier === "business" || normTier === "premium") {
+    return (
+      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-black tracking-wider uppercase shadow-sm shrink-0 leading-none">
+        <Crown className="w-2.5 h-2.5 fill-white text-white shrink-0" />
+        <span>Premium</span>
+      </div>
+    );
+  }
+
+  if (normTier === "pro" || normTier === "starter") {
+    return (
+      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-black tracking-wider uppercase shadow-sm shrink-0 leading-none">
+        <Zap className="w-2.5 h-2.5 fill-white text-white shrink-0" />
+        <span>Starter</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 text-[9px] font-extrabold tracking-wider uppercase shrink-0 leading-none">
+      <span>Free</span>
+    </div>
+  );
+}
+
 function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleLogout, primaryBusiness }: {
   user: User | null;
   pathname: string;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   handleLogout: () => void;
-  primaryBusiness: { id: string, category: string } | null;
+  primaryBusiness: { id: string, category: string, subscription_tier?: string } | null;
 }) {
   const { t, lang, setLang } = useTranslation();
 
@@ -121,9 +151,12 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-sm shadow-indigo-200 group-hover:shadow-md group-hover:shadow-indigo-200 transition-shadow">
               <QrCode className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <span className="text-lg font-bold text-[#0F172A]">MeuQR</span>
-              <span className="block text-[10px] text-[#64748B] font-medium leading-none -mt-0.5">Business OS</span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-lg font-bold text-[#0F172A] leading-none">MeuQR</span>
+                <SubscriptionBadge tier={primaryBusiness?.subscription_tier} />
+              </div>
+              <span className="block text-[10px] text-[#64748B] font-medium leading-none mt-1">Business OS</span>
             </div>
           </Link>
           <button
@@ -187,7 +220,13 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
               <p className="text-sm font-semibold text-[#0F172A] truncate">
                 {user?.email?.split("@")[0] || "Usuário"}
               </p>
-              <p className="text-[10px] text-[#64748B] font-medium">{t("free_plan")}</p>
+              <p className="text-[10px] text-[#64748B] font-extrabold tracking-wider uppercase">
+                {primaryBusiness?.subscription_tier === "business" || primaryBusiness?.subscription_tier === "premium"
+                  ? "Premium"
+                  : primaryBusiness?.subscription_tier === "pro" || primaryBusiness?.subscription_tier === "starter"
+                  ? "Starter"
+                  : "Free"}
+              </p>
             </div>
             <button
               onClick={handleLogout}
@@ -210,7 +249,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [primaryBusiness, setPrimaryBusiness] = useState<{ id: string, category: string } | null>(null);
+  const [primaryBusiness, setPrimaryBusiness] = useState<{ id: string, category: string, subscription_tier?: string } | null>(null);
   const params = useParams();
 
   useEffect(() => {
@@ -228,7 +267,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
       let query = supabase
         .from("businesses")
-        .select("id, category")
+        .select("id, category, subscription_tier")
         .eq("owner_id", user.id);
         
       if (routeBusinessId && routeBusinessId !== "undefined") {
@@ -294,6 +333,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               <QrCode className="w-4 h-4 text-white" />
             </div>
             <span className="text-base font-bold text-[#0F172A]">MeuQR</span>
+            <SubscriptionBadge tier={primaryBusiness?.subscription_tier} />
           </Link>
           <NotificationBell />
         </header>
@@ -304,6 +344,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             <nav className="flex items-center gap-2 text-sm text-[#64748B]">
               <span className="font-semibold text-[#0F172A]">{t("sidebar.home")}</span>
             </nav>
+            <SubscriptionBadge tier={primaryBusiness?.subscription_tier} />
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
