@@ -62,15 +62,34 @@ export default function BillingPage() {
       if (fetchError) throw fetchError;
 
       if (businesses && businesses.length > 0) {
-        const { error: updateError } = await supabase
-          .from("businesses")
-          .update({ subscription_tier: planKey })
-          .eq("id", businesses[0].id);
+        const businessId = businesses[0].id;
 
-        if (updateError) throw updateError;
-        
-        setCurrentTier(planKey);
-        toast.success(t('success.updated'));
+        if (planKey === "free") {
+          // Downgrade to free directly
+          const { error: updateError } = await supabase
+            .from("businesses")
+            .update({ subscription_tier: "free" })
+            .eq("id", businessId);
+
+          if (updateError) throw updateError;
+          
+          setCurrentTier("free");
+          toast.success(t('success.updated'));
+        } else {
+          // Redirect to checkout for paid plans (MercadoPago)
+          const res = await fetch("/api/checkout-mp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ planKey, businessId }),
+          });
+          
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Erro no checkout");
+          
+          if (data.url) {
+            window.location.href = data.url;
+          }
+        }
       } else {
         toast.error(t('errors.generic'));
       }

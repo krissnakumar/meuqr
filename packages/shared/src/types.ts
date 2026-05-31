@@ -110,6 +110,7 @@ export interface Business {
   website: string | null;
   opening_hours: Record<string, string> | null;
   subscription_tier: SubscriptionTier;
+  notification_settings: any | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -366,6 +367,80 @@ export interface StorageFile {
   storage_path: string;
   public_url: string;
   uploaded_by: string;
+  created_at: string;
+}
+
+export interface Notification {
+  id: string;
+  business_id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  metadata: any | null;
+  created_at: string;
+}
+
+export interface Appointment {
+  id: string;
+  business_id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string | null;
+  service_id: string;
+  staff_id: string | null;
+  date: string;
+  time: string;
+  status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AppointmentService {
+  id: string;
+  business_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  duration_minutes: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface LoyaltyProgram {
+  id: string;
+  business_id: string;
+  name: string;
+  description: string | null;
+  points_required: number;
+  reward_description: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoyaltyCard {
+  id: string;
+  program_id: string;
+  customer_phone: string;
+  customer_name: string | null;
+  current_points: number;
+  total_points_earned: number;
+  rewards_redeemed: number;
+  last_point_added_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoyaltyTransaction {
+  id: string;
+  card_id: string;
+  points_added: number;
+  points_redeemed: number;
+  description: string | null;
+  created_by: string | null;
   created_at: string;
 }
 

@@ -67,27 +67,27 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
       if (isFood) {
         mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Menu", match: "/pages" });
         mainItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, label: "Orders", match: "/orders" });
-        mainItems.push({ href: `/dashboard/business/${id}/tables`, icon: Utensils, label: "Tables", match: "/tables" });
-        mainItems.push({ href: `/dashboard/business/${id}/delivery`, icon: Truck, label: "Delivery", match: "/delivery" });
+        mainItems.push({ href: `/dashboard/business/${id}/pages?tab=tables`, icon: Utensils, label: "Tables", match: "/pages" });
+        mainItems.push({ href: `/dashboard/business/${id}/pages?tab=delivery`, icon: Truck, label: "Delivery", match: "/pages" });
         mainItems.push({ href: `/dashboard/business/${id}/loyalty`, icon: Gift, label: "Fidelidade", match: "/loyalty" });
       } else if (isConstruction) {
         mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Product Catalog", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/quotes`, icon: FileText, label: "Quote Requests", match: "/quotes" });
+        mainItems.push({ href: `/dashboard/business/${id}/quote-requests`, icon: FileText, label: "Quote Requests", match: "/quote-requests" });
         mainItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, label: "WhatsApp Orders", match: "/orders" });
-        mainItems.push({ href: `/dashboard/business/${id}/pricing`, icon: DollarSign, label: "Bulk Pricing", match: "/pricing" });
+        mainItems.push({ href: `/dashboard/business/${id}/pages?tab=pricing`, icon: DollarSign, label: "Bulk Pricing", match: "/pages" });
       } else if (isClinic) {
         mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
-        mainItems.push({ href: `/dashboard/business/${id}/doctors`, icon: Stethoscope, label: "Doctors", match: "/doctors" });
-        mainItems.push({ href: `/dashboard/business/${id}/patients`, icon: Users, label: "Patients", match: "/patients" });
+        mainItems.push({ href: `/dashboard/business/${id}/members`, icon: Stethoscope, label: "Doctors", match: "/members" });
+        mainItems.push({ href: `/dashboard/business/${id}/clients`, icon: Users, label: "Patients", match: "/clients" });
         mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: HeartPulse, label: "Treatments", match: "/pages" });
       } else if (isDentist) {
         mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
         mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Dental Procedures", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/treatment-plans`, icon: FileText, label: "Treatment Plans", match: "/treatment-plans" });
-        mainItems.push({ href: `/dashboard/business/${id}/follow-ups`, icon: HeartPulse, label: "Follow-ups", match: "/follow-ups" });
+        mainItems.push({ href: `/dashboard/business/${id}/pages?tab=plans`, icon: FileText, label: "Treatment Plans", match: "/pages" });
+        mainItems.push({ href: `/dashboard/business/${id}/clients?tab=followup`, icon: HeartPulse, label: "Follow-ups", match: "/clients" });
       } else if (isBeauty) {
         mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
-        mainItems.push({ href: `/dashboard/business/${id}/professionals`, icon: Users, label: "Professionals", match: "/professionals" });
+        mainItems.push({ href: `/dashboard/business/${id}/members`, icon: Users, label: "Professionals", match: "/members" });
         mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Services", match: "/pages" });
         mainItems.push({ href: `/dashboard/business/${id}/loyalty`, icon: Gift, label: "Fidelidade", match: "/loyalty" });
       } else {
