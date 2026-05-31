@@ -353,8 +353,7 @@ export default function BusinessSetupPage() {
                 </div>
               </div>
             )}
-
-
+          </div>
 
           {/* Skip */}
           <div className="text-center">
