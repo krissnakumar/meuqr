@@ -2558,7 +2558,7 @@ const RAW_BUSINESS_TEMPLATES: any[] = [
   },
   // ===== CLINICS & HEALTHCARE =====
   {
-    id: "tmpl-052-clinica-medica",
+    id: "tmpl-055-clinica-medica",
     businessType: "medical_clinic",
     name: "Clínica Médica Geral",
     description: "Página para agendamento de consultas médicas via WhatsApp e cadastro de pacientes",

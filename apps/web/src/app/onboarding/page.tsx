@@ -78,7 +78,7 @@ export default function OnboardingPage() {
   // Business states
   const [bizName, setBizName] = useState("");
   const [bizSlug, setBizSlug] = useState("");
-  const [bizCategory, setBizCategory] = useState("restaurante");
+  const [bizCategory, setBizCategory] = useState("restaurant");
   const [bizPhone, setBizPhone] = useState("");
   const [bizWhatsapp, setBizWhatsapp] = useState("");
 
