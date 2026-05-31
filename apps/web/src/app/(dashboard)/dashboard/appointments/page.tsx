@@ -153,11 +153,11 @@ export default function AppointmentsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "pending": return <Badge variant="yellow">Pendente</Badge>;
+      case "pending": return <Badge variant="amber">Pendente</Badge>;
       case "confirmed": return <Badge variant="emerald">Confirmado</Badge>;
       case "completed": return <Badge variant="indigo">Concluído</Badge>;
-      case "cancelled": return <Badge variant="red">Cancelado</Badge>;
-      case "no_show": return <Badge variant="gray">Não Compareceu</Badge>;
+      case "cancelled": return <Badge variant="rose">Cancelado</Badge>;
+      case "no_show": return <Badge variant="muted">Não Compareceu</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
