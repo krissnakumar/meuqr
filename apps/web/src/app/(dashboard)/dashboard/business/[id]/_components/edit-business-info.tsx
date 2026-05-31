@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Button, GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from "@meuqr/ui";
+import { Button, GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent, ImageUpload } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -15,7 +15,6 @@ import {
   Globe,
   ExternalLink,
 } from "lucide-react";
-import Link from "next/link";
 
 interface BusinessData {
   id: string;
@@ -24,6 +23,7 @@ interface BusinessData {
   category: string;
   description: string | null;
   logo_url: string | null;
+  cover_url: string | null;
   whatsapp: string | null;
   instagram: string | null;
   subscription_tier: string;
@@ -45,6 +45,13 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
   const [editSlug, setEditSlug] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editLang, setEditLang] = useState("pt-BR");
+  
+  // Media states
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>(business.logo_url || "");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string>(business.cover_url || "");
+  
   const [savingInfo, setSavingInfo] = useState(false);
 
   const startEditInfo = () => {
@@ -54,8 +61,31 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
     setEditSlug(business.slug);
     setEditDescription(business.description || "");
     setEditLang(business.default_language || "pt-BR");
+    setLogoUrl(business.logo_url || "");
+    setCoverUrl(business.cover_url || "");
+    setLogoFile(null);
+    setCoverFile(null);
     setEditingInfo(true);
   };
+
+  async function uploadFile(file: File): Promise<string | null> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("businessId", businessId);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      return data.url;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
 
   async function handleSaveInfo() {
     if (!editName || !editSlug) {
@@ -64,6 +94,19 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
     }
     setSavingInfo(true);
     try {
+      let finalLogoUrl = logoUrl;
+      let finalCoverUrl = coverUrl;
+
+      if (logoFile) {
+        const uploaded = await uploadFile(logoFile);
+        if (uploaded) finalLogoUrl = uploaded;
+      }
+
+      if (coverFile) {
+        const uploaded = await uploadFile(coverFile);
+        if (uploaded) finalCoverUrl = uploaded;
+      }
+
       const { error } = await supabase
         .from("businesses")
         .update({
@@ -73,6 +116,8 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
           slug: editSlug,
           description: editDescription || null,
           default_language: editLang,
+          logo_url: finalLogoUrl || null,
+          cover_url: finalCoverUrl || null,
         })
         .eq("id", businessId);
 
@@ -113,6 +158,31 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
       <GlassCardContent>
         {editingInfo ? (
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-500 block">Logo</label>
+                <ImageUpload
+                  value={logoUrl}
+                  onChange={setLogoFile}
+                  onRemove={() => { setLogoUrl(""); setLogoFile(null); }}
+                  shape="circle"
+                  aspectRatio="square"
+                  label="Upload Logo"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-500 block">Capa</label>
+                <ImageUpload
+                  value={coverUrl}
+                  onChange={setCoverFile}
+                  onRemove={() => { setCoverUrl(""); setCoverFile(null); }}
+                  shape="rounded"
+                  aspectRatio="video"
+                  label="Upload Capa"
+                />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-gray-500 block">Nome do Negócio *</label>
               <input

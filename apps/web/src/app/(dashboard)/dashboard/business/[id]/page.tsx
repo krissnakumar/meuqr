@@ -41,6 +41,7 @@ interface BusinessFull {
   category: string;
   description: string | null;
   logo_url: string | null;
+  cover_url: string | null;
   whatsapp: string | null;
   instagram: string | null;
   subscription_tier: string;
