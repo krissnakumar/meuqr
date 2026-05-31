@@ -768,26 +768,40 @@ export function PublicBusinessPageClient({
         )}
       </div>
 
-      {/* Page Navigation Tabs */}
+      {/* Premium Sticky Glassmorphic Page Navigation Tabs */}
       {pages.length > 1 && (
-        <div className="px-6 mb-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {pages.map((p) => {
-              const isActive = p.id === page.id;
-              return (
-                <a
-                  key={p.id}
-                  href={`/${business.slug}?p=${p.slug}`}
-                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-                    isActive
-                      ? "bg-[#111827] text-white border-[#111827] shadow-sm"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  {p.title}
-                </a>
-              );
-            })}
+        <div className="sticky top-0 z-30 backdrop-blur-md bg-[#F9FAFB]/90 border-b border-gray-200/50 py-3 mb-6 transition-all">
+          <div className="px-6">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {pages.map((p) => {
+                const isActive = p.id === page.id;
+                // Generate path based on current window location prefix
+                let href = `/${business.slug}?p=${p.slug}`;
+                if (typeof window !== "undefined" && window.location.pathname.includes("/b/")) {
+                  href = `/b/${business.slug}/${p.slug}`;
+                }
+                const activeColor = (business as any).brand_color || "#4F46E5";
+
+                return (
+                  <a
+                    key={p.id}
+                    href={href}
+                    style={{
+                      borderColor: isActive ? activeColor : "transparent",
+                      backgroundColor: isActive ? `${activeColor}10` : "white",
+                      color: isActive ? activeColor : "#4B5563"
+                    }}
+                    className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border shadow-sm ${
+                      isActive
+                        ? "shadow-indigo-100/50 font-black scale-105"
+                        : "border-gray-200/80 hover:border-gray-300 hover:text-gray-900 active:scale-95"
+                    }`}
+                  >
+                    {p.title}
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

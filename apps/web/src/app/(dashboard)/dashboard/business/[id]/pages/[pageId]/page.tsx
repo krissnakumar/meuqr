@@ -65,6 +65,13 @@ export default function PageEditorPage() {
   const [newSectionName, setNewSectionName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
+  // Page Settings States
+  const [showSettings, setShowSettings] = useState(false);
+  const [navLabel, setNavLabel] = useState("");
+  const [showInNav, setShowInNav] = useState(true);
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDesc, setSeoDesc] = useState("");
+
   useEffect(() => {
     loadPage();
   }, [pageId]);
@@ -86,10 +93,44 @@ export default function PageEditorPage() {
       setPage(pg);
       setBusiness(pg?.businesses);
       setSections(secs || []);
+      setNavLabel(pg?.navigation_label || pg?.title || "");
+      setShowInNav(pg?.show_in_navigation ?? true);
+      setSeoTitle(pg?.seo_title || "");
+      setSeoDesc(pg?.seo_description || "");
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function savePageSettings() {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("pages")
+        .update({
+          navigation_label: navLabel,
+          show_in_navigation: showInNav,
+          seo_title: seoTitle,
+          seo_description: seoDesc,
+        })
+        .eq("id", pageId);
+
+      if (error) throw error;
+      setPage({ 
+        ...page, 
+        navigation_label: navLabel,
+        show_in_navigation: showInNav,
+        seo_title: seoTitle,
+        seo_description: seoDesc
+      });
+      toast.success("Ajustes salvos com sucesso!");
+      setShowSettings(false);
+    } catch (err) {
+      toast.error("Erro ao salvar configurações.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -558,11 +599,11 @@ export default function PageEditorPage() {
     <div className="space-y-8 animate-fade-in-up">
       {/* Back */}
       <Link
-        href={`/dashboard/business/${businessId}`}
+        href={`/dashboard/business/${businessId}/pages`}
         className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-indigo-600 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        {business?.name}
+        Todas as Páginas
       </Link>
 
       {/* Header */}
@@ -578,6 +619,14 @@ export default function PageEditorPage() {
         </div>
         <div className="flex gap-2">
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSettings(!showSettings)}
+            className="border-slate-200 text-slate-700 font-semibold"
+          >
+            Configurações da Página
+          </Button>
+          <Button
             variant={page?.is_published ? "outline" : "default"}
             size="sm"
             onClick={togglePublish}
@@ -586,13 +635,90 @@ export default function PageEditorPage() {
           >
             {page?.is_published ? "Despublicar" : "Publicar"}
           </Button>
-          <Link href={`/${business?.slug}`} target="_blank">
+          <Link href={`/b/${business?.slug}/${page?.slug}`} target="_blank">
             <Button variant="ghost" size="icon" className="hover:bg-slate-100">
               <Eye className="w-4 h-4" />
             </Button>
           </Link>
         </div>
       </div>
+
+      {/* Page Settings Collapsible Panel */}
+      {showSettings && (
+        <GlassCard className="border-indigo-100 bg-indigo-50/5 p-5 animate-fade-in space-y-4">
+          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+            <Settings2 className="w-4.5 h-4.5 text-indigo-500" />
+            Ajustes de Visibilidade e SEO
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Nome de Exibição no Menu (Abas)</label>
+                <Input
+                  value={navLabel}
+                  onChange={(e) => setNavLabel(e.target.value)}
+                  placeholder="Ex: Nossas Bebidas"
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="flex items-start gap-2.5 p-3.5 bg-white border border-slate-150 rounded-xl">
+                <input
+                  type="checkbox"
+                  id="showInNavCheck"
+                  checked={showInNav}
+                  onChange={(e) => setShowInNav(e.target.checked)}
+                  className="w-4 h-4 rounded text-indigo-600 border-slate-350 focus:ring-indigo-500 mt-0.5 cursor-pointer"
+                />
+                <label htmlFor="showInNavCheck" className="text-xs text-slate-700 leading-normal cursor-pointer select-none">
+                  <span className="block font-bold">Exibir no menu público de abas</span>
+                  Ative para que seus clientes consigam achar esta aba no topo da sua página principal.
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Título para o Google (SEO)</label>
+                <Input
+                  value={seoTitle}
+                  onChange={(e) => setSeoTitle(e.target.value)}
+                  placeholder="Ex: Cardápio Oficial - Meu Café"
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Descrição para o Google (SEO)</label>
+                <textarea
+                  value={seoDesc}
+                  onChange={(e) => setSeoDesc(e.target.value)}
+                  placeholder="Escreva uma frase que descreva sua página para buscadores como Google."
+                  className="w-full h-[76px] px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSettings(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={savePageSettings}
+              disabled={saving}
+              className="bg-indigo-600 text-white font-bold"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Alterações"}
+            </Button>
+          </div>
+        </GlassCard>
+      )}
 
       {/* Sections */}
       <div className="space-y-4">

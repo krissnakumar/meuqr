@@ -70,60 +70,16 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
       const id = primaryBusiness.id;
       const cat = primaryBusiness.category;
       
-      const isFood = ["restaurant", "pizzeria", "burger_shop", "bakery", "coffee_shop", "acai_sorveteria", "bar_pub", "food_truck"].includes(cat);
-      const isConstruction = ["construction_materials", "hardware_store", "paint_store"].includes(cat);
-      const isClinic = ["medical_clinic", "physiotherapy"].includes(cat);
-      const isDentist = ["dental_clinic"].includes(cat);
-      const isBeauty = ["salon", "barber_shop", "nail_studio", "spa"].includes(cat);
-
-      // Industry specific modules
-      if (isFood) {
-        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Menu", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, label: "Orders", match: "/orders" });
-        mainItems.push({ href: `/dashboard/business/${id}/pages?tab=tables`, icon: Utensils, label: "Tables", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/pages?tab=delivery`, icon: Truck, label: "Delivery", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/loyalty`, icon: Gift, label: "Fidelidade", match: "/loyalty" });
-      } else if (isConstruction) {
-        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Product Catalog", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/quote-requests`, icon: FileText, label: "Quote Requests", match: "/quote-requests" });
-        mainItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, label: "WhatsApp Orders", match: "/orders" });
-        mainItems.push({ href: `/dashboard/business/${id}/pages?tab=pricing`, icon: DollarSign, label: "Bulk Pricing", match: "/pages" });
-      } else if (isClinic) {
-        mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
-        mainItems.push({ href: `/dashboard/business/${id}/members`, icon: Stethoscope, label: "Doctors", match: "/members" });
-        mainItems.push({ href: `/dashboard/business/${id}/clients`, icon: Users, label: "Patients", match: "/clients" });
-        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: HeartPulse, label: "Treatments", match: "/pages" });
-      } else if (isDentist) {
-        mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
-        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Dental Procedures", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/pages?tab=plans`, icon: FileText, label: "Treatment Plans", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/clients?tab=followup`, icon: HeartPulse, label: "Follow-ups", match: "/clients" });
-      } else if (isBeauty) {
-        mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
-        mainItems.push({ href: `/dashboard/business/${id}/members`, icon: Users, label: "Professionals", match: "/members" });
-        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Services", match: "/pages" });
-        mainItems.push({ href: `/dashboard/business/${id}/loyalty`, icon: Gift, label: "Fidelidade", match: "/loyalty" });
-      } else {
-        // Generic Fallback
-        const needsOrders = ["supermarket", "cellphone_store", "florist", "pharmacy", "pet_shop", "clothing_store", "shoe_store", "cosmetics_store", "furniture_store", "electrical_supplies", "plumbing_supplies"].includes(cat);
-        const needsAppointments = ["gym", "veterinary", "auto_repair", "motorcycle_repair", "car_wash"].includes(cat);
-
-        mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, key: "sidebar.pages", match: "/pages" });
-        
-        if (needsAppointments) {
-          mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, key: "sidebar.appointments", match: "/appointments" });
-        }
-        
-        mainItems.push({ href: `/dashboard/business/${id}/leads`, icon: Users, key: "sidebar.leads", match: "/leads" });
-
-        if (needsOrders) {
-          mainItems.push({ href: `/dashboard/business/${id}/orders`, icon: Package, key: "sidebar.orders", match: "/orders" });
-        }
-      }
-      
-      mainItems.push({ href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" });
-      mainItems.push({ href: "/dashboard/analytics", icon: BarChart3, key: "sidebar.analytics", match: "/dashboard/analytics" });
-      mainItems.push({ href: "/dashboard/settings", icon: Settings, key: "sidebar.settings", match: "/dashboard/settings" });
+      // Clear mainItems and place business-centric sidebar for selected business
+      mainItems.length = 0;
+      mainItems.push({ href: `/dashboard/business/${id}`, icon: LayoutDashboard, label: "Overview", match: `/dashboard/business/${id}$` });
+      mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: FileText, label: "Pages", match: "/pages" });
+      mainItems.push({ href: `/dashboard/business/${id}/qr`, icon: QrCode, label: "QR Codes", match: "/qr" });
+      mainItems.push({ href: `/dashboard/business/${id}/pages`, icon: ShoppingCart, label: "Products / Menu / Services", match: "/products" });
+      mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
+      mainItems.push({ href: `/dashboard/business/${id}/leads`, icon: Users, label: "Leads", match: "/leads" });
+      mainItems.push({ href: `/dashboard/business/${id}/analytics`, icon: BarChart3, label: "Analytics", match: "/analytics" });
+      mainItems.push({ href: `/dashboard/business/${id}/setup`, icon: Settings, label: "Settings", match: "/setup" });
 
       groups.push({ items: mainItems });
 

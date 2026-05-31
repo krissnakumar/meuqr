@@ -80,9 +80,9 @@ export default async function QRRedirectPage({ params }: PageProps) {
   // Redirect to public business page
   if (businessSlug) {
     if (pageSlug) {
-      redirect(`/${businessSlug}?p=${pageSlug}`);
+      redirect(`/b/${businessSlug}/${pageSlug}`);
     } else {
-      redirect(`/${businessSlug}`);
+      redirect(`/b/${businessSlug}`);
     }
   }
 
