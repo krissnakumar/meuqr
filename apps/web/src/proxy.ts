@@ -14,7 +14,7 @@ const SECURITY_HEADERS = {
     "max-age=63072000; includeSubDomains; preload",
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't need auth

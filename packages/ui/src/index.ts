@@ -20,3 +20,5 @@ export { QuickActionItem } from "./quick-action";
 export type { QuickActionItemProps } from "./quick-action";
 export { WelcomeBanner } from "./welcome-banner";
 export type { WelcomeBannerProps } from "./welcome-banner";
+export { ImageUpload } from "./image-upload";
+export type { ImageUploadProps } from "./image-upload";
