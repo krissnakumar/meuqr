@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useRouter, usePathname, useParams, useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Button, ErrorBoundary, LanguageSelector } from "@meuqr/ui";
@@ -20,7 +20,6 @@ import {
   FileText,
   Package,
   Users,
-  LayoutTemplate,
   Megaphone,
   Calendar,
   Utensils,
@@ -30,11 +29,61 @@ import {
   HeartPulse,
   Gift,
   Crown,
-  Zap
+  Zap,
+  MessageSquare,
+  Star,
+  UserPlus,
+  Sparkles,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n-provider";
 import { NotificationBell } from "@/components/NotificationBell";
+import { getNavigationForBusiness } from "@meuqr/shared";
+
+// Map icon strings from navigation config to actual Lucide components
+const ICON_MAP: Record<string, any> = {
+  LayoutDashboard,
+  FileText,
+  QrCode,
+  Image: Package,
+  MessageSquare,
+  Users,
+  BarChart3,
+  MessageCircle: Bell,
+  Star,
+  Bell,
+  Settings,
+  CreditCard: DollarSign,
+  Package,
+  Briefcase: Calendar,
+  UtensilsCrossed: Utensils,
+  Calendar,
+  ShoppingCart,
+  CalendarCheck: Calendar,
+  ClipboardList: FileText,
+  FileSpreadsheet: FileText,
+  Megaphone,
+  Gift,
+  TicketPercent: Gift,
+  UsersRound: Users,
+  UserCheck: Users,
+  HeartPulse,
+  Stethoscope,
+  Home: Store,
+  UserPlus,
+  BookOpen: FileText,
+  GraduationCap: Users,
+  ChalkboardTeacher: Users,
+  CalendarDays: Calendar,
+  Hotel: Store,
+  RoomService: Bell,
+  ConciergeBell: Bell,
+  Truck,
+  Car: Truck,
+  Wrench: Settings,
+  FileSignature: FileText,
+  Table2: Calendar,
+};
 
 type SidebarItem = {
   href: string;
@@ -77,46 +126,52 @@ function SubscriptionBadge({ tier }: { tier: string | undefined }) {
   );
 }
 
-function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleLogout, primaryBusiness }: {
+function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleLogout, primaryBusiness, enabledModuleSlugs }: {
   user: User | null;
   pathname: string;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   handleLogout: () => void;
   primaryBusiness: { id: string, category: string, subscription_tier?: string } | null;
+  enabledModuleSlugs: string[];
 }) {
   const { t, lang, setLang } = useTranslation();
-  const searchParams = useSearchParams();
-  const activeFilter = searchParams.get("filter") || "";
 
   const getSidebarItems = () => {
     const groups: SidebarGroup[] = [];
 
-    // Base Group 1
-    const mainItems: SidebarItem[] = [
-      { href: "/dashboard", icon: LayoutDashboard, key: "sidebar.overview", match: "/dashboard$" },
-      { href: "/dashboard/business", icon: Store, key: "dashboard.businesses", match: "/dashboard/business$" },
-    ];
+    const mainItems: SidebarItem[] = [];
 
     if (primaryBusiness) {
       const id = primaryBusiness.id;
-      const cat = primaryBusiness.category;
-      
-      // Clear mainItems and place business-centric sidebar for selected business
-      mainItems.length = 0;
-      mainItems.push({ href: `/dashboard/business/${id}`, icon: LayoutDashboard, label: "Overview", match: `/dashboard/business/${id}$` });
-      mainItems.push({ href: `/dashboard/business/${id}/pages?filter=content`, icon: FileText, label: "Pages", match: "filter=content" });
-      mainItems.push({ href: `/dashboard/business/${id}/qr`, icon: QrCode, label: "QR Codes", match: "/qr" });
-      mainItems.push({ href: `/dashboard/business/${id}/pages?filter=menus`, icon: ShoppingCart, label: "Products / Menu / Services", match: "filter=menus" });
-      mainItems.push({ href: `/dashboard/business/${id}/appointments`, icon: Calendar, label: "Appointments", match: "/appointments" });
-      mainItems.push({ href: `/dashboard/business/${id}/leads`, icon: Users, label: "Leads", match: "/leads" });
-      mainItems.push({ href: `/dashboard/business/${id}/analytics`, icon: BarChart3, label: "Analytics", match: "/analytics" });
-      mainItems.push({ href: `/dashboard/business/${id}/setup`, icon: Settings, label: "Settings", match: "/setup" });
+
+      // Generate dynamic navigation from enabled modules
+      const navItems = getNavigationForBusiness(id, enabledModuleSlugs, primaryBusiness.category);
+
+      for (const item of navItems) {
+        const IconComp = ICON_MAP[item.icon] || LayoutDashboard;
+        const matchValue = item.match || item.href;
+        mainItems.push({
+          href: item.href,
+          icon: IconComp,
+          label: item.label,
+          match: matchValue,
+        });
+      }
+
+      // Add "Add Features" link at the end
+      mainItems.push({
+        href: `/dashboard/business/${id}/add-features`,
+        icon: Sparkles,
+        label: "Add Features",
+        match: "/add-features",
+      });
 
       groups.push({ items: mainItems });
-
     } else {
       // Global fallback if no primary business selected
+      mainItems.push({ href: "/dashboard", icon: LayoutDashboard, key: "sidebar.overview", match: "/dashboard$" });
+      mainItems.push({ href: "/dashboard/business", icon: Store, key: "dashboard.businesses", match: "/dashboard/business$" });
       mainItems.push({ href: "/dashboard/qr-codes", icon: QrCode, key: "sidebar.qrcodes", match: "/dashboard/qr-codes" });
       mainItems.push({ href: "/dashboard/analytics", icon: BarChart3, key: "sidebar.analytics", match: "/dashboard/analytics" });
       mainItems.push({ href: "/dashboard/settings", icon: Settings, key: "sidebar.settings", match: "/dashboard/settings" });
@@ -129,14 +184,11 @@ function DashboardSidebar({ user, pathname, sidebarOpen, setSidebarOpen, handleL
   const sidebarItems = getSidebarItems();
 
   const isActive = (item: SidebarItem) => {
-    if (item.match === "/dashboard$") return pathname === "/dashboard";
-    if (item.match === "filter=content") {
-      return pathname.endsWith("/pages") && (activeFilter === "content" || activeFilter === "");
+    const match = item.match;
+    if (match.endsWith('$')) {
+      return pathname === match.slice(0, -1);
     }
-    if (item.match === "filter=menus") {
-      return pathname.endsWith("/pages") && activeFilter === "menus";
-    }
-    return pathname.includes(item.match);
+    return pathname.includes(match);
   };
 
   return (
@@ -258,7 +310,36 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [primaryBusiness, setPrimaryBusiness] = useState<{ id: string, category: string, subscription_tier?: string } | null>(null);
+  const [enabledModuleSlugs, setEnabledModuleSlugs] = useState<string[]>([]);
   const params = useParams();
+
+  // Fetch enabled modules for the current business
+  useEffect(() => {
+    const bizId = params?.id as string | undefined;
+    if (!bizId || bizId === 'undefined') {
+      setEnabledModuleSlugs([]);
+      return;
+    }
+
+    supabase
+      .from("business_enabled_modules")
+      .select("module_id, modules(slug)")
+      .eq("business_id", bizId)
+      .eq("enabled", true)
+      .then(({ data }) => {
+        if (data) {
+          const slugs: string[] = [];
+          for (const row of data) {
+            // row.modules can be the joined object { slug: string } or null
+            const mod = row as any;
+            if (mod.modules?.slug) {
+              slugs.push(mod.modules.slug);
+            }
+          }
+          setEnabledModuleSlugs(slugs);
+        }
+      });
+  }, [params?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -328,6 +409,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         setSidebarOpen={setSidebarOpen}
         handleLogout={handleLogout}
         primaryBusiness={primaryBusiness}
+        enabledModuleSlugs={enabledModuleSlugs}
       />
 
       <div className="flex-1 min-w-0 flex flex-col">

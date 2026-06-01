@@ -70,6 +70,10 @@ export type Database = {
           default_language: string | null;
           notification_settings: Json;
           form_schema: Json;
+          vertical_id: string | null;
+          subvertical_id: string | null;
+          onboarding_completed: boolean;
+          setup_step: number;
           created_at: Timestamp;
           updated_at: Timestamp;
         };
@@ -98,6 +102,10 @@ export type Database = {
           default_language?: string | null;
           notification_settings?: Json;
           form_schema?: Json;
+          vertical_id?: string | null;
+          subvertical_id?: string | null;
+          onboarding_completed?: boolean;
+          setup_step?: number;
           created_at?: Timestamp;
           updated_at?: Timestamp;
         };
@@ -124,6 +132,10 @@ export type Database = {
           default_language?: string | null;
           notification_settings?: Json;
           form_schema?: Json;
+          vertical_id?: string | null;
+          subvertical_id?: string | null;
+          onboarding_completed?: boolean;
+          setup_step?: number;
           updated_at?: Timestamp;
         };
       };
@@ -1198,9 +1210,298 @@ export type Database = {
           is_active?: boolean;
         };
       };
+      // ============================================
+      // Business OS — New Tables
+      // ============================================
+      business_verticals: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          icon: string;
+          status: string;
+          default_modules: Json;
+          default_pages: Json;
+          default_navigation: Json;
+          recommended_modules: Json;
+          sort_order: number;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          icon?: string;
+          status?: string;
+          default_modules?: Json;
+          default_pages?: Json;
+          default_navigation?: Json;
+          recommended_modules?: Json;
+          sort_order?: number;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          icon?: string;
+          status?: string;
+          default_modules?: Json;
+          default_pages?: Json;
+          default_navigation?: Json;
+          recommended_modules?: Json;
+          sort_order?: number;
+          updated_at?: Timestamp;
+        };
+      };
+      business_subverticals: {
+        Row: {
+          id: string;
+          vertical_id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          icon: string | null;
+          default_modules: Json;
+          default_pages: Json;
+          sort_order: number;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          vertical_id: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          icon?: string | null;
+          default_modules?: Json;
+          default_pages?: Json;
+          sort_order?: number;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          icon?: string | null;
+          default_modules?: Json;
+          default_pages?: Json;
+          sort_order?: number;
+          updated_at?: Timestamp;
+        };
+      };
+      modules: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          icon: string;
+          category: string;
+          is_core: boolean;
+          status: string;
+          required_plan: string;
+          sort_order: number;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          icon?: string;
+          category?: string;
+          is_core?: boolean;
+          status?: string;
+          required_plan?: string;
+          sort_order?: number;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          icon?: string;
+          category?: string;
+          is_core?: boolean;
+          status?: string;
+          required_plan?: string;
+          sort_order?: number;
+          updated_at?: Timestamp;
+        };
+      };
+      business_enabled_modules: {
+        Row: {
+          id: string;
+          business_id: string;
+          module_id: string;
+          enabled: boolean;
+          source: string;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          business_id: string;
+          module_id: string;
+          enabled?: boolean;
+          source?: string;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          enabled?: boolean;
+          source?: string;
+          updated_at?: Timestamp;
+        };
+      };
+      inbox_items: {
+        Row: {
+          id: string;
+          business_id: string;
+          customer_id: string | null;
+          source_type: string;
+          source_id: string | null;
+          title: string;
+          message: string | null;
+          status: string;
+          priority: string;
+          assigned_to: string | null;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          business_id: string;
+          customer_id?: string | null;
+          source_type: string;
+          source_id?: string | null;
+          title: string;
+          message?: string | null;
+          status?: string;
+          priority?: string;
+          assigned_to?: string | null;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          customer_id?: string | null;
+          source_type?: string;
+          source_id?: string | null;
+          title?: string;
+          message?: string | null;
+          status?: string;
+          priority?: string;
+          assigned_to?: string | null;
+          updated_at?: Timestamp;
+        };
+      };
+      customers: {
+        Row: {
+          id: string;
+          business_id: string;
+          name: string;
+          phone: string | null;
+          email: string | null;
+          notes: string | null;
+          tags: string[];
+          source: string;
+          last_interaction_at: Timestamp | null;
+          total_visits: number;
+          total_spent: number;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          business_id: string;
+          name: string;
+          phone?: string | null;
+          email?: string | null;
+          notes?: string | null;
+          tags?: string[];
+          source?: string;
+          last_interaction_at?: Timestamp | null;
+          total_visits?: number;
+          total_spent?: number;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        };
+        Update: {
+          name?: string;
+          phone?: string | null;
+          email?: string | null;
+          notes?: string | null;
+          tags?: string[];
+          source?: string;
+          last_interaction_at?: Timestamp | null;
+          total_visits?: number;
+          total_spent?: number;
+          updated_at?: Timestamp;
+        };
+      };
+      analytics_events: {
+        Row: {
+          id: string;
+          business_id: string;
+          page_id: string | null;
+          qr_code_id: string | null;
+          event_type: string;
+          metadata: Json;
+          visitor_id: string | null;
+          device: string | null;
+          referrer: string | null;
+          created_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          business_id: string;
+          page_id?: string | null;
+          qr_code_id?: string | null;
+          event_type: string;
+          metadata?: Json;
+          visitor_id?: string | null;
+          device?: string | null;
+          referrer?: string | null;
+          created_at?: Timestamp;
+        };
+        Update: {
+          page_id?: string | null;
+          qr_code_id?: string | null;
+          event_type?: string;
+          metadata?: Json;
+          visitor_id?: string | null;
+          device?: string | null;
+          referrer?: string | null;
+        };
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      get_enabled_modules_for_business: {
+        Args: {
+          p_business_id: string;
+        };
+        Returns: {
+          module_id: string;
+          module_slug: string;
+          module_name: string;
+          module_icon: string;
+          module_category: string;
+          is_core: boolean;
+          source: string;
+          enabled: boolean;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

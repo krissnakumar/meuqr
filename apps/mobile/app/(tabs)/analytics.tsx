@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { supabase } from "../../src/lib/supabase";
+import { businessApi, analyticsApi } from "../../src/lib/api-business";
 import { Eye, MousePointerClick, MessageCircle, TrendingUp } from "lucide-react-native";
 
 export default function AnalyticsScreen() {
@@ -29,51 +30,24 @@ export default function AnalyticsScreen() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: businesses } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("owner_id", user.id);
+      const businesses = await businessApi.list();
 
       if (!businesses?.length) {
         setLoading(false);
         return;
       }
 
-      const { data: qrCodes } = await supabase
-        .from("qr_codes")
-        .select("id")
-        .in(
-          "business_id",
-          businesses.map((b) => b.id)
-        );
+      const summaries = await Promise.all(
+        businesses.map((b) => analyticsApi.getSummary(b.id))
+      );
 
-      const qrIds = qrCodes?.map((q) => q.id) || [];
-      
-      if (qrIds.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      const { count: scans } = await supabase
-        .from("scans")
-        .select("*", { count: "exact", head: true })
-        .in("qr_code_id", qrIds);
-
-      const { count: clicks } = await supabase
-        .from("clicks")
-        .select("*", { count: "exact", head: true })
-        .in("qr_code_id", qrIds);
-
-      const { count: whatsapp } = await supabase
-        .from("clicks")
-        .select("*", { count: "exact", head: true })
-        .in("qr_code_id", qrIds)
-        .eq("click_type", "whatsapp");
+      const totalScans = summaries.reduce((sum, s) => sum + s.totalQrScans, 0);
+      const whatsappClicks = summaries.reduce((sum, s) => sum + s.whatsappClicks, 0);
 
       setStats({
-        totalScans: scans || 0,
-        totalClicks: clicks || 0,
-        whatsappClicks: whatsapp || 0,
+        totalScans,
+        totalClicks: whatsappClicks,
+        whatsappClicks,
         todayScans: 0,
       });
     } catch (err) {

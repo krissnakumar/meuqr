@@ -8,17 +8,16 @@ import {
   ActivityIndicator,
   Share,
 } from "react-native";
-import { supabase } from "../../src/lib/supabase";
+import { qrApi } from "../../src/lib/api-business";
 import { QrCode, Share2 } from "lucide-react-native";
 import { useTranslation } from "../../src/lib/i18n-provider";
 
 interface QRCode {
   id: string;
   short_code: string;
-  title: string | null;
+  title?: string;
   scan_count: number;
   created_at: string;
-  businesses: { name: string };
 }
 
 export default function QRCodesScreen() {
@@ -32,10 +31,7 @@ export default function QRCodesScreen() {
 
   async function loadQRCodes() {
     try {
-      const { data } = await supabase
-        .from("qr_codes")
-        .select("*, businesses(name)")
-        .order("created_at", { ascending: false });
+      const data = await qrApi.listAll();
 
       setQrCodes(data || []);
     } catch (err) {
@@ -83,7 +79,7 @@ export default function QRCodesScreen() {
             <View style={styles.qrInfo}>
               <Text style={styles.qrTitle}>{qr.title || qr.short_code}</Text>
               <Text style={styles.qrMeta}>
-                {(qr as any).businesses?.name} · {qr.scan_count} scans
+                {qr.scan_count} scans
               </Text>
             </View>
             <TouchableOpacity onPress={() => handleShare(qr.short_code)}>

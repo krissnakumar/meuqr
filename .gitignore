@@ -47,3 +47,7 @@ apps/mobile/*.hprof
 # Misc
 *.zip
 *.tgz
+
+# Standalone backend clone
+meuqr-backend/
+apps/api/

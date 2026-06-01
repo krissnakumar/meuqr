@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { supabase } from "../../src/lib/supabase";
+import { businessApi } from "../../src/lib/api-business";
 import { Store, Plus, ArrowRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "../../src/lib/i18n-provider";
@@ -36,11 +37,7 @@ export default function BusinessesScreen() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
-        .from("businesses")
-        .select("id, name, category, created_at")
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false });
+      const data = await businessApi.list();
 
       setBusinesses(data || []);
     } catch (err) {

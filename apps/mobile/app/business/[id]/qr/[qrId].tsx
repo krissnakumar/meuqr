@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
-import { supabase } from "../../../../src/lib/supabase";
+import { api } from "../../../../src/lib/api-client";
+import { qrApi } from "../../../../src/lib/api-business";
 import {
   ArrowLeft,
   QrCode,
@@ -34,8 +35,6 @@ export default function QRCodeDetailScreen() {
   const { t } = useTranslation();
 
   const [qrCode, setQrCode] = useState<any>(null);
-  const [qrStyle, setQrStyle] = useState<any>(null);
-  const [recentScans, setRecentScans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editTitle, setEditTitle] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -50,28 +49,8 @@ export default function QRCodeDetailScreen() {
 
   async function loadQRData() {
     try {
-      const { data: qr } = await supabase
-        .from("qr_codes")
-        .select("*, businesses!inner(name, slug)")
-        .eq("id", qrId)
-        .single();
-
-      const { data: style } = await supabase
-        .from("qr_styles")
-        .select("*")
-        .eq("qr_code_id", qrId)
-        .single();
-
-      const { data: scans } = await supabase
-        .from("scans")
-        .select("*")
-        .eq("qr_code_id", qrId)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
+      const qr = await qrApi.getById(qrId);
       setQrCode(qr);
-      setQrStyle(style);
-      setRecentScans(scans || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -97,12 +76,13 @@ export default function QRCodeDetailScreen() {
 
   async function saveTitle() {
     if (!newTitle.trim()) return;
-    await supabase
-      .from("qr_codes")
-      .update({ title: newTitle })
-      .eq("id", qrId);
-    setQrCode({ ...qrCode, title: newTitle });
-    setEditTitle(false);
+    try {
+      await qrApi.update(qrId, { title: newTitle });
+      setQrCode({ ...qrCode, title: newTitle });
+      setEditTitle(false);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function deleteQR() {
@@ -112,7 +92,7 @@ export default function QRCodeDetailScreen() {
         text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
-          await supabase.from("qr_codes").delete().eq("id", qrId);
+          await qrApi.remove(qrId);
           router.back();
         },
       },
@@ -160,8 +140,8 @@ export default function QRCodeDetailScreen() {
           <QRCode
             value={qrUrl}
             size={200}
-            backgroundColor={qrStyle?.background_color || "#FFFFFF"}
-            color={qrStyle?.foreground_color || "#111827"}
+            backgroundColor={"#FFFFFF"}
+            color={"#111827"}
           />
         </View>
         <Text style={styles.qrUrlText}>/q/{qrCode.short_code}</Text>
@@ -226,20 +206,20 @@ export default function QRCodeDetailScreen() {
             <Text style={styles.statLabel}>{t("common.qr_total_scans")}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{recentScans.length}</Text>
+            <Text style={styles.statNumber}>{qrCode.scan_count}</Text>
             <Text style={styles.statLabel}>{t("common.qr_recent_scans")}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>
-              {recentScans.filter((s) => s.device_type === "mobile").length}
+              {qrCode.is_active ? 1 : 0}
             </Text>
-            <Text style={styles.statLabel}>{t("common.qr_mobile")}</Text>
+            <Text style={styles.statLabel}>{t("common.status")}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>
-              {recentScans.filter((s) => s.device_type === "desktop").length}
+              {qrCode.is_active ? 1 : 0}
             </Text>
-            <Text style={styles.statLabel}>{t("common.qr_desktop")}</Text>
+            <Text style={styles.statLabel}>{t("common.active")}</Text>
           </View>
         </View>
       </View>
@@ -253,7 +233,7 @@ export default function QRCodeDetailScreen() {
         <View style={styles.infoList}>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>{t("business.title")}</Text>
-            <Text style={styles.infoValue}>{qrCode.businesses?.name}</Text>
+            <Text style={styles.infoValue}>{qrCode.title || "MeuQR"}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>{t("dashboard.created_at")}</Text>
@@ -284,33 +264,21 @@ export default function QRCodeDetailScreen() {
         </View>
       </View>
 
-      {/* Recent Scans */}
-      {recentScans.length > 0 && (
+      {/* Scans Info */}
+      {qrCode.scan_count > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Smartphone size={18} color="#111827" />
             <Text style={styles.sectionTitle}>{t("common.qr_recent_scans")}</Text>
           </View>
-          {recentScans.map((scan) => (
-            <View key={scan.id} style={styles.scanRow}>
-              <View style={styles.scanIcon}>
-                {scan.device_type === "mobile" ? (
-                  <Smartphone size={14} color="#6B7280" />
-                ) : (
-                  <Monitor size={14} color="#6B7280" />
-                )}
-              </View>
-              <View style={styles.scanInfo}>
-                <Text style={styles.scanDevice}>
-                  {scan.device_type || t("common.qr_unknown_device")}
-                  {scan.browser ? ` · ${scan.browser}` : ""}
-                </Text>
-                <Text style={styles.scanTime}>
-                  {new Date(scan.created_at).toLocaleString("pt-BR")}
-                </Text>
-              </View>
+          <View style={styles.scanRow}>
+            <View style={styles.scanIcon}>
+              <Smartphone size={14} color="#6B7280" />
             </View>
-          ))}
+            <View style={styles.scanInfo}>
+              <Text style={styles.scanDevice}>{qrCode.scan_count} {t("common.qr_total_scans")}</Text>
+            </View>
+          </View>
         </View>
       )}
 

@@ -10,7 +10,8 @@ import {
   RefreshControl,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../../../src/lib/supabase";
+import { api } from "../../../src/lib/api-client";
+import { orderApi } from "../../../src/lib/api-business";
 import {
   ArrowLeft,
   ShoppingCart,
@@ -70,12 +71,7 @@ export default function OrdersScreen() {
 
   async function loadOrders() {
     try {
-      const { data } = await supabase
-        .from("orders")
-        .select("*, order_items(*)")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
-
+      const data = await orderApi.list(businessId);
       setOrders(data || []);
     } catch (err) {
       console.error(err);
@@ -86,17 +82,15 @@ export default function OrdersScreen() {
   }
 
   async function updateOrderStatus(orderId: string, newStatus: string) {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: newStatus })
-      .eq("id", orderId);
-
-    if (!error) {
+    try {
+      await orderApi.update(orderId, { status: newStatus });
       setOrders(
         orders.map((o) =>
           o.id === orderId ? { ...o, status: newStatus } : o
         )
       );
+    } catch (err) {
+      console.error(err);
     }
   }
 

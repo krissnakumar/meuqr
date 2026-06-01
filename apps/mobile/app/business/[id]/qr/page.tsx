@@ -13,7 +13,8 @@ import {
   Modal,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../../../../src/lib/supabase";
+import { api } from "../../../../src/lib/api-client";
+import { businessApi, qrApi } from "../../../../src/lib/api-business";
 import {
   ArrowLeft,
   QrCode,
@@ -51,12 +52,7 @@ export default function BusinessQRCodesScreen() {
 
   async function loadQRCodes() {
     try {
-      const { data } = await supabase
-        .from("qr_codes")
-        .select("*, pages(title)")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
-
+      const data = await businessApi.getQrCodes(businessId);
       setQrCodes(data || []);
     } catch (err) {
       console.error(err);
@@ -75,16 +71,16 @@ export default function BusinessQRCodesScreen() {
   }
 
   async function toggleQRStatus(qrId: string, currentActive: boolean) {
-    await supabase
-      .from("qr_codes")
-      .update({ is_active: !currentActive })
-      .eq("id", qrId);
-
-    setQrCodes(
-      qrCodes.map((q) =>
-        q.id === qrId ? { ...q, is_active: !currentActive } : q
-      )
-    );
+    try {
+      await qrApi.update(qrId, { isActive: !currentActive });
+      setQrCodes(
+        qrCodes.map((q) =>
+          q.id === qrId ? { ...q, is_active: !currentActive } : q
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function deleteQR(qrId: string) {
@@ -94,7 +90,7 @@ export default function BusinessQRCodesScreen() {
         text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
-          await supabase.from("qr_codes").delete().eq("id", qrId);
+          await qrApi.remove(qrId);
           setQrCodes(qrCodes.filter((q) => q.id !== qrId));
         },
       },
@@ -111,23 +107,17 @@ export default function BusinessQRCodesScreen() {
         .substring(2, 8)
         .toUpperCase();
 
-      const { data, error } = await supabase
-        .from("qr_codes")
-        .insert({
-          business_id: businessId,
-          short_code: shortCode,
-          title: newQrTitle.trim() || null,
-        })
-        .select()
-        .single();
+      const data = await qrApi.create({
+        business_id: businessId,
+        short_code: shortCode,
+        title: newQrTitle.trim() || null,
+      });
 
-      if (!error && data) {
+      if (data) {
         setQrCodes([data, ...qrCodes]);
         setShowNewQrModal(false);
         setNewQrTitle("");
         Alert.alert(t("success.created"), t("business.qr_created_success", { code: shortCode }));
-      } else if (error) {
-        Alert.alert(t("errors.generic"), error.message);
       }
     } catch (err) {
       console.error(err);

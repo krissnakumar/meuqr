@@ -11,7 +11,8 @@ import {
   Linking,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../../../src/lib/supabase";
+import { api } from "../../../src/lib/api-client";
+import { quoteApi } from "../../../src/lib/api-business";
 import {
   ArrowLeft,
   FileText,
@@ -64,12 +65,7 @@ export default function QuoteRequestsScreen() {
 
   async function loadQuotes() {
     try {
-      const { data } = await supabase
-        .from("quote_requests")
-        .select("*, quote_items(*)")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
-
+      const data = await quoteApi.list(businessId);
       setQuotes(data || []);
     } catch (err) {
       console.error(err);
@@ -80,16 +76,16 @@ export default function QuoteRequestsScreen() {
   }
 
   async function updateQuoteStatus(quoteId: string, status: string) {
-    await supabase
-      .from("quote_requests")
-      .update({ status })
-      .eq("id", quoteId);
-
-    setQuotes(
-      quotes.map((q) =>
-        q.id === quoteId ? { ...q, status } : q
-      )
-    );
+    try {
+      await quoteApi.update(quoteId, { status });
+      setQuotes(
+        quotes.map((q) =>
+          q.id === quoteId ? { ...q, status } : q
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function deleteQuote(quoteId: string) {
@@ -99,7 +95,7 @@ export default function QuoteRequestsScreen() {
         text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
-          await supabase.from("quote_requests").delete().eq("id", quoteId);
+          await quoteApi.remove(quoteId);
           setQuotes(quotes.filter((q) => q.id !== quoteId));
         },
       },

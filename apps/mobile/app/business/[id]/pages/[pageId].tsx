@@ -12,7 +12,8 @@ import {
   RefreshControl,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../../../../src/lib/supabase";
+import { api } from "../../../../src/lib/api-client";
+import { pageApi } from "../../../../src/lib/api-business";
 import {
   ArrowLeft,
   Plus,
@@ -69,17 +70,11 @@ export default function PageEditorScreen() {
 
   async function loadPage() {
     try {
-      const { data: pg } = await supabase
-        .from("pages")
-        .select("*")
-        .eq("id", pageId)
-        .single();
-
-      const { data: secs } = await supabase
-        .from("sections")
-        .select("*, items(*)")
-        .eq("page_id", pageId)
-        .order("sort_order");
+      const pg = await pageApi.getById(pageId);
+      let secs: SectionData[] = [];
+      try {
+        secs = await api.get("/api/sections", { params: { pageId } }) || [];
+      } catch {}
 
       setPage(pg);
       setSections(secs || []);
@@ -99,22 +94,22 @@ export default function PageEditorScreen() {
       .replace(/[^a-z0-9\s]/g, "")
       .replace(/\s+/g, "-");
 
-    const { data, error } = await supabase
-      .from("sections")
-      .insert({
+    try {
+      const data = await pageApi.addSection({
         page_id: pageId,
         name: newSectionName,
         slug,
         sort_order: sections.length,
         is_visible: true,
-      })
-      .select()
-      .single();
+      });
 
-    if (!error && data) {
-      setSections([...sections, { ...data, items: [] }]);
-      setNewSectionName("");
-      setSectionModal(false);
+      if (data) {
+        setSections([...sections, { ...data, items: [] }]);
+        setNewSectionName("");
+        setSectionModal(false);
+      }
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -125,27 +120,30 @@ export default function PageEditorScreen() {
         text: "Excluir",
         style: "destructive",
         onPress: async () => {
-          await supabase.from("sections").delete().eq("id", sectionId);
-          setSections(sections.filter((s) => s.id !== sectionId));
+          try {
+            await pageApi.removeSection(sectionId);
+            setSections(sections.filter((s) => s.id !== sectionId));
+          } catch (err) {
+            console.error(err);
+          }
         },
       },
     ]);
   }
 
   async function toggleSectionVisibility(section: SectionData) {
-    const { data } = await supabase
-      .from("sections")
-      .update({ is_visible: !section.is_visible })
-      .eq("id", section.id)
-      .select()
-      .single();
+    try {
+      const data = await pageApi.updateSection(section.id, { is_visible: !section.is_visible });
 
-    if (data) {
-      setSections(
-        sections.map((s) =>
-          s.id === section.id ? { ...s, is_visible: data.is_visible } : s
-        )
-      );
+      if (data) {
+        setSections(
+          sections.map((s) =>
+            s.id === section.id ? { ...s, is_visible: data.is_visible } : s
+          )
+        );
+      }
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -174,38 +172,29 @@ export default function PageEditorScreen() {
 
       if (editingItem.item) {
         // Update existing item
-        const { data } = await supabase
-          .from("items")
-          .update({
-            name: itemForm.name,
-            description: itemForm.description || null,
-            price,
-          })
-          .eq("id", editingItem.item.id)
-          .select()
-          .single();
+        const data = await api.patch("/api/items/" + editingItem.item.id, {
+          name: itemForm.name,
+          description: itemForm.description || null,
+          price,
+        });
 
         if (data) {
           setSections(
             sections.map((s) => ({
               ...s,
-              items: s.items.map((i) => (i.id === data.id ? data : i)),
+              items: s.items.map((i) => (i.id === editingItem!.item!.id ? { ...i, ...data } : i)),
             }))
           );
         }
       } else {
         // Create new item
-        const { data } = await supabase
-          .from("items")
-          .insert({
-            section_id: editingItem.sectionId,
-            name: itemForm.name,
-            description: itemForm.description || null,
-            price,
-            sort_order: section?.items.length || 0,
-          })
-          .select()
-          .single();
+        const data = await api.post("/api/items", {
+          section_id: editingItem.sectionId,
+          name: itemForm.name,
+          description: itemForm.description || null,
+          price,
+          sort_order: section?.items.length || 0,
+        });
 
         if (data) {
           setSections(
@@ -228,31 +217,34 @@ export default function PageEditorScreen() {
   }
 
   async function deleteItem(itemId: string, sectionId: string) {
-    await supabase.from("items").delete().eq("id", itemId);
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId
-          ? { ...s, items: s.items.filter((i) => i.id !== itemId) }
-          : s
-      )
-    );
+    try {
+      await api.del("/api/items/" + itemId);
+      setSections(
+        sections.map((s) =>
+          s.id === sectionId
+            ? { ...s, items: s.items.filter((i) => i.id !== itemId) }
+            : s
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function toggleItemAvailability(item: ItemData, sectionId: string) {
-    const { data } = await supabase
-      .from("items")
-      .update({ is_available: !item.is_available })
-      .eq("id", item.id)
-      .select()
-      .single();
+    try {
+      const data = await api.patch("/api/items/" + item.id, { is_available: !item.is_available });
 
-    if (data) {
-      setSections(
-        sections.map((s) => ({
-          ...s,
-          items: s.items.map((i) => (i.id === item.id ? data : i)),
-        }))
-      );
+      if (data) {
+        setSections(
+          sections.map((s) => ({
+            ...s,
+            items: s.items.map((i) => (i.id === item.id ? { ...i, ...data } : i)),
+          }))
+        );
+      }
+    } catch (err) {
+      console.error(err);
     }
   }
 

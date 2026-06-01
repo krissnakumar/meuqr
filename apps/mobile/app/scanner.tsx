@@ -10,7 +10,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import { supabase } from "../src/lib/supabase";
+import { api } from "../src/lib/api-client";
 import { Scan, QrCode, ArrowLeft } from "lucide-react-native";
 import { useTranslation } from "../src/lib/i18n-provider";
 
@@ -52,38 +52,25 @@ export default function ScannerScreen() {
         }
       }
 
-      // Look up the QR code by short code
-      const { data: qrData, error } = await supabase
-        .from("qr_codes")
-        .select("*, businesses!inner(slug)")
-        .eq("short_code", shortCode)
-        .single();
+      // Look up the QR code by short code via public API
+      try {
+        const qrData = await api.get<{
+          businessSlug: string;
+          destinationUrl: string;
+        }>(`/api/public/qr/${shortCode}`);
 
-      if (error || !qrData) {
-        // Try to open as a business slug directly
-        const { data: bizData } = await supabase
-          .from("businesses")
-          .select("slug")
-          .eq("slug", shortCode)
-          .single();
-
-        if (bizData) {
-          Linking.openURL(`https://meuqr.com.br/${bizData.slug}`);
-          resetScanner();
-          return;
+        if (qrData?.destinationUrl) {
+          Linking.openURL(qrData.destinationUrl);
+        } else if (qrData?.businessSlug) {
+          Linking.openURL(`https://meuqr.com.br/${qrData.businessSlug}`);
+        } else {
+          Alert.alert(t("errors.not_found"), t("public.qr_scanner_prompt"), [
+            { text: "OK", onPress: () => resetScanner() },
+          ]);
         }
-
-        Alert.alert(t("errors.not_found"), t("public.qr_scanner_prompt"), [
-          { text: "OK", onPress: () => resetScanner() },
-        ]);
-        return;
-      }
-
-      const business = (qrData as any).businesses as { slug: string };
-      if (business?.slug) {
-        Linking.openURL(`https://meuqr.com.br/${business.slug}`);
-      } else {
-        Alert.alert(t("business.not_found"), t("business.not_found"));
+      } catch {
+        // Try to open as a business slug directly
+        Linking.openURL(`https://meuqr.com.br/${shortCode}`);
         resetScanner();
       }
     } catch (err) {

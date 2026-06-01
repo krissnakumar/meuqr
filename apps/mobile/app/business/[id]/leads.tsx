@@ -12,7 +12,8 @@ import {
   Linking,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../../../src/lib/supabase";
+import { api } from "../../../src/lib/api-client";
+import { leadApi } from "../../../src/lib/api-business";
 import {
   ArrowLeft,
   Users,
@@ -49,12 +50,7 @@ export default function LeadsScreen() {
 
   async function loadLeads() {
     try {
-      const { data } = await supabase
-        .from("leads")
-        .select("*")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
-
+      const data = await leadApi.list(businessId);
       setLeads(data || []);
     } catch (err) {
       console.error(err);
@@ -71,7 +67,7 @@ export default function LeadsScreen() {
         text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
-          await supabase.from("leads").delete().eq("id", leadId);
+          await leadApi.remove(leadId);
           setLeads(leads.filter((l) => l.id !== leadId));
         },
       },

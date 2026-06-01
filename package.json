@@ -5,6 +5,8 @@
   "description": "MeuQR - Smart QR Pages for Brazilian Businesses",
   "scripts": {
     "dev": "pnpm --filter @meuqr/web dev",
+    "dev:api": "pnpm --filter @meuqr/api dev",
+    "dev:all": "pnpm --parallel -r dev",
     "build": "pnpm --filter @meuqr/web build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",

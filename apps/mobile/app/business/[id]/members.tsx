@@ -12,7 +12,8 @@ import {
   Modal,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../../../src/lib/supabase";
+import { api } from "../../../src/lib/api-client";
+import { memberApi } from "../../../src/lib/api-business";
 import {
   ArrowLeft,
   Users,
@@ -61,12 +62,7 @@ export default function MembersScreen() {
 
   async function loadMembers() {
     try {
-      const { data } = await supabase
-        .from("business_members")
-        .select("*")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: true });
-
+      const data = await memberApi.list(businessId);
       setMembers(data || []);
     } catch (err) {
       console.error(err);
@@ -81,21 +77,17 @@ export default function MembersScreen() {
     setSendingInvite(true);
 
     try {
-      const { error } = await supabase.from("business_members").insert({
+      await memberApi.invite({
         business_id: businessId,
         invited_email: inviteEmail.trim(),
         role: inviteRole,
         status: "pending",
       });
 
-      if (error) {
-        Alert.alert(t("errors.generic"), error.message);
-      } else {
-        Alert.alert(t("business.invite_sent"), t("business.invite_sent_desc", { email: inviteEmail }));
-        setShowInviteModal(false);
-        setInviteEmail("");
-        loadMembers();
-      }
+      Alert.alert(t("business.invite_sent"), t("business.invite_sent_desc", { email: inviteEmail }));
+      setShowInviteModal(false);
+      setInviteEmail("");
+      loadMembers();
     } catch (err: any) {
       Alert.alert(t("errors.generic"), err.message);
     } finally {
@@ -110,7 +102,7 @@ export default function MembersScreen() {
         text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
-          await supabase.from("business_members").delete().eq("id", memberId);
+          await memberApi.remove(memberId);
           setMembers(members.filter((m) => m.id !== memberId));
         },
       },

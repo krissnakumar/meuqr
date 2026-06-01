@@ -9,7 +9,8 @@ import {
   RefreshControl,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../../../src/lib/supabase";
+import { api } from "../../../src/lib/api-client";
+import { analyticsApi } from "../../../src/lib/api-business";
 import {
   ArrowLeft,
   Eye,
@@ -42,60 +43,15 @@ export default function BusinessAnalyticsScreen() {
 
   async function loadAnalytics() {
     try {
-      const { data: qrCodes } = await supabase
-        .from("qr_codes")
-        .select("id")
-        .eq("business_id", businessId);
-
-      const qrIds = qrCodes?.map((q) => q.id) || [];
-
-      let scanCount = 0;
-      let clickCount = 0;
-      let mobileCount = 0;
-      let desktopCount = 0;
-
-      if (qrIds.length > 0) {
-        const { count: scans } = await supabase
-          .from("scans")
-          .select("*", { count: "exact", head: true })
-          .in("qr_code_id", qrIds);
-        scanCount = scans || 0;
-
-        const { count: clicks } = await supabase
-          .from("clicks")
-          .select("*", { count: "exact", head: true })
-          .in("qr_code_id", qrIds);
-        clickCount = clicks || 0;
-
-        const { data: recentScans } = await supabase
-          .from("scans")
-          .select("device_type")
-          .in("qr_code_id", qrIds)
-          .limit(100);
-
-        if (recentScans) {
-          mobileCount = recentScans.filter((s) => s.device_type === "mobile").length;
-          desktopCount = recentScans.filter((s) => s.device_type === "desktop").length;
-        }
-      }
-
-      const { count: leadsCount } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", businessId);
-
-      const { count: ordersCount } = await supabase
-        .from("orders")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", businessId);
+      const summary = await analyticsApi.getSummary(businessId);
 
       setStats({
-        scans: scanCount,
-        clicks: clickCount,
-        leads: leadsCount || 0,
-        orders: ordersCount || 0,
-        mobileScans: mobileCount,
-        desktopScans: desktopCount,
+        scans: summary.qrScans || 0,
+        clicks: summary.whatsappClicks || 0,
+        leads: summary.newLeads || 0,
+        orders: 0,
+        mobileScans: 0,
+        desktopScans: 0,
       });
     } catch (err) {
       console.error(err);

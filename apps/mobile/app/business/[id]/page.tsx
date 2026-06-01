@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
-import { supabase } from "../../../src/lib/supabase";
+import { api } from "../../../src/lib/api-client";
+import { businessApi } from "../../../src/lib/api-business";
 import { useTranslation } from "../../../src/lib/i18n-provider";
 import {
   ArrowLeft,
@@ -62,23 +63,9 @@ export default function BusinessDetailScreen() {
 
   async function loadBusiness() {
     try {
-      const { data: biz } = await supabase
-        .from("businesses")
-        .select("*")
-        .eq("id", businessId)
-        .single();
-
-      const { data: bizPages } = await supabase
-        .from("pages")
-        .select("id, title, slug, is_published, created_at")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
-
-      const { data: bizQrs } = await supabase
-        .from("qr_codes")
-        .select("id, short_code, title, scan_count, created_at")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
+      const biz = await businessApi.getById(businessId);
+      const bizPages = await businessApi.getPages(businessId);
+      const bizQrs = await businessApi.getQrCodes(businessId);
 
       setBusiness(biz);
       setPages(bizPages || []);
@@ -101,7 +88,7 @@ export default function BusinessDetailScreen() {
           text: t("common.delete"),
           style: "destructive",
           onPress: async () => {
-            await supabase.from("businesses").delete().eq("id", businessId);
+            await businessApi.remove(businessId);
             router.back();
           },
         },

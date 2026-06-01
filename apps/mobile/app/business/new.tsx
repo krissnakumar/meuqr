@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { supabase } from "../../src/lib/supabase";
+import { api } from "../../src/lib/api-client";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Store, Check, ChevronRight } from "lucide-react-native";
 import { useTranslation } from "../../src/lib/i18n-provider";
@@ -72,28 +72,17 @@ export default function NewBusinessScreen() {
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { data: business, error } = await supabase
-        .from("businesses")
-        .insert({
-          owner_id: user.id,
-          name,
-          slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
-          category,
-          description: description || null,
-          whatsapp: whatsapp || null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const business = await api.post("/api/businesses", {
+        name,
+        category,
+        description: description || undefined,
+        whatsapp: whatsapp || undefined,
+      });
 
       Alert.alert(t("success.created"), t("business.success_create"), [
         {
           text: t("business.details"),
-          onPress: () => router.push(`/business/${business.id}`),
+          onPress: () => router.push(`/business/${(business as any).id}`),
         },
         { text: "OK", onPress: () => router.back() },
       ]);

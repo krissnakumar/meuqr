@@ -12,7 +12,8 @@ import {
   Platform,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../../../../../src/lib/supabase";
+import { api } from "../../../../../src/lib/api-client";
+import { pageApi } from "../../../../../src/lib/api-business";
 import {
   ArrowLeft,
   Save,
@@ -41,11 +42,7 @@ export default function PageSettingsScreen() {
 
   async function loadPage() {
     try {
-      const { data } = await supabase
-        .from("pages")
-        .select("*")
-        .eq("id", pageId)
-        .single();
+      const data = await pageApi.getById(pageId);
 
       if (data) {
         setPage(data);
@@ -70,18 +67,14 @@ export default function PageSettingsScreen() {
     setSaving(true);
 
     try {
-      const { error } = await supabase
-        .from("pages")
-        .update({
-          title: title.trim(),
-          slug: slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, ""),
-          meta_description: metaDescription.trim() || null,
-          custom_css: customCss.trim() || null,
-          custom_js: customJs.trim() || null,
-        })
-        .eq("id", pageId);
+      await pageApi.update(pageId, {
+        title: title.trim(),
+        slug: slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, ""),
+        meta_description: metaDescription.trim() || null,
+        custom_css: customCss.trim() || null,
+        custom_js: customJs.trim() || null,
+      });
 
-      if (error) throw error;
       Alert.alert("Salvo!", "As configurações foram atualizadas.", [
         { text: "OK", onPress: () => router.back() },
       ]);

@@ -9,6 +9,7 @@ import {
   Image,
 } from "react-native";
 import { supabase } from "../../src/lib/supabase";
+import { businessApi, analyticsApi } from "../../src/lib/api-business";
 import { QrCode, Store, Eye, MousePointerClick, ChevronRight, Plus, Sparkles, TrendingUp } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "../../src/lib/i18n-provider";
@@ -48,42 +49,27 @@ export default function DashboardScreen() {
       }
 
       // Fetch user's businesses
-      const { data: bizList } = await supabase
-        .from("businesses")
-        .select("id, name, category, logo_url, created_at")
-        .eq("owner_id", user?.id || "")
-        .order("created_at", { ascending: false });
-
-      const businessItems = bizList || [];
+      const businessItems = await businessApi.list();
       setBusinesses(businessItems);
-
-      const bizIds = businessItems.map((b) => b.id);
 
       let qrCount = 0;
       let scanCount = 0;
       let clickCount = 0;
 
-      if (bizIds.length > 0) {
-        const { data: qrCodes } = await supabase
-          .from("qr_codes")
-          .select("id")
-          .in("business_id", bizIds);
+      if (businessItems.length > 0) {
+        const results = await Promise.all(
+          businessItems.map((biz) =>
+            Promise.all([
+              businessApi.getQrCodes(biz.id),
+              analyticsApi.getSummary(biz.id),
+            ])
+          )
+        );
 
-        const qrIds = qrCodes?.map((q: any) => q.id) || [];
-        qrCount = qrIds.length;
-
-        if (qrIds.length > 0) {
-          const { count: sCount } = await supabase
-            .from("scans")
-            .select("*", { count: "exact", head: true })
-            .in("qr_code_id", qrIds);
-          scanCount = sCount || 0;
-
-          const { count: cCount } = await supabase
-            .from("clicks")
-            .select("*", { count: "exact", head: true })
-            .in("qr_code_id", qrIds);
-          clickCount = cCount || 0;
+        for (const [qrCodes, analytics] of results) {
+          qrCount += qrCodes.length;
+          scanCount += analytics.totalQrScans;
+          clickCount += analytics.whatsappClicks;
         }
       }
 

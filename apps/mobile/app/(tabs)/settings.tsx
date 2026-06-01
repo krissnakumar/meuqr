@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { supabase } from "../../src/lib/supabase";
+import { profileApi } from "../../src/lib/api-business";
 import { LogOut, User, Mail, Shield, Globe, Check } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "../../src/lib/i18n-provider";
@@ -32,14 +33,12 @@ export default function SettingsScreen() {
         return;
       }
 
-      const { data: prof, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (prof) {
-        setProfile(prof);
+      const result = await profileApi.get();
+      if (result) {
+        setProfile({
+          ...result.profile,
+          email: result.email,
+        });
       }
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -53,12 +52,7 @@ export default function SettingsScreen() {
     setUpdatingLang(true);
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ language: newLang })
-        .eq("id", profile.id);
-
-      if (error) throw error;
+      await profileApi.update({ language: newLang });
 
       setProfile((prev: any) => ({ ...prev, language: newLang }));
       

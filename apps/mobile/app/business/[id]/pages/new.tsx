@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { supabase } from "../../../../src/lib/supabase";
+import { api } from "../../../../src/lib/api-client";
+import { businessApi, pageApi, qrApi } from "../../../../src/lib/api-business";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, ChevronRight, FileText } from "lucide-react-native";
 import { getAllBusinessTemplates } from "@meuqr/shared";
@@ -41,8 +42,12 @@ export default function NewPageScreen() {
   React.useEffect(() => {
     async function loadBusiness() {
       if (!businessId) return;
-      const { data } = await supabase.from("businesses").select("category").eq("id", businessId).single();
-      if (data) setBusiness(data);
+      try {
+        const data = await businessApi.getById(businessId);
+        if (data) setBusiness(data);
+      } catch (err) {
+        console.error(err);
+      }
     }
     loadBusiness();
   }, [businessId]);
@@ -83,60 +88,32 @@ export default function NewPageScreen() {
     setLoading(true);
     try {
       // 1. Create the page
-      const { data: page, error: pageError } = await supabase
-        .from("pages")
-        .insert({
-          business_id: businessId,
-          template_id: selectedTemplate?.id || null,
-          title: title,
-          slug: slug,
-          is_published: true,
-        })
-        .select()
-        .single();
+      const page = await pageApi.create({
+        business_id: businessId,
+        template_id: selectedTemplate?.id || null,
+        title: title,
+        slug: slug,
+        is_published: true,
+      });
 
-      if (pageError) throw pageError;
-
-      // 2. Clone template sections and items
+      // 2. Clone template sections
       if (selectedTemplate) {
         for (let i = 0; i < selectedTemplate.sections.length; i++) {
           const section = selectedTemplate.sections[i];
 
-          const { data: newSection, error: secError } = await supabase
-            .from("sections")
-            .insert({
-              page_id: page.id,
-              name: getLocalString(section.title),
-              slug: section.slug,
-              section_type: section.sectionType || null,
-              sort_order: i,
-            })
-            .select()
-            .single();
-
-          if (secError) throw secError;
-
-          if (section.items && section.items.length > 0) {
-            const itemsToInsert = section.items.map((item: any, idx: number) => ({
-              section_id: newSection.id,
-              name: getLocalString(item.name),
-              description: item.description ? getLocalString(item.description) : null,
-              price: item.price || null,
-              sort_order: idx,
-            }));
-
-            const { error: itemsError } = await supabase
-              .from("items")
-              .insert(itemsToInsert);
-
-            if (itemsError) throw itemsError;
-          }
+          await pageApi.addSection({
+            page_id: page.id,
+            name: getLocalString(section.title),
+            slug: section.slug,
+            section_type: section.sectionType || null,
+            sort_order: i,
+          });
         }
       }
 
       // 3. Create active QR code for this page
       const shortCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      await supabase.from("qr_codes").insert({
+      await qrApi.create({
         business_id: businessId,
         page_id: page.id,
         short_code: shortCode,

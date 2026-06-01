@@ -6,7 +6,7 @@ import {
   LANGUAGE_INFO,
   t as translate,
 } from "@meuqr/shared";
-import { supabase } from "./supabase";
+import { api } from "./api-client";
 
 // =============================================================================
 // Context
@@ -39,17 +39,11 @@ export function I18nProvider({ children }: I18nProviderProps) {
 
   async function loadUserLanguage() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const me = await api.get<{ profile?: { language?: string } }>("/api/me");
+      const lang = me?.profile?.language;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("language")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.language && SUPPORTED_LANGUAGES.includes(profile.language as Language)) {
-        setLangState(profile.language as Language);
+      if (lang && SUPPORTED_LANGUAGES.includes(lang as Language)) {
+        setLangState(lang as Language);
       }
     } catch {
       // Fall back to default language
