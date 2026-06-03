@@ -405,7 +405,7 @@ function PagesDashboardContent() {
 
       // 3. Create QR Code specifically for this page
       const shortCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-      const destUrl = `${window.location.origin}/b/${business.slug}/${cleanSlug}`;
+      const destUrl = `${window.location.origin}/b/${business.slug}?p=${cleanSlug}`;
 
       const { data: qr, error: qrErr } = await supabase
         .from("qr_codes")
@@ -442,7 +442,7 @@ function PagesDashboardContent() {
   }
 
   function handleCopyLink(slug: string) {
-    const url = `${window.location.origin}/b/${business?.slug}/${slug}`;
+    const url = `${window.location.origin}/b/${business?.slug}?p=${slug}`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     toast.success("Link copiado!");
@@ -609,7 +609,7 @@ function PagesDashboardContent() {
                   {displayedPages.map((p) => {
                     const pageQr = qrCodes.find(q => q.page_id === p.id);
                     const scanCount = pageQr ? pageQr.scan_count : 0;
-                    const publicUrl = `/b/${business?.slug}/${p.slug}`;
+                    const publicUrl = `/b/${business?.slug}?p=${p.slug}`;
 
                     return (
                       <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -1117,7 +1117,7 @@ function PagesDashboardContent() {
                       <input
                         type="text"
                         readOnly
-                        value={`${window.location.origin}/b/${business?.slug}/${createdPage?.slug}`}
+                        value={`${window.location.origin}/b/${business?.slug}?p=${createdPage?.slug}`}
                         className="bg-slate-950 border border-slate-800 text-[10px] px-2.5 py-1.5 rounded-lg flex-1 text-slate-300 font-mono focus:outline-none"
                       />
                       <button

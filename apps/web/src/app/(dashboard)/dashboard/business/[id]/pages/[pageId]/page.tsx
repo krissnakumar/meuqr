@@ -648,7 +648,7 @@ export default function PageEditorPage() {
           >
             {page?.is_published ? "Despublicar" : "Publicar"}
           </Button>
-          <Link href={`/b/${business?.slug}/${page?.slug}`} target="_blank">
+          <Link href={`/b/${business?.slug}?p=${page?.slug}`} target="_blank">
             <Button variant="ghost" size="icon" className="hover:bg-slate-100">
               <Eye className="w-4 h-4" />
             </Button>
