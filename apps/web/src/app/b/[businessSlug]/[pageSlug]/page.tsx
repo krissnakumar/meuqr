@@ -120,11 +120,11 @@ export default async function PublicBusinessSubPage({ params }: PageProps) {
 
   const { data: pages } = await supabase
     .from("pages")
-    .select("id, title, slug, seo_title, seo_description")
+    .select("id, title, slug, show_in_navigation, navigation_label, seo_title, seo_description")
     .eq("business_id", biz.id)
     .eq("is_published", true);
 
-  const pagesList = (pages as unknown as { id: string; title: string; slug: string }[]) || null;
+  const pagesList = (pages as unknown as { id: string; title: string; slug: string; show_in_navigation?: boolean | null; navigation_label?: string | null }[]) || null;
   
   const page = pagesList?.find((p) => p.slug === pageSlug) || null;
 

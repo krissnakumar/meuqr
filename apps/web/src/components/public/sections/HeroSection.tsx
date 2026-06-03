@@ -15,10 +15,22 @@ interface HeroSectionProps {
     whatsapp: string | null;
     brand_color?: string;
   };
+  /** Optional: specific page hero item from the DB (name, description, metadata) */
+  heroItem?: {
+    name?: string;
+    description?: string | null;
+    metadata?: {
+      button_label?: string;
+      button_action?: string;
+      button_url?: string;
+    };
+  } | null;
 }
 
-export function HeroSection({ business }: HeroSectionProps) {
+export function HeroSection({ business, heroItem }: HeroSectionProps) {
   const brandColor = business.brand_color || "#4F46E5";
+  const displayName = heroItem?.name || business.name;
+  const displayDesc = heroItem?.description ?? business.description;
 
   return (
     <div className="relative bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 pb-6">
@@ -58,7 +70,7 @@ export function HeroSection({ business }: HeroSectionProps) {
 
         {/* Business Title & Details */}
         <h1 className="mt-4 text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight">
-          {business.name}
+          {displayName}
         </h1>
 
         {business.city && (
@@ -68,9 +80,9 @@ export function HeroSection({ business }: HeroSectionProps) {
           </div>
         )}
 
-        {business.description && (
+        {displayDesc && (
           <p className="mt-3 text-sm text-[#475569] max-w-md leading-relaxed">
-            {business.description}
+            {displayDesc}
           </p>
         )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ShoppingCart, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 
 interface Product {
   id: string;
@@ -18,6 +18,7 @@ interface ProductGridSectionProps {
   businessPhone: string | null;
   businessName: string;
   onSelectItem?: (product: Product) => void;
+  hideTitle?: boolean;
 }
 
 export function ProductGridSection({
@@ -26,6 +27,7 @@ export function ProductGridSection({
   businessPhone,
   businessName,
   onSelectItem,
+  hideTitle = false,
 }: ProductGridSectionProps) {
   if (items.length === 0) return null;
 
@@ -34,7 +36,6 @@ export function ProductGridSection({
     const text = encodeURIComponent(
       `Olá! Estou na página do ${businessName} e gostaria de saber mais sobre o produto: *${product.name}* (R$ ${product.price?.toFixed(2) || "Preço sob consulta"}).`
     );
-    // Track click event
     fetch("/api/track/click", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -46,73 +47,89 @@ export function ProductGridSection({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-black text-[#0F172A] border-l-4 border-indigo-600 pl-2.5">
-        {title || "Produtos"}
-      </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {items.map((item) => (
-          <div 
-            key={item.id} 
-            className="bg-white rounded-xl border border-slate-100 overflow-hidden shadow-sm flex flex-col hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => onSelectItem?.(item)}
-          >
-            {/* Image */}
-            <div className="h-32 bg-slate-50 relative overflow-hidden flex items-center justify-center">
-              {item.image_url ? (
-                <img 
-                  src={item.image_url} 
-                  alt={item.name} 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-[#CBD5E1] text-xs">Sem Imagem</span>
-              )}
-              {item.original_price && item.price && item.original_price > item.price && (
-                <div className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">
-                  Oferta
-                </div>
-              )}
-            </div>
+      {!hideTitle && (
+        <h2 className="text-lg font-black text-[#0F172A] border-l-4 border-indigo-600 pl-2.5">
+          {title || "Produtos"}
+        </h2>
+      )}
 
-            {/* Content */}
-            <div className="p-3 flex-1 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] line-clamp-1">
-                  {item.name}
-                </h3>
-                {item.description && (
-                  <p className="text-[10px] text-[#64748B] mt-1 line-clamp-2 leading-relaxed">
-                    {item.description}
-                  </p>
+      <div className="space-y-2.5">
+        {items.map((item) => {
+          const isOffer = item.original_price && item.price && item.original_price > item.price;
+
+          return (
+            <article
+              key={item.id}
+              className="group flex gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.08)] cursor-pointer"
+              onClick={() => onSelectItem?.(item)}
+            >
+              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-100">
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    Sem imagem
+                  </div>
+                )}
+
+                {isOffer && (
+                  <div className="absolute left-2 top-2 rounded-full bg-rose-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white shadow-sm">
+                    Oferta
+                  </div>
                 )}
               </div>
 
-              <div className="mt-3 flex items-center justify-between gap-1.5">
-                <div className="flex flex-col">
-                  {item.original_price && item.price && item.original_price > item.price && (
-                    <span className="text-[10px] text-[#94A3B8] line-through">
-                      R$ {item.original_price.toFixed(2)}
-                    </span>
-                  )}
-                  <span className="text-xs sm:text-sm font-black text-indigo-600">
-                    {item.price ? `R$ ${item.price.toFixed(2)}` : "Consultar"}
-                  </span>
+              <div className="min-w-0 flex-1 py-0.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-bold text-[#0F172A]">
+                      {item.name}
+                    </h3>
+                    {item.description && (
+                      <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[#64748B]">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleInquiry(item);
+                    }}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 transition-colors hover:bg-emerald-100"
+                    title="Perguntar no WhatsApp"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </button>
                 </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleInquiry(item);
-                  }}
-                  className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors shrink-0"
-                  title="Perguntar no WhatsApp"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                </button>
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <div className="flex flex-col">
+                    {isOffer && (
+                      <span className="text-[10px] text-[#94A3B8] line-through">
+                        R$ {item.original_price?.toFixed(2)}
+                      </span>
+                    )}
+                    <span className="text-sm font-black text-indigo-600">
+                      {item.price ? `R$ ${item.price.toFixed(2)}` : "Consultar"}
+                    </span>
+                  </div>
+
+                  {!item.is_available && (
+                    <span className="rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
+                      Indisponível
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </div>
   );

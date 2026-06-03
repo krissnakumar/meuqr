@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { PublicBusinessPageClient } from "../../[businessSlug]/client";
 import { PublicPageProvider } from "../../[businessSlug]/context";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getPublicBusinessHomePath, getPublicBusinessPagePath } from "@/lib/public-url";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,10 @@ export async function generateMetadata({ params, searchParams }: PageProps) {
   
   let page = null;
   if (pageSlug) {
-    page = pagesList?.find((p) => p.slug === pageSlug) || pagesList?.[0] || null;
+    page = pagesList?.find((p) => p.slug === pageSlug) || null;
+    if (!page) {
+      return { title: "Página não encontrada | MeuQR" };
+    }
   } else {
     page = pagesList?.[0] || null;
   }
@@ -61,10 +65,14 @@ export async function generateMetadata({ params, searchParams }: PageProps) {
   const title = page?.seo_title || (page ? `${page.title} - ${biz.name}` : biz.name);
   const description = page?.seo_description || biz.description || `Conheça ${biz.name} no MeuQR`;
   const imageUrl = page?.seo_image_url || biz.logo_url;
+  const canonical = page ? getPublicBusinessPagePath(businessSlug, page.slug) : getPublicBusinessHomePath(businessSlug);
 
   return {
     title: `${title} | MeuQR`,
     description,
+    alternates: {
+      canonical,
+    },
     openGraph: {
       title,
       description,
@@ -134,7 +142,16 @@ export default async function PublicBusinessPage({ params, searchParams }: PageP
   
   let page = null;
   if (pageSlug) {
-    page = pagesList?.find((p) => p.slug === pageSlug) || pagesList?.[0] || null;
+    page = pagesList?.find((p) => p.slug === pageSlug) || null;
+    if (!page) {
+      notFound();
+    }
+
+    if (page.slug === "home") {
+      redirect(getPublicBusinessHomePath(businessSlug));
+    }
+
+    redirect(getPublicBusinessPagePath(businessSlug, page.slug));
   } else {
     page = pagesList?.[0] || null;
   }
