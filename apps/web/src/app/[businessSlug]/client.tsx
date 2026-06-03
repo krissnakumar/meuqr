@@ -793,9 +793,9 @@ export function PublicBusinessPageClient({
 
       {/* Premium Sticky Glassmorphic Page Navigation Tabs */}
       {pages.length > 1 && (
-        <div className="sticky top-0 z-30 backdrop-blur-md bg-[#F9FAFB]/90 border-b border-gray-200/50 py-2 mb-4 transition-all">
-          <div className="px-6">
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <div className="sticky top-0 z-30 backdrop-blur-md bg-[#F9FAFB]/90 border-b border-gray-200/30 py-2.5 mb-4 transition-all">
+          <div className="px-6 flex justify-start">
+            <div className="inline-flex p-0.5 bg-slate-100/90 rounded-full border border-slate-200/40 gap-1 overflow-x-auto scrollbar-none max-w-full shadow-inner">
               {pages.map((p) => {
                 const isActive = p.id === activePageId;
                 // Generate path based on current window location prefix
@@ -816,14 +816,12 @@ export function PublicBusinessPageClient({
                       }
                     }}
                     style={{
-                      borderColor: isActive ? activeColor : "transparent",
-                      backgroundColor: isActive ? `${activeColor}10` : "white",
-                      color: isActive ? activeColor : "#4B5563"
+                      color: isActive ? activeColor : "#64748B"
                     }}
-                    className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border shadow-sm cursor-pointer ${
+                    className={`px-4 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-200 border cursor-pointer ${
                       isActive
-                        ? "shadow-indigo-100/50 font-black scale-105"
-                        : "border-gray-200/80 hover:border-gray-300 hover:text-gray-900 active:scale-95"
+                        ? "bg-white shadow-sm border-slate-200/50"
+                        : "bg-transparent border-transparent hover:text-slate-800 hover:bg-slate-200/40 active:scale-95"
                     }`}
                   >
                     {p.title}
