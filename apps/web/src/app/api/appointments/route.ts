@@ -1,9 +1,25 @@
-import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { ERR } from "@meuqr/shared";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          setAll() {
+            // Not setting cookies
+          },
+        },
+      }
+    );
+
     const {
       businessId,
       serviceId,
@@ -28,7 +44,7 @@ export async function POST(req: Request) {
     // Uma implementação real buscaria a duration_minutes do serviço no BD
     let endTime = appointmentTime;
     if (serviceId) {
-      const { data: svc } = await supabaseAdmin
+      const { data: svc } = await supabase
         .from("appointment_services")
         .select("duration_minutes")
         .eq("id", serviceId)
@@ -43,6 +59,7 @@ export async function POST(req: Request) {
       }
     }
 
+    // Insert appointment using admin client to bypass select RLS constraint for anonymous guest
     const { data, error } = await supabaseAdmin
       .from("appointments")
       .insert({

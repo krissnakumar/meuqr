@@ -107,6 +107,7 @@ export default async function PublicBusinessSubPage({ params }: PageProps) {
     city: string | null;
     state: string | null;
     instagram: string | null;
+    facebook: string | null;
     website: string | null;
     opening_hours: Record<string, string> | null;
     notification_settings: any;
@@ -131,10 +132,11 @@ export default async function PublicBusinessSubPage({ params }: PageProps) {
     notFound();
   }
 
+  const pageIds = pagesList?.map((p) => p.id) || [];
   const { data: sections } = await supabase
     .from("sections")
     .select("*, items(*)")
-    .eq("page_id", page.id)
+    .in("page_id", pageIds)
     .eq("is_visible", true)
     .order("sort_order");
 

@@ -380,7 +380,7 @@ export default function MeuQRAuditReport() {
               { title: "Database schema", body: "The SQL migrations are well-structured with proper foreign keys, indexes, RLS enablement, and update triggers. The appointments schema (migration 5) is particularly thorough." },
               { title: "i18n with pt-BR, en, es", body: "Full translation system with locale files for all three languages. The audit script (scripts/i18n-audit.sh) is a thoughtful addition. Language selector in the sidebar." },
               { title: "WhatsApp-first order flow", body: "The public page → order drawer → WhatsApp deep link flow is complete and works well for food businesses. Quote-to-WhatsApp also works." },
-              { title: "Security headers middleware", body: "proxy.ts applies X-Frame-Options, CSP, HSTS, and other headers correctly to all routes. Good auth-gating for /dashboard routes." },
+              { title: "Security headers middleware", body: "middleware.ts applies X-Frame-Options, CSP, HSTS, and other headers correctly to all routes. Good auth-gating for /dashboard routes." },
               { title: "Industry-aware dashboard", body: "getManagementLinks() and the sidebar both dynamically change based on business category. The right idea — just needs the broken routes fixed." },
               { title: "Admin panel", body: "Admin pages for user management, template management, audit logs, and settings are fully implemented and gated correctly." },
               { title: "Sentry integration", body: "client, server, and edge Sentry configs are all set up correctly. Good for production error tracking." },

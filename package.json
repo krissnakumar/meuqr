@@ -21,7 +21,7 @@
     "audit:i18n:quick": "bash scripts/i18n-audit.sh --quick"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=22.0.0",
+    "pnpm": ">=11.0.0"
   }
 }

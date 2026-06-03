@@ -6,6 +6,7 @@ import {
   MapPin,
   Clock,
   Instagram,
+  Facebook,
   Share2,
   QrCode,
   ChevronDown,
@@ -64,7 +65,9 @@ interface BusinessData {
   pix_key: string | null;
   address: string | null;
   city: string | null;
+  state: string | null;
   instagram: string | null;
+  facebook: string | null;
   website: string | null;
   opening_hours: Record<string, string> | null;
   category?: string | null;
@@ -87,6 +90,7 @@ interface SectionItem {
 
 interface PageSection {
   id: string;
+  page_id?: string;
   name: string;
   slug: string;
   section_type: string | null;
@@ -108,6 +112,10 @@ export function PublicBusinessPageClient({
   sections: PageSection[];
   nearbyBusinesses?: any[];
 }) {
+  const [activePageId, setActivePageId] = useState(page.id);
+  const activePage = pages.find((p) => p.id === activePageId) || page;
+  const activeSections = sections.filter((s) => s.page_id === activePageId);
+
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
   
@@ -153,16 +161,19 @@ export function PublicBusinessPageClient({
 
   useEffect(() => {
     // Expand first section by default
-    if (sections.length > 0) {
-      setExpandedSections({ [sections[0].id]: true });
+    if (activeSections.length > 0) {
+      setExpandedSections({ [activeSections[0].id]: true });
     }
-  }, [sections]);
+  }, [activePageId, sections]);
 
   // Check page template types to pre-hook styles
-  const isQuotePage = sections.some((s) => s.section_type === "quote");
+  const isQuotePage = activeSections.some((s) => s.section_type === "quote");
 
   function toggleSection(id: string) {
-    setExpandedSections((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedSections((prev) => {
+      const isExpanded = !!prev[id];
+      return isExpanded ? {} : { [id]: true };
+    });
   }
 
   // === Shopping Cart Functions ===
@@ -405,19 +416,19 @@ export function PublicBusinessPageClient({
     if (!customerName || !customerPhone) return;
 
     setSubmittingOrder(true);
-    trackClick("order", page.id);
+    trackClick("order", activePage.id);
 
     try {
       const payload = {
         businessId: business.id,
-        pageId: page.id,
+        pageId: activePage.id,
         customerName,
         customerPhone,
         customerEmail,
         items: orderItems.map((oi) => ({
           id: oi.item.id,
           name: oi.item.name,
-          qty: oi.qty,
+          quantity: oi.qty,
           price: oi.item.price,
           quality: oi.quality,
         })),
@@ -469,19 +480,19 @@ export function PublicBusinessPageClient({
     if (!customerName || !customerPhone) return;
 
     setSubmittingQuote(true);
-    trackClick("quote", page.id);
+    trackClick("quote", activePage.id);
 
     try {
       const payload = {
         businessId: business.id,
-        pageId: page.id,
+        pageId: activePage.id,
         customerName,
         customerPhone,
         customerEmail,
         items: quoteItems.map((qi) => ({
           id: qi.item.id,
           name: qi.item.name,
-          qty: qi.qty,
+          quantity: qi.qty,
           quality: qi.quality,
         })),
         message: quoteNotes,
@@ -532,12 +543,12 @@ export function PublicBusinessPageClient({
     if (!leadName || !leadPhone) return;
 
     setSubmittingLead(true);
-    trackClick("lead", page.id);
+    trackClick("lead", activePage.id);
 
     try {
       const payload = {
         businessId: business.id,
-        pageId: page.id,
+        pageId: activePage.id,
         name: leadName,
         email: leadEmail,
         phone: leadPhone,
@@ -583,7 +594,7 @@ export function PublicBusinessPageClient({
     if (!customerName || !customerPhone || !bookingDate || !bookingTime) return;
 
     setSubmittingBooking(true);
-    trackClick("booking", page.id);
+    trackClick("booking", activePage.id);
 
     try {
       let finalNotes = quoteNotes;
@@ -727,6 +738,18 @@ export function PublicBusinessPageClient({
           </a>
         )}
 
+        {business.facebook && (
+          <a
+            href={business.facebook.startsWith("http") ? business.facebook : `https://facebook.com/${business.facebook.replace("@", "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-9 h-9 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
+            title="Facebook"
+          >
+            <Facebook className="w-4.5 h-4.5" />
+          </a>
+        )}
+
         <button
           onClick={handleShare}
           className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
@@ -752,7 +775,7 @@ export function PublicBusinessPageClient({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full text-xs font-semibold text-gray-600 border border-gray-200/80 hover:border-gray-300 shadow-sm transition-all"
           >
             <MapPin className="w-3.5 h-3.5 text-red-500" />
-            {business.city || business.address?.split(",")[0]}
+            {`${business.address}${business.city ? `, ${business.city}` : ""}${business.state ? ` - ${business.state}` : ""}`}
           </a>
         )}
         {business.website && (
@@ -770,11 +793,11 @@ export function PublicBusinessPageClient({
 
       {/* Premium Sticky Glassmorphic Page Navigation Tabs */}
       {pages.length > 1 && (
-        <div className="sticky top-0 z-30 backdrop-blur-md bg-[#F9FAFB]/90 border-b border-gray-200/50 py-3 mb-6 transition-all">
+        <div className="sticky top-0 z-30 backdrop-blur-md bg-[#F9FAFB]/90 border-b border-gray-200/50 py-2 mb-4 transition-all">
           <div className="px-6">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               {pages.map((p) => {
-                const isActive = p.id === page.id;
+                const isActive = p.id === activePageId;
                 // Generate path based on current window location prefix
                 let href = `/${business.slug}?p=${p.slug}`;
                 if (typeof window !== "undefined" && window.location.pathname.includes("/b/")) {
@@ -783,22 +806,28 @@ export function PublicBusinessPageClient({
                 const activeColor = (business as any).brand_color || "#4F46E5";
 
                 return (
-                  <a
+                  <button
                     key={p.id}
-                    href={href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActivePageId(p.id);
+                      if (typeof window !== "undefined") {
+                        window.history.pushState(null, "", href);
+                      }
+                    }}
                     style={{
                       borderColor: isActive ? activeColor : "transparent",
                       backgroundColor: isActive ? `${activeColor}10` : "white",
                       color: isActive ? activeColor : "#4B5563"
                     }}
-                    className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border shadow-sm ${
+                    className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border shadow-sm cursor-pointer ${
                       isActive
                         ? "shadow-indigo-100/50 font-black scale-105"
                         : "border-gray-200/80 hover:border-gray-300 hover:text-gray-900 active:scale-95"
                     }`}
                   >
                     {p.title}
-                  </a>
+                  </button>
                 );
               })}
             </div>
@@ -810,7 +839,7 @@ export function PublicBusinessPageClient({
 
       {/* Sections with Items */}
       <div className="px-6 space-y-4">
-        {sections.map((section) => (
+        {activeSections.map((section) => (
           <div
             key={section.id}
             id={section.id}
@@ -1122,7 +1151,7 @@ export function PublicBusinessPageClient({
       </div>
 
       {/* Sleek Contact / Lead Form Block if required */}
-      {sections.some((s) => s.section_type === "lead" || s.section_type === "contact") && (
+      {activeSections.some((s) => s.section_type === "lead" || s.section_type === "contact") && (
         <div className="px-4 mt-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
@@ -1797,36 +1826,7 @@ export function PublicBusinessPageClient({
         </div>
       )}
 
-      {/* Nearby Businesses */}
-      {nearbyBusinesses && nearbyBusinesses.length > 0 && (
-        <div className="px-6 py-8 mt-4 border-t border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-indigo-500" /> 
-            Descubra Perto de Você
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {nearbyBusinesses.map((biz) => (
-              <a
-                key={biz.id}
-                href={`/${biz.slug}`}
-                className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all group"
-              >
-                {biz.logo_url ? (
-                  <img src={biz.logo_url} alt={biz.name} className="w-12 h-12 rounded-xl object-cover shrink-0" />
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-400 shrink-0">
-                    {biz.name.charAt(0)}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <h4 className="font-semibold text-gray-800 text-sm group-hover:text-indigo-600 transition-colors truncate">{biz.name}</h4>
-                  <p className="text-xs text-gray-500 capitalize truncate">{biz.category ? biz.category.replace("_", " ") : biz.city}</p>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Footer */}
       <div className="text-center py-6 mt-2">

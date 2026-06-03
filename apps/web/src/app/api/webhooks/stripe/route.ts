@@ -121,11 +121,9 @@ export async function POST(req: NextRequest) {
         const businessId = customer?.metadata?.businessId;
         
         if (businessId) {
-          // Update status to past_due in a real implementation
-          // For now, if payment fails, we downgrade to free
           const { error } = await supabase
             .from("businesses")
-            .update({ subscription_tier: "free" })
+            .update({ subscription_tier: "past_due" })
             .eq("id", businessId);
             
           if (error) console.error("Failed to update payment failure:", error);

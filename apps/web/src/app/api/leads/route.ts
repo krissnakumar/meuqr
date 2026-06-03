@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getOrCreateClient, createNotification, supabaseAdmin } from "@/lib/notifications";
-import { ERR } from "@meuqr/shared";
+import { ERR, leadSchema } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +23,22 @@ export async function POST(request: NextRequest) {
     );
 
     const body = await request.json();
-    const { businessId, pageId, name, email, phone, message, source } = body;
 
-    if (!businessId || !name) {
+    // Validate request body using leadSchema
+    const parsed = leadSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: ERR.MISSING_LEAD_DATA },
+        { error: parsed.error.errors[0]?.message || ERR.INVALID_INPUT },
+        { status: 400 }
+      );
+    }
+
+    const { name, email, phone, message } = parsed.data;
+    const { businessId, pageId, source } = body;
+
+    if (!businessId) {
+      return NextResponse.json(
+        { error: ERR.MISSING_BUSINESS_ID },
         { status: 400 }
       );
     }
@@ -60,8 +71,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Insert lead into Supabase
-    const { data: lead, error } = await supabase
+    // 2. Insert lead into Supabase (using admin client to bypass select RLS constraint for anonymous guest)
+    const { data: lead, error } = await supabaseAdmin
       .from("leads")
       .insert({
         business_id: businessId,
@@ -87,8 +98,7 @@ export async function POST(request: NextRequest) {
       clientId: clientId || undefined,
       leadId: lead.id,
       type: "new_lead",
-      title: "Novo contato de lead",
-      message: `${name} enviou uma nova mensagem pelo formulário de contato.`,
+      data: { clientName: name },
       priority: "normal"
     });
 

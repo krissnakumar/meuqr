@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Rate limiting check
     const ip = getClientIp(request);
-    const limitRes = checkRateLimit(ip, RATE_LIMIT_CONFIGS.tracking);
+    const limitRes = await checkRateLimit(ip, RATE_LIMIT_CONFIGS.tracking);
     if (!limitRes.allowed) {
       return NextResponse.json({ error: ERR.TOO_MANY_SOLICITATIONS }, { status: 429 });
     }

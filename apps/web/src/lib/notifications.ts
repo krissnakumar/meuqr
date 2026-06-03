@@ -186,8 +186,8 @@ export async function createNotification(params: {
   qrCodeId?: string;
   itemId?: string;
   type: string;
-  title: string;
-  message: string;
+  title?: string;
+  message?: string;
   data?: any;
   priority?: "low" | "normal" | "high" | "urgent";
   channel?: "in_app" | "push" | "email" | "whatsapp" | "system";
@@ -225,6 +225,49 @@ export async function createNotification(params: {
   if (type === "new_quote" && settings.notify_quote_request === false) return null;
   if (type === "new_lead" && settings.notify_lead === false) return null;
 
+  // Resolve localized title and message from templates if they are not provided
+  let resolvedTitle = title || "";
+  let resolvedMessage = message || "";
+
+  if (!resolvedTitle || !resolvedMessage) {
+    const templateGroup = notificationTemplates[type];
+    if (templateGroup) {
+      // Query the owner's language from their profile
+      let lang = "pt-BR";
+      if (business?.owner_id) {
+        const { data: ownerProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("language")
+          .eq("id", business.owner_id)
+          .maybeSingle();
+        if (ownerProfile && (ownerProfile as any).language) {
+          lang = (ownerProfile as any).language;
+        }
+      }
+      if (!lang) lang = settings.language || "pt-BR";
+
+      const template = templateGroup[lang] || templateGroup["pt-BR"];
+      if (template) {
+        const vars = {
+          clientName: data.clientName || data.customerName || "",
+          qrTitle: data.qrTitle || "",
+          itemName: data.itemName || "",
+          ...data,
+        };
+
+        const interpolate = (text: string, v: typeof vars) =>
+          text.replace(/\{\{(\w+)\}\}/g, (_, k) => String(v[k] || ""));
+
+        if (!resolvedTitle) resolvedTitle = interpolate(template.title, vars);
+        if (!resolvedMessage) resolvedMessage = interpolate(template.message, vars);
+      }
+    }
+  }
+
+  // Fallbacks if templates are not found or resolved to empty
+  if (!resolvedTitle) resolvedTitle = title || "Notification";
+  if (!resolvedMessage) resolvedMessage = message || "";
+
   // 2. Persist the in-app notification in Supabase
   const { data: notification, error } = await supabaseAdmin
     .from("notifications")
@@ -238,8 +281,8 @@ export async function createNotification(params: {
       qr_code_id: qrCodeId || null,
       item_id: itemId || null,
       type,
-      title,
-      message,
+      title: resolvedTitle,
+      message: resolvedMessage,
       data,
       priority,
       channel,
@@ -269,10 +312,11 @@ export async function createNotification(params: {
 
         if (tokens && tokens.length > 0) {
           const pushTokens = tokens.map(t => t.expo_push_token);
-          await sendExpoPushNotification({
+          // Send push notification asynchronously (fire-and-forget) so it doesn't block the client checkout response
+          sendExpoPushNotification({
             to: pushTokens,
-            title,
-            body: message,
+            title: resolvedTitle,
+            body: resolvedMessage,
             data: {
               notificationId: notification.id,
               type,

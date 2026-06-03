@@ -69,7 +69,7 @@ export type BusinessCategory =
   | "product_shelf"
   | "other";
 
-export type SubscriptionTier = "free" | "pro" | "business";
+export type SubscriptionTier = "free" | "pro" | "business" | "past_due";
 
 export type QRCornerStyle = "square" | "extra-rounded" | "rounded" | "circle";
 
@@ -107,6 +107,7 @@ export interface Business {
   latitude: number | null;
   longitude: number | null;
   instagram: string | null;
+  facebook: string | null;
   website: string | null;
   opening_hours: Record<string, string> | null;
   subscription_tier: SubscriptionTier;

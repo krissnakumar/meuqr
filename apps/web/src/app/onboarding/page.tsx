@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Button, Badge } from "@meuqr/ui";
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, Button, Badge, ImageUpload } from "@meuqr/ui";
 import { VERTICAL_CONFIGS } from "@meuqr/shared";
 import {
   QrCode,
@@ -157,6 +157,10 @@ export default function OnboardingPage() {
   const [bizState, setBizState] = useState("");
   const [bizBrandColor, setBizBrandColor] = useState("#4F46E5");
   const [bizLogo, setBizLogo] = useState("");
+  const [bizLogoFile, setBizLogoFile] = useState<File | null>(null);
+  const [bizCoverFile, setBizCoverFile] = useState<File | null>(null);
+  const [bizLogoUrl, setBizLogoUrl] = useState<string>("");
+  const [bizCoverUrl, setBizCoverUrl] = useState<string>("");
   const [openingHours, setOpeningHours] = useState<Record<string, string>>({});
 
   // CNPJ/CPF
@@ -460,6 +464,49 @@ export default function OnboardingPage() {
       const businessId = business.id;
       setCreatedBusinessId(businessId);
       setCreatedBusinessSlug(business.slug);
+
+      // Helper function to upload logo and cover pictures
+      async function uploadFile(file: File, bId: string): Promise<string | null> {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("businessId", bId);
+
+        try {
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Upload failed");
+          return data.url;
+        } catch (err) {
+          console.error("Upload error:", err);
+          return null;
+        }
+      }
+
+      // Upload files if selected
+      let finalLogoUrl = null;
+      let finalCoverUrl = null;
+
+      if (bizLogoFile) {
+        finalLogoUrl = await uploadFile(bizLogoFile, businessId);
+      }
+      if (bizCoverFile) {
+        finalCoverUrl = await uploadFile(bizCoverFile, businessId);
+      }
+
+      // If we uploaded files, update the business record with the urls
+      if (finalLogoUrl || finalCoverUrl) {
+        const updatePayload: any = {};
+        if (finalLogoUrl) updatePayload.logo_url = finalLogoUrl;
+        if (finalCoverUrl) updatePayload.cover_url = finalCoverUrl;
+
+        await supabase
+          .from("businesses")
+          .update(updatePayload)
+          .eq("id", businessId);
+      }
 
       // 2. Try to look up vertical_id from our verticals table
       let verticalId: string | null = null;
@@ -994,6 +1041,36 @@ export default function OnboardingPage() {
                       value={bizState}
                       onChange={(e) => setBizState(e.target.value.toUpperCase())}
                       className="w-full h-11 px-3 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Logo and Cover Uploads */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-[#0F172A]">
+                      Logo (Profile Picture)
+                    </label>
+                    <ImageUpload
+                      value={bizLogoUrl}
+                      onChange={setBizLogoFile}
+                      onRemove={() => { setBizLogoUrl(""); setBizLogoFile(null); }}
+                      shape="circle"
+                      aspectRatio="square"
+                      label="Upload Logo"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-[#0F172A]">
+                      Cover (Feature Picture)
+                    </label>
+                    <ImageUpload
+                      value={bizCoverUrl}
+                      onChange={setBizCoverFile}
+                      onRemove={() => { setBizCoverUrl(""); setBizCoverFile(null); }}
+                      shape="rounded"
+                      aspectRatio="video"
+                      label="Upload Cover"
                     />
                   </div>
                 </div>

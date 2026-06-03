@@ -11,6 +11,7 @@ import {
   Store,
   Phone,
   Instagram,
+  Facebook,
   Hash,
   Globe,
   ExternalLink,
@@ -26,6 +27,7 @@ interface BusinessData {
   cover_url: string | null;
   whatsapp: string | null;
   instagram: string | null;
+  facebook: string | null;
   subscription_tier: string;
   is_active: boolean;
   default_language?: string;
@@ -42,6 +44,7 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
   const [editName, setEditName] = useState("");
   const [editWhatsapp, setEditWhatsapp] = useState("");
   const [editInstagram, setEditInstagram] = useState("");
+  const [editFacebook, setEditFacebook] = useState("");
   const [editSlug, setEditSlug] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editLang, setEditLang] = useState("pt-BR");
@@ -58,6 +61,7 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
     setEditName(business.name);
     setEditWhatsapp(business.whatsapp || "");
     setEditInstagram(business.instagram || "");
+    setEditFacebook(business.facebook || "");
     setEditSlug(business.slug);
     setEditDescription(business.description || "");
     setEditLang(business.default_language || "pt-BR");
@@ -113,6 +117,7 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
           name: editName,
           whatsapp: editWhatsapp || null,
           instagram: editInstagram || null,
+          facebook: editFacebook || null,
           slug: editSlug,
           description: editDescription || null,
           default_language: editLang,
@@ -237,6 +242,20 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
             </div>
 
             <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-500 block">Facebook</label>
+              <div className="relative">
+                <Facebook className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={editFacebook}
+                  onChange={(e) => setEditFacebook(e.target.value)}
+                  className="w-full h-10 rounded-xl border border-slate-200 pl-10 pr-3.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all bg-white"
+                  placeholder="@meunegocio"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
               <label className="text-xs font-semibold text-gray-500 block">Idioma</label>
               <select
                 value={editLang}
@@ -296,6 +315,11 @@ export default function EditBusinessInfo({ businessId, business, onRefresh }: Ed
               icon={<Instagram className="w-4 h-4 text-gray-400" />}
               label="Instagram"
               value={business.instagram || "—"}
+            />
+            <InfoRow
+              icon={<Facebook className="w-4 h-4 text-gray-400" />}
+              label="Facebook"
+              value={business.facebook || "—"}
             />
             <InfoRow
               icon={<Hash className="w-4 h-4 text-gray-400" />}

@@ -67,29 +67,11 @@ export function useSubscriptionLimits(userId?: string): SubscriptionInfo {
       // Count usage
       let itemCount = 0;
       if (bizIds.length > 0) {
-        const { data: pages } = await supabase
-          .from("pages")
-          .select("id")
-          .in("business_id", bizIds);
-
-        const pageIds = (pages || []).map((p) => p.id);
-
-        if (pageIds.length > 0) {
-          const { data: sections } = await supabase
-            .from("sections")
-            .select("id")
-            .in("page_id", pageIds);
-
-          const sectionIds = (sections || []).map((s) => s.id);
-
-          if (sectionIds.length > 0) {
-            const { count } = await supabase
-              .from("items")
-              .select("*", { count: "exact", head: true })
-              .in("section_id", sectionIds);
-            itemCount = count || 0;
-          }
-        }
+        const { count } = await supabase
+          .from("items")
+          .select("id, sections!inner(pages!inner(business_id))", { count: "exact", head: true })
+          .in("sections.pages.business_id", bizIds);
+        itemCount = count || 0;
       }
 
       const qrCount = bizIds.length > 0

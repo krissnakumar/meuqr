@@ -212,6 +212,7 @@ export default function PageEditorPage() {
           s.id === sectionId ? { ...s, items: [...s.items, data] } : s
         )
       );
+      setEditingItemId(data.id);
     }
   }
 
@@ -248,6 +249,18 @@ export default function PageEditorPage() {
         ...s,
         items: s.items.map((i: any) =>
           i.id === itemId ? { ...i, metadata } : i
+        ),
+      }))
+    );
+  }
+
+  async function updateItemField(itemId: string, field: string, value: any) {
+    await supabase.from("items").update({ [field]: value }).eq("id", itemId);
+    setSections(
+      sections.map((s) => ({
+        ...s,
+        items: s.items.map((i: any) =>
+          i.id === itemId ? { ...i, [field]: value } : i
         ),
       }))
     );
@@ -816,10 +829,78 @@ export default function PageEditorPage() {
 
                       {/* Polymorphic Metadata Editor */}
                       {editingItemId === item.id && (
-                        <div className="p-4 bg-slate-50/80 border-t border-slate-100/50">
-                          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Atributos Específicos</h4>
+                        <div className="p-5 bg-slate-50/80 border-t border-slate-100/50 space-y-5">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="space-y-4">
+                              <div>
+                                <label className="text-xs font-bold text-slate-650 block mb-1">Nome do Item *</label>
+                                <Input
+                                  value={item.name}
+                                  onChange={(e) => updateItemField(item.id, "name", e.target.value)}
+                                  placeholder="Ex: Cimento CP-II"
+                                  className="bg-white"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="text-xs font-bold text-slate-650 block mb-1">Preço (R$)</label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={item.price ?? ""}
+                                    onChange={(e) => updateItemField(item.id, "price", e.target.value ? parseFloat(e.target.value) : null)}
+                                    placeholder="0.00"
+                                    className="bg-white"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-xs font-bold text-slate-650 block mb-1">Preço Riscado (De)</label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={item.original_price ?? ""}
+                                    onChange={(e) => updateItemField(item.id, "original_price", e.target.value ? parseFloat(e.target.value) : null)}
+                                    placeholder="0.00"
+                                    className="bg-white"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="space-y-4">
+                              <div>
+                                <label className="text-xs font-bold text-slate-650 block mb-1">Descrição</label>
+                                <textarea
+                                  value={item.description || ""}
+                                  onChange={(e) => updateItemField(item.id, "description", e.target.value)}
+                                  placeholder="Descreva o item, detalhes técnicos, etc."
+                                  className="w-full h-[84px] px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-bold text-slate-650 block mb-1">Foto do Item</label>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-14 h-14">
+                                    <ImageUpload
+                                      value={item.image_url}
+                                      onChange={(file) => uploadItemImage(item.id, section.id, file)}
+                                      onRemove={() => removeItemImage(item.id, section.id)}
+                                      shape="rounded"
+                                      label="Foto"
+                                      className="w-14 h-14"
+                                    />
+                                  </div>
+                                  <span className="text-xs text-gray-400">
+                                    Envie uma foto para destacar este item no seu catálogo.
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                           
-                          {renderCategoryAttributes(item)}
+                          <div className="pt-4 border-t border-slate-200">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Atributos Específicos da Categoria</h4>
+                            {renderCategoryAttributes(item)}
+                          </div>
                         </div>
                       )}
                     </div>

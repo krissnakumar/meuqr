@@ -9,7 +9,7 @@ MeuQR é uma plataforma SaaS que permite que qualquer negócio crie páginas int
 | Layer | Technology |
 |-------|-----------|
 | **Frontend (Web)** | Next.js 16, TypeScript, Tailwind CSS, shadcn/ui |
-| **Mobile** | Expo SDK 56, React Native 0.85 |
+| **Mobile** | Expo SDK 54, React Native 0.81 |
 | **Backend** | Supabase (Postgres, Auth, Storage, Edge Functions) |
 | **QR Code** | qr-code-styling v1.9.2 |
 | **Forms** | React Hook Form + Zod |

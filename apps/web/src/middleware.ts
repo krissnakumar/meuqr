@@ -14,7 +14,7 @@ const SECURITY_HEADERS = {
     "max-age=63072000; includeSubDomains; preload",
 };
 
-export default async function proxy(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't need auth
@@ -25,6 +25,7 @@ export default async function proxy(request: NextRequest) {
     "/pricing",
     "/api",
     "/q",
+    "/b",
   ];
 
   const isPublicRoute = publicRoutes.some(
@@ -43,7 +44,8 @@ export default async function proxy(request: NextRequest) {
     !pathname.startsWith("/register") &&
     !pathname.startsWith("/pricing") &&
     !pathname.startsWith("/api") &&
-    !pathname.startsWith("/q");
+    !pathname.startsWith("/q") &&
+    !pathname.startsWith("/audit");
 
   if (isPublicRoute || isBusinessPage) {
     // Apply security headers even to public routes

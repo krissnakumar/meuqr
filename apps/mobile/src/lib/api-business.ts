@@ -15,6 +15,7 @@ export interface BusinessDTO {
   city?: string;
   state?: string;
   instagram?: string;
+  facebook?: string;
   website?: string;
   brand_color?: string;
   pix_key?: string;

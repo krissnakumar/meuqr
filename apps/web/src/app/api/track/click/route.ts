@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit check
     const ip = getClientIp(request);
-    const rateLimit = checkRateLimit(`click:${ip}`, RATE_LIMIT_CONFIGS.tracking);
+    const rateLimit = await checkRateLimit(`click:${ip}`, RATE_LIMIT_CONFIGS.tracking);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: ERR.TOO_MANY_REQUESTS },

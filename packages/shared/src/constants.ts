@@ -120,6 +120,19 @@ export const PLANS: PlanConfig = {
     price_monthly: 79.9,
     price_yearly: 799,
   },
+  past_due: {
+    name: "Past Due",
+    namePt: "Atrasado",
+    max_businesses: 1,
+    max_qrs: 1,
+    max_items: 20,
+    custom_qr: false,
+    analytics: false,
+    staff_members: false,
+    api_access: false,
+    price_monthly: 0,
+    price_yearly: 0,
+  },
 };
 
 // ===== QR Defaults =====

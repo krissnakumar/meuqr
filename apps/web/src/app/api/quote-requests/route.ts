@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
       console.error("Failed to link client to quote request:", clientErr);
     }
 
-    // 2. Insert quote request into Supabase
-    const { data: quote, error } = await supabase
+    // 2. Insert quote request into Supabase (using admin client to bypass select RLS constraint for anonymous guest)
+    const { data: quote, error } = await supabaseAdmin
       .from("quote_requests")
       .insert({
         business_id: businessId,
@@ -87,8 +87,7 @@ export async function POST(request: NextRequest) {
       clientId: clientId || undefined,
       quoteRequestId: quote.id,
       type: "new_quote",
-      title: "Novo orçamento solicitado",
-      message: `${customerName} quer orçamento para ${firstItemName} (${items.length} itens).`,
+      data: { clientName: customerName, itemName: firstItemName },
       priority: "high"
     });
 

@@ -84,6 +84,8 @@ export const businessCategorySchema = z.enum([
   "pharmacy",
   "travel_agency",
   "delivery_business",
+  "clinic",
+  "mechanic",
   // Generic
   "product_shelf",
   "other",
@@ -103,6 +105,7 @@ export const createBusinessSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   instagram: z.string().optional(),
+  facebook: z.string().optional(),
   website: z.string().optional(),
 });
 
@@ -184,9 +187,11 @@ export const orderSchema = z.object({
   customerEmail: z.string().email().optional().or(z.literal("")),
   items: z.array(
     z.object({
+      id: z.string().optional(),
       name: z.string(),
       quantity: z.number().int().min(1),
       price: z.number().min(0),
+      quality: z.string().optional(),
     })
   ),
   total: z.number().min(0),

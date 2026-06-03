@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit check (strict for uploads)
     const ip = getClientIp(request);
-    const rateLimit = checkRateLimit(`upload:${ip}`, RATE_LIMIT_CONFIGS.fileUpload);
+    const rateLimit = await checkRateLimit(`upload:${ip}`, RATE_LIMIT_CONFIGS.fileUpload);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: ERR.TOO_MANY_REQUESTS },

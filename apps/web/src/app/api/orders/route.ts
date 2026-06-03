@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getOrCreateClient, createNotification, supabaseAdmin } from "@/lib/notifications";
-import { ERR } from "@meuqr/shared";
+import { ERR, orderSchema } from "@meuqr/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +23,22 @@ export async function POST(request: NextRequest) {
     );
 
     const body = await request.json();
-    const { businessId, pageId, customerName, customerPhone, customerEmail, items, total, paymentMethod } = body;
 
-    if (!businessId || !customerName || !customerPhone || !items || !Array.isArray(items) || items.length === 0) {
+    // Validate request body using orderSchema
+    const parsed = orderSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: ERR.MISSING_ORDER_DATA },
+        { error: parsed.error.errors[0]?.message || ERR.INVALID_INPUT },
+        { status: 400 }
+      );
+    }
+
+    const { customerName, customerPhone, customerEmail, items, total, paymentMethod } = parsed.data;
+    const { businessId, pageId } = body;
+
+    if (!businessId) {
+      return NextResponse.json(
+        { error: ERR.MISSING_BUSINESS_ID },
         { status: 400 }
       );
     }
@@ -59,8 +70,8 @@ export async function POST(request: NextRequest) {
       console.error("Failed to link client to order:", clientErr);
     }
 
-    // 2. Insert order into Supabase
-    const { data: order, error } = await supabase
+    // 2. Insert order into Supabase (using admin client to bypass select RLS constraint for anonymous guest)
+    const { data: order, error } = await supabaseAdmin
       .from("orders")
       .insert({
         business_id: businessId,
@@ -88,8 +99,7 @@ export async function POST(request: NextRequest) {
       clientId: clientId || undefined,
       orderId: order.id,
       type: "new_order",
-      title: "Novo pedido recebido",
-      message: `${customerName} enviou um pedido de R$ ${total.toFixed(2)} pelo catálogo MeuQR.`,
+      data: { clientName: customerName },
       priority: "high"
     });
 

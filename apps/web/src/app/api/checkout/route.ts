@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { ERR } from "@meuqr/shared";
 
 async function stripeRequest<T>(path: string, init: RequestInit): Promise<T> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -29,6 +31,45 @@ export async function POST(req: NextRequest) {
 
     if (!planKey || !businessId) {
       return NextResponse.json({ error: "Missing planKey or businessId" }, { status: 400 });
+    }
+
+    // Verify authentication
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          setAll() {
+            // Not setting cookies in API route
+          },
+        },
+      }
+    );
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: ERR.NOT_AUTHENTICATED }, { status: 401 });
+    }
+
+    // Verify the user owns this business
+    const { data: business } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("id", businessId)
+      .eq("owner_id", user.id)
+      .single();
+
+    if (!business) {
+      return NextResponse.json(
+        { error: ERR.BUSINESS_NOT_FOUND_OR_NO_PERMISSION },
+        { status: 403 }
+      );
     }
 
     // Usually you would map planKey to a Stripe Price ID from your environment

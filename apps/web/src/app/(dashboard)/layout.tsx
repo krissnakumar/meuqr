@@ -354,27 +354,32 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       // If we are looking at a specific business (e.g. /dashboard/business/[id])
       const routeBusinessId = params?.id as string | undefined;
 
-      let query = supabase
+      // Query all businesses owned by this user to safely match client-side
+      const { data: businesses, error } = await supabase
         .from("businesses")
         .select("id, category, subscription_tier")
         .eq("owner_id", user.id);
-        
+
+      if (cancelled) return;
+
+      if (error || !businesses || businesses.length === 0) {
+        router.push("/onboarding");
+        return;
+      }
+
       if (routeBusinessId && routeBusinessId !== "undefined") {
-        query = query.eq("id", routeBusinessId);
-      } else {
-        query = query.limit(1);
-      }
-
-      const { data: businesses } = await query;
-
-      if (!cancelled) {
-        if (!businesses || businesses.length === 0) {
-          router.push("/onboarding");
-        } else {
-          setPrimaryBusiness(businesses[0]);
-          setLoading(false);
+        const matched = businesses.find((b) => b.id === routeBusinessId);
+        if (!matched) {
+          // If the user owns other businesses but requested an invalid/unowned ID, redirect to dashboard overview
+          router.push("/dashboard");
+          return;
         }
+        setPrimaryBusiness(matched);
+      } else {
+        // Default to the first business owned by the user
+        setPrimaryBusiness(businesses[0]);
       }
+      setLoading(false);
     }).catch(() => {
       if (!cancelled) {
         router.push("/login");
@@ -382,7 +387,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     });
 
     return () => { cancelled = true; };
-  }, [router]);
+  }, [router, params?.id]);
 
   async function handleLogout() {
     await supabase.auth.signOut();

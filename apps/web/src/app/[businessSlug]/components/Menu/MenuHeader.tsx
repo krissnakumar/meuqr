@@ -14,6 +14,7 @@ interface BusinessData {
   address: string | null;
   city: string | null;
   instagram: string | null;
+  facebook: string | null;
   website: string | null;
   opening_hours: Record<string, string> | null;
   category?: string | null;

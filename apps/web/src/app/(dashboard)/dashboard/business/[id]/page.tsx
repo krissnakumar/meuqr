@@ -44,6 +44,7 @@ interface BusinessFull {
   cover_url: string | null;
   whatsapp: string | null;
   instagram: string | null;
+  facebook: string | null;
   subscription_tier: string;
   is_active: boolean;
   default_language?: string;

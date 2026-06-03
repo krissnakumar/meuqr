@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   // Rate limit check
   const ip = getClientIp(request);
-  const rateLimit = checkRateLimit(`public-page:${ip}`, RATE_LIMIT_CONFIGS.publicData);
+  const rateLimit = await checkRateLimit(`public-page:${ip}`, RATE_LIMIT_CONFIGS.publicData);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: ERR.TOO_MANY_REQUESTS },
