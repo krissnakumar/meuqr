@@ -23,6 +23,7 @@ interface PublicPageRendererProps {
   business: any;
   sections: any[];
   onSelectItem?: (item: any) => void;
+  isMobileLayout?: boolean;
 }
 
 interface CollapsibleSectionShellProps {
@@ -106,6 +107,43 @@ function CollapsibleSectionShell({
 
       <div className="px-4 pb-4 pt-1">{children}</div>
     </details>
+  );
+}
+
+function StaticSectionShell({
+  title,
+  subtitle,
+  badge,
+  children,
+  id,
+}: CollapsibleSectionShellProps) {
+  return (
+    <section
+      id={id}
+      className="scroll-mt-24 overflow-hidden rounded-[28px] border border-slate-100 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)]"
+    >
+      <div className="flex items-center justify-between gap-3 px-4 py-3.5 select-none">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-black text-[#0F172A]">
+              {title}
+            </span>
+            {badge && (
+              <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600">
+                {badge}
+              </span>
+            )}
+          </div>
+          {subtitle && (
+            <p className="mt-1 text-[11px] leading-relaxed text-[#64748B]">
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 pb-4 pt-1">{children}</div>
+    </section>
   );
 }
 
@@ -312,29 +350,50 @@ function renderSectionCard(
     badge?: string;
     defaultOpen?: boolean;
     id?: string;
+    mobileStatic?: boolean;
   } = {}
 ) {
   return (
-    <div id={options.id || section.id} key={section.id} className="animate-fade-in scroll-mt-28">
-      <CollapsibleSectionShell
-        id={options.id || section.id}
-        title={options.title || section?.name || "Seção"}
-        subtitle={options.subtitle}
-        badge={options.badge}
-        defaultOpen={options.defaultOpen ?? true}
-      >
-        {children}
-      </CollapsibleSectionShell>
+    <div
+      id={options.id || section.id}
+      key={section.id}
+      className="scroll-mt-28 md:animate-fade-in"
+    >
+      {options.mobileStatic ? (
+        <StaticSectionShell
+          id={options.id || section.id}
+          title={options.title || section?.name || "Seção"}
+          subtitle={options.subtitle}
+          badge={options.badge}
+        >
+          {children}
+        </StaticSectionShell>
+      ) : (
+        <CollapsibleSectionShell
+          id={options.id || section.id}
+          title={options.title || section?.name || "Seção"}
+          subtitle={options.subtitle}
+          badge={options.badge}
+          defaultOpen={options.defaultOpen ?? true}
+        >
+          {children}
+        </CollapsibleSectionShell>
+      )}
     </div>
   );
 }
 
 function renderStandaloneSection(
   section: any,
-  children: ReactNode
+  children: ReactNode,
+  mobileStatic = false
 ) {
   return (
-    <div id={section.id} key={section.id} className="animate-fade-in scroll-mt-28">
+    <div
+      id={section.id}
+      key={section.id}
+      className={`scroll-mt-28 ${mobileStatic ? "" : "md:animate-fade-in"}`}
+    >
       {children}
     </div>
   );
@@ -344,6 +403,7 @@ export function PublicPageRenderer({
   business,
   sections,
   onSelectItem,
+  isMobileLayout = false,
 }: PublicPageRendererProps) {
   const openAndScrollTo = (targetId: string) => {
     const element = document.getElementById(targetId);
@@ -354,7 +414,10 @@ export function PublicPageRenderer({
       details.open = true;
     }
 
-    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    element.scrollIntoView({
+      behavior: isMobileLayout ? "auto" : "smooth",
+      block: "start",
+    });
   };
 
   const handleBookService = (_service: any) => {
@@ -372,6 +435,7 @@ export function PublicPageRenderer({
         {
           title,
           subtitle: section?.description || "Toque para expandir",
+          mobileStatic: isMobileLayout,
         }
       );
     }
@@ -390,6 +454,7 @@ export function PublicPageRenderer({
         title,
         badge: `${items.length} ${items.length === 1 ? "item" : "itens"}`,
         subtitle: section?.description || "Toque para expandir ou recolher",
+        mobileStatic: isMobileLayout,
       }
     );
   };
@@ -420,7 +485,8 @@ export function PublicPageRenderer({
           case "hero":
             return renderStandaloneSection(
               section,
-              <HeroSection business={business} heroItem={items[0] || null} />
+              <HeroSection business={business} heroItem={items[0] || null} />,
+              isMobileLayout
             );
 
           case "product_grid":
@@ -440,6 +506,7 @@ export function PublicPageRenderer({
                 title: sectionTitle,
                 badge: sectionBadge,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -451,6 +518,7 @@ export function PublicPageRenderer({
               {
                 title: sectionTitle,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -471,6 +539,7 @@ export function PublicPageRenderer({
                 title: sectionTitle,
                 badge: sectionBadge,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -485,6 +554,7 @@ export function PublicPageRenderer({
               {
                 title: sectionTitle,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -501,6 +571,7 @@ export function PublicPageRenderer({
               {
                 title: sectionTitle,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -523,6 +594,7 @@ export function PublicPageRenderer({
                 badge: sectionBadge,
                 subtitle: sectionSubtitle,
                 id: section.id,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -534,6 +606,7 @@ export function PublicPageRenderer({
                 title: sectionTitle,
                 badge: sectionBadge,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -546,6 +619,7 @@ export function PublicPageRenderer({
               {
                 title: sectionTitle,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -560,6 +634,7 @@ export function PublicPageRenderer({
               {
                 title: sectionTitle,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
 
@@ -581,6 +656,7 @@ export function PublicPageRenderer({
                   title: sectionTitle,
                   badge: sectionBadge,
                   subtitle: sectionSubtitle,
+                  mobileStatic: isMobileLayout,
                 }
               ) : renderSectionCard(
                 section,
@@ -596,6 +672,7 @@ export function PublicPageRenderer({
                   title: sectionTitle,
                   badge: sectionBadge,
                   subtitle: sectionSubtitle,
+                  mobileStatic: isMobileLayout,
                 }
               );
             }
@@ -606,6 +683,7 @@ export function PublicPageRenderer({
               {
                 title: sectionTitle,
                 subtitle: sectionSubtitle,
+                mobileStatic: isMobileLayout,
               }
             );
           }

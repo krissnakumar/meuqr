@@ -68,27 +68,28 @@ export function PublicBusinessPageClient({
   sections: PageSection[];
   nearbyBusinesses?: any[];
 }) {
-  const [isCompact, setIsCompact] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.matchMedia("(max-width: 768px)").matches;
+  });
 
   useEffect(() => {
-    const threshold = 112;
-    let ticking = false;
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
 
-    const updateCompactState = () => {
-      if (ticking) return;
-      ticking = true;
-
-      window.requestAnimationFrame(() => {
-        setIsCompact(window.scrollY > threshold);
-        ticking = false;
-      });
+    const updateViewport = () => {
+      setIsMobileViewport(mediaQuery.matches);
     };
 
-    updateCompactState();
-    window.addEventListener("scroll", updateCompactState, { passive: true });
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
 
-    return () => window.removeEventListener("scroll", updateCompactState);
+    return () => mediaQuery.removeEventListener("change", updateViewport);
   }, []);
+
+  const isCompact = isMobileViewport;
 
   const visiblePages = useMemo(
     () => pages.filter((p) => p.show_in_navigation !== false || p.slug === page.slug),
@@ -154,9 +155,9 @@ export function PublicBusinessPageClient({
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.08),_transparent_34%),linear-gradient(180deg,_#F8FAFC_0%,_#EEF2FF_100%)] max-w-md mx-auto relative shadow-[0_12px_40px_rgba(15,23,42,0.12)] border-x border-white/70 flex flex-col justify-between">
       <header className="sticky top-0 z-30 border-b border-white/60 bg-white/45 backdrop-blur-2xl">
-        <div className={`px-4 sm:px-5 transition-all duration-300 ${isCompact ? "pt-2 pb-2 space-y-2" : "pt-4 pb-3 space-y-3"}`}>
+        <div className={`px-4 sm:px-5 ${isCompact ? "pt-2 pb-2 space-y-2" : "pt-4 pb-3 space-y-3"} transition-none md:transition-all md:duration-300`}>
           <section className="overflow-hidden rounded-[30px] border border-white/70 bg-white/70 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur-2xl ring-1 ring-white/50 transition-all duration-300">
-            <div className={`relative w-full overflow-hidden transition-all duration-300 ${isCompact ? "h-16" : "h-44 sm:h-52"}`}>
+            <div className={`relative w-full overflow-hidden ${isCompact ? "h-16" : "h-44 sm:h-52"} transition-none md:transition-all md:duration-300`}>
               {business.cover_url ? (
                 <img src={business.cover_url} alt={`${business.name} cover`} className="h-full w-full object-cover" />
               ) : (
@@ -187,9 +188,9 @@ export function PublicBusinessPageClient({
               )}
             </div>
 
-            <div className={`relative px-4 sm:px-5 transition-all duration-300 ${isCompact ? "pb-3" : "pb-4 sm:pb-5"}`}>
-              <div className={`flex min-w-0 items-end gap-3 transition-all duration-300 ${isCompact ? "-mt-8" : "-mt-10"}`}>
-                <div className={`shrink-0 overflow-hidden rounded-[26px] border-[5px] border-white bg-white shadow-[0_18px_50px_rgba(15,23,42,0.18)] ring-1 ring-slate-100 transition-all duration-300 ${isCompact ? "h-14 w-14" : "h-20 w-20"}`}>
+            <div className={`relative px-4 sm:px-5 ${isCompact ? "pb-3" : "pb-4 sm:pb-5"} transition-none md:transition-all md:duration-300`}>
+              <div className={`flex min-w-0 items-end gap-3 ${isCompact ? "-mt-8" : "-mt-10"} transition-none md:transition-all md:duration-300`}>
+                <div className={`shrink-0 overflow-hidden rounded-[26px] border-[5px] border-white bg-white shadow-[0_18px_50px_rgba(15,23,42,0.18)] ring-1 ring-slate-100 ${isCompact ? "h-14 w-14" : "h-20 w-20"} transition-none md:transition-all md:duration-300`}>
                   {business.logo_url ? (
                     <img src={business.logo_url} alt={business.name} className="h-full w-full object-cover" />
                   ) : (
@@ -200,7 +201,7 @@ export function PublicBusinessPageClient({
                 </div>
 
                 <div className="min-w-0 pb-1">
-                  <h1 className={`truncate font-black leading-tight tracking-tight text-[#0F172A] transition-all duration-300 ${isCompact ? "text-[18px]" : "text-[22px] sm:text-[24px]"}`}>
+                  <h1 className={`truncate font-black leading-tight tracking-tight text-[#0F172A] ${isCompact ? "text-[18px]" : "text-[22px] sm:text-[24px]"} transition-none md:transition-all md:duration-300`}>
                     {business.name}
                   </h1>
                   {!isCompact && business.category && (
@@ -229,7 +230,7 @@ export function PublicBusinessPageClient({
                 </p>
               )}
 
-              <div className={`mt-4 flex flex-wrap items-center gap-2 transition-all duration-300 ${isCompact ? "mt-2" : "mt-4"}`}>
+              <div className={`mt-4 flex flex-wrap items-center gap-2 ${isCompact ? "mt-2" : "mt-4"} transition-none md:transition-all md:duration-300`}>
                 {whatsappLink && (
                   isCompact ? (
                     <a
@@ -329,7 +330,7 @@ export function PublicBusinessPageClient({
           </section>
 
           {visiblePages.length > 1 && (
-            <nav className={`overflow-hidden rounded-[24px] border border-white/70 bg-white/75 p-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-2xl transition-all duration-300 ${isCompact ? "py-1.5" : ""}`}>
+            <nav className={`overflow-hidden rounded-[24px] border border-white/70 bg-white/75 p-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-2xl ${isCompact ? "py-1.5" : ""} transition-none md:transition-all md:duration-300`}>
               <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {visiblePages.map((navPage) => {
                   const isActive = navPage.slug === page.slug;
@@ -358,7 +359,11 @@ export function PublicBusinessPageClient({
       </header>
 
       <main className="p-4 sm:p-5 flex-1">
-        <PublicPageRenderer business={business} sections={activeSections} />
+        <PublicPageRenderer
+          business={business}
+          sections={activeSections}
+          isMobileLayout={isCompact}
+        />
       </main>
 
       {whatsappLink && (
