@@ -3,581 +3,524 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { 
+  Plus, 
+  Eye, 
+  QrCode, 
+  MessageCircle, 
+  Download, 
+  Share2, 
+  ShoppingCart, 
+  ClipboardList, 
+  Calendar, 
+  UserPlus, 
+  BarChart3, 
+  ExternalLink,
+  ChevronRight,
+  Sparkles,
+  AlertCircle,
+  Loader2,
+  Store
+} from "lucide-react";
 import { Button, GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent, Badge } from "@meuqr/ui";
 import { supabase } from "@/lib/supabase";
-import { useTranslation } from "@/lib/i18n-provider";
 import { toast } from "sonner";
-import PagesTreeView from "./_components/pages-tree-view";
-import EditBusinessInfo from "./_components/edit-business-info";
-import NotificationSettings from "./_components/notification-settings";
-import {
-  ArrowLeft,
-  Trash2,
-  ShoppingCart,
-  Users,
-  MessageSquare,
-  BarChart3,
-  ChevronRight,
-  Store,
-  Sparkles,
-  ClipboardList,
-  Eye,
-  Plus,
-  Calendar,
-  Utensils,
-  Truck,
-  DollarSign,
-  Stethoscope,
-  HeartPulse,
-  Package,
-  FileText,
-  Gift
-} from "lucide-react";
+import { getModulesForVertical } from "@meuqr/shared";
 
-interface BusinessFull {
+interface BusinessData {
   id: string;
   name: string;
   slug: string;
   category: string;
   description: string | null;
   logo_url: string | null;
-  cover_url: string | null;
   whatsapp: string | null;
-  instagram: string | null;
-  facebook: string | null;
   subscription_tier: string;
   is_active: boolean;
-  default_language?: string;
 }
 
-const getManagementLinks = (cat: string, id: string) => {
-  const isFood = ["restaurant", "pizzeria", "burger_shop", "bakery", "coffee_shop", "acai_sorveteria", "bar_pub", "food_truck"].includes(cat);
-  const isClinic = ["medical_clinic", "physiotherapy"].includes(cat);
-  const isDentist = ["dental_clinic"].includes(cat);
-  const isConstruction = ["construction_materials", "hardware_store", "paint_store"].includes(cat);
-  const isBeauty = ["salon", "barber_shop", "nail_studio", "spa"].includes(cat);
-
-  const links = [];
-
-  if (isFood) {
-    links.push({ label: "Menu", descKey: "menu_desc", href: `/dashboard/business/${id}/pages`, color: "from-blue-500 to-indigo-500", bg: "bg-blue-50", iconBg: "from-blue-50 to-indigo-50", iconColor: "text-blue-600", countKey: null, icon: FileText });
-    links.push({ label: "Orders", descKey: "orders_desc", href: `/dashboard/business/${id}/orders`, color: "from-amber-500 to-orange-500", bg: "bg-amber-50", iconBg: "from-amber-50 to-orange-50", iconColor: "text-amber-600", countKey: "totalOrders" as const, icon: Package });
-    links.push({ label: "Fidelidade", descKey: "loyalty_desc", href: `/dashboard/business/${id}/loyalty`, color: "from-pink-500 to-rose-500", bg: "bg-pink-50", iconBg: "from-pink-50 to-rose-50", iconColor: "text-pink-600", countKey: null, icon: Gift });
-    links.push({ label: "Customers", descKey: "clients_desc", href: `/dashboard/business/${id}/clients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
-  } else if (isClinic || isDentist) {
-    links.push({ label: "Appointments", descKey: "appointments_desc", href: `/dashboard/business/${id}/appointments`, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50", iconBg: "from-emerald-50 to-green-50", iconColor: "text-emerald-600", countKey: null, icon: Calendar });
-    links.push({ label: "Patients", descKey: "patients_desc", href: `/dashboard/business/${id}/clients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
-    links.push({ label: "Doctors", descKey: "doctors_desc", href: `/dashboard/business/${id}/members`, color: "from-teal-500 to-emerald-500", bg: "bg-teal-50", iconBg: "from-teal-50 to-emerald-50", iconColor: "text-teal-600", countKey: "totalMembers" as const, icon: Stethoscope });
-  } else if (isConstruction) {
-    links.push({ label: "Product Catalog", descKey: "catalog_desc", href: `/dashboard/business/${id}/pages`, color: "from-blue-500 to-indigo-500", bg: "bg-blue-50", iconBg: "from-blue-50 to-indigo-50", iconColor: "text-blue-600", countKey: null, icon: FileText });
-    links.push({ label: "Quote Requests", descKey: "quote_requests_desc", href: `/dashboard/business/${id}/quote-requests`, color: "from-teal-500 to-emerald-500", bg: "bg-teal-50", iconBg: "from-teal-50 to-emerald-50", iconColor: "text-teal-600", countKey: "totalQuoteRequests" as const, icon: ClipboardList });
-    links.push({ label: "Orders", descKey: "orders_desc", href: `/dashboard/business/${id}/orders`, color: "from-amber-500 to-orange-500", bg: "bg-amber-50", iconBg: "from-amber-50 to-orange-50", iconColor: "text-amber-600", countKey: "totalOrders" as const, icon: Package });
-  } else if (isBeauty) {
-    links.push({ label: "Appointments", descKey: "appointments_desc", href: `/dashboard/business/${id}/appointments`, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50", iconBg: "from-emerald-50 to-green-50", iconColor: "text-emerald-600", countKey: null, icon: Calendar });
-    links.push({ label: "Fidelidade", descKey: "loyalty_desc", href: `/dashboard/business/${id}/loyalty`, color: "from-pink-500 to-rose-500", bg: "bg-pink-50", iconBg: "from-pink-50 to-rose-50", iconColor: "text-pink-600", countKey: null, icon: Gift });
-    links.push({ label: "Clients", descKey: "clients_desc", href: `/dashboard/business/${id}/clients`, color: "from-indigo-500 to-violet-500", bg: "bg-indigo-50", iconBg: "from-indigo-50 to-violet-50", iconColor: "text-indigo-600", countKey: "totalClients" as const, icon: Users });
-    links.push({ label: "Professionals", descKey: "professionals_desc", href: `/dashboard/business/${id}/members`, color: "from-purple-500 to-fuchsia-500", bg: "bg-purple-50", iconBg: "from-purple-50 to-fuchsia-50", iconColor: "text-purple-600", countKey: "totalMembers" as const, icon: Users });
-  } else {
-    // Generic
-    links.push({ label: "Pages", descKey: "pages_desc", href: `/dashboard/business/${id}/pages`, color: "from-blue-500 to-indigo-500", bg: "bg-blue-50", iconBg: "from-blue-50 to-indigo-50", iconColor: "text-blue-600", countKey: null, icon: FileText });
-    links.push({ label: "Orders", descKey: "orders_desc", href: `/dashboard/business/${id}/orders`, color: "from-amber-500 to-orange-500", bg: "bg-amber-50", iconBg: "from-amber-50 to-orange-50", iconColor: "text-amber-600", countKey: "totalOrders" as const, icon: Package });
-    links.push({ label: "Leads", descKey: "leads_desc", href: `/dashboard/business/${id}/leads`, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50", iconBg: "from-emerald-50 to-green-50", iconColor: "text-emerald-600", countKey: "totalLeads" as const, icon: MessageSquare });
-  }
-
-  // Always append Analytics
-  links.push({ label: "Analytics", descKey: "analytics_desc", href: `/dashboard/business/${id}/analytics`, color: "from-slate-500 to-gray-500", bg: "bg-slate-50", iconBg: "from-slate-50 to-gray-50", iconColor: "text-slate-600", countKey: null, icon: BarChart3 });
-
-  return links;
-};
-
-export default function BusinessDetailPage() {
+export default function BusinessDashboardPage() {
   const params = useParams();
   const router = useRouter();
   const businessId = params.id as string;
 
-  const { t } = useTranslation();
-  const [business, setBusiness] = useState<BusinessFull | null>(null);
-  const [pages, setPages] = useState<any[]>([]);
-  const [qrCodes, setQrCodes] = useState<any[]>([]);
+  const [business, setBusiness] = useState<BusinessData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [totalOrders, setTotalOrders] = useState(0);
-  const [totalLeads, setTotalLeads] = useState(0);
-  const [totalMembers, setTotalMembers] = useState(0);
-  const [totalQuoteRequests, setTotalQuoteRequests] = useState(0);
-  const [totalClients, setTotalClients] = useState(0);
-  const [sections, setSections] = useState<any[]>([]);
-  const [notifSettings, setNotifSettings] = useState<any>(null);
+  
+  // Stats & Lists
+  const [todayOrdersCount, setTodayOrdersCount] = useState(0);
+  const [newQuotesCount, setNewQuotesCount] = useState(0);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  const [newLeadsCount, setNewLeadsCount] = useState(0);
+  
+  // Analytics
+  const [viewsCount, setViewsCount] = useState(0);
+  const [whatsappClicks, setWhatsappClicks] = useState(0);
+  const [conversionRate, setConversionRate] = useState(0);
 
-  async function handleSaveNotifSettings(updatedSettings: any) {
-    try {
-      const { error } = await supabase
-        .from("businesses")
-        .update({
-          notification_settings: updatedSettings
-        })
-        .eq("id", businessId);
-
-      if (error) {
-        toast.error(t("errors.generic") + " " + error.message);
-        return;
-      }
-
-      setNotifSettings(updatedSettings);
-      toast.success(t("success.saved"));
-    } catch (err) {
-      console.error(err);
-      toast.error(t("errors.generic"));
-    }
-  }
+  // QR details
+  const [qrCode, setQrCode] = useState<any>(null);
 
   useEffect(() => {
-    loadBusiness();
+    if (businessId) {
+      loadDashboardData();
+    }
   }, [businessId]);
 
-  async function loadBusiness() {
+  async function loadDashboardData() {
     try {
-      const { data: biz } = await supabase
+      // 1. Fetch business
+      const { data: biz, error: bizError } = await supabase
         .from("businesses")
         .select("*")
         .eq("id", businessId)
         .single();
 
-      const { data: bizPages } = await supabase
-        .from("pages")
-        .select("*")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
+      if (bizError || !biz) {
+        toast.error("Estabelecimento não encontrado.");
+        return;
+      }
+      setBusiness(biz);
 
-      const { data: bizQrs } = await supabase
+      // 2. Fetch main QR Code
+      const { data: qrs } = await supabase
         .from("qr_codes")
         .select("*")
         .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
+        .eq("is_active", true)
+        .limit(1);
+      if (qrs && qrs.length > 0) {
+        setQrCode(qrs[0]);
+      }
 
+      // 3. Fetch today's orders
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
       const { count: ordersCount } = await supabase
         .from("orders")
         .select("*", { count: "exact", head: true })
-        .eq("business_id", businessId);
+        .eq("business_id", businessId)
+        .gte("created_at", startOfDay.toISOString());
+      setTodayOrdersCount(ordersCount || 0);
 
-      const { count: leadsCount } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", businessId);
-
-      const { count: membersCount } = await supabase
-        .from("business_members")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", businessId);
-
+      // 4. Fetch quote requests count
       const { count: quotesCount } = await supabase
         .from("quote_requests")
         .select("*", { count: "exact", head: true })
         .eq("business_id", businessId);
+      setNewQuotesCount(quotesCount || 0);
 
-      const { count: clientsCount } = await supabase
-        .from("clients")
+      // 5. Fetch upcoming appointments
+      const { data: appointments } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("business_id", businessId)
+        .eq("status", "pending")
+        .order("appointment_date", { ascending: true })
+        .limit(3);
+      setUpcomingAppointments(appointments || []);
+
+      // 6. Fetch new leads count
+      const { count: leadsCount } = await supabase
+        .from("leads")
         .select("*", { count: "exact", head: true })
         .eq("business_id", businessId);
+      setNewLeadsCount(leadsCount || 0);
 
-      const pageIds = bizPages?.map((p) => p.id) || [];
-      let bizSections: any[] = [];
-      if (pageIds.length > 0) {
-        const { data: secs } = await supabase
-          .from("sections")
-          .select("*")
-          .in("page_id", pageIds)
-          .order("sort_order");
-        bizSections = secs || [];
-      }
+      // 7. Simple Analytics Calculations
+      // Scan count is cached on qr_codes
+      const scans = qrs?.[0]?.scan_count || 0;
+      setViewsCount(scans);
 
-      setBusiness(biz);
-      setPages(bizPages || []);
-      setQrCodes(bizQrs || []);
-      setSections(bizSections);
-      setTotalOrders(ordersCount || 0);
-      setTotalLeads(leadsCount || 0);
-      setTotalMembers(membersCount || 0);
-      setTotalQuoteRequests(quotesCount || 0);
-      setTotalClients(clientsCount || 0);
-      setNotifSettings(biz?.notification_settings || {
-        notify_qr_scan: true,
-        notify_whatsapp_click: true,
-        notify_new_order: true,
-        notify_quote_request: true,
-        notify_lead: true,
-        quiet_hours_start: "22:00",
-        quiet_hours_end: "08:00",
-        quiet_hours_enabled: false,
-        notification_language: "pt-BR",
-        push_enabled: true,
-        email_enabled: false,
-        whatsapp_enabled: false
-      });
+      // Query WhatsApp clicks
+      const { count: clicks } = await supabase
+        .from("clicks")
+        .select("*", { count: "exact", head: true })
+        .eq("qr_code_id", qrs?.[0]?.id || "")
+        .eq("click_type", "whatsapp");
+      setWhatsappClicks(clicks || 0);
+
+      const rate = scans > 0 ? Math.round(((clicks || 0) / scans) * 100) : 0;
+      setConversionRate(rate);
+
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load dashboard statistics:", err);
     } finally {
       setLoading(false);
     }
   }
 
-  async function deleteBusiness() {
-    if (!confirm(t("business.confirm_delete"))) return;
-    const { error } = await supabase.from("businesses").delete().eq("id", businessId);
-    if (error) {
-      toast.error(t("business.error_delete"));
+  const handleDownloadQR = () => {
+    if (!qrCode) return;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+      `${origin}/r/${qrCode.short_code}`
+    )}`;
+    window.open(qrUrl, "_blank");
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!business?.whatsapp) {
+      toast.error("Por favor, configure o número do WhatsApp comercial primeiro.");
       return;
     }
-    toast.success(t("business.success_delete"));
-    router.push("/dashboard");
-  }
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const text = encodeURIComponent(
+      `Confira a página oficial de *${business.name}* no MeuQR: ${origin}/${business.slug}`
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+  };
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto pb-12 space-y-8 animate-fade-in-up">
-        {/* Back link skeleton */}
-        <div className="skeleton w-24 h-4 rounded" />
-
-        {/* Header GlassCard skeleton */}
-        <div className="rounded-xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_0_rgb(0_0_0/0.06),0_1px_2px_-1px_rgb(0_0_0/0.06)] p-5 sm:p-6 relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {/* Logo skeleton */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl skeleton" />
-              <div className="space-y-2.5">
-                {/* Name skeleton */}
-                <div className="skeleton h-6 w-44 rounded" />
-                {/* Badges skeleton */}
-                <div className="flex gap-2">
-                  <div className="skeleton h-5 w-20 rounded-md" />
-                  <div className="skeleton h-5 w-14 rounded-md" />
-                </div>
-              </div>
-            </div>
-            {/* Action buttons skeleton */}
-            <div className="flex items-center gap-2">
-              <div className="skeleton h-9 w-28 rounded-xl" />
-              <div className="skeleton h-9 w-36 rounded-xl" />
-              <div className="skeleton h-9 w-9 rounded-xl" />
-            </div>
-          </div>
-        </div>
-
-        {/* Main Grid skeleton */}
-        <div className="grid lg:grid-cols-3 gap-6">
-
-          {/* LEFT COLUMN: Pages skeleton */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_0_rgb(0_0_0/0.06),0_1px_2px_-1px_rgb(0_0_0/0.06)]">
-              {/* Card header */}
-              <div className="flex items-center justify-between p-5 sm:p-6 border-b border-[#E2E8F0]">
-                <div className="flex items-center gap-3">
-                  <div className="skeleton w-9 h-9 rounded-xl" />
-                  <div className="space-y-1.5">
-                    <div className="skeleton h-4 w-36 rounded" />
-                    <div className="skeleton h-3 w-48 rounded" />
-                  </div>
-                </div>
-                <div className="skeleton h-9 w-28 rounded-xl" />
-              </div>
-              {/* Card content */}
-              <div className="p-5 sm:p-6 space-y-4">
-                {/* Business root node skeleton */}
-                <div className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 p-3.5">
-                  <div className="skeleton w-9 h-9 rounded-lg" />
-                  <div className="space-y-1.5 flex-1">
-                    <div className="skeleton h-4 w-32 rounded" />
-                    <div className="skeleton h-3 w-24 rounded" />
-                  </div>
-                </div>
-                {/* Tree branch skeleton */}
-                <div className="relative pl-6 border-l-2 border-dashed border-slate-200 space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="relative">
-                      <div className="absolute -left-[26px] top-6 w-[26px] h-0.5 border-t-2 border-dashed border-slate-200" />
-                      <div className="rounded-xl border border-[#E2E8F0] bg-white overflow-hidden">
-                        <div className="flex items-center gap-3 p-4 ml-2">
-                          {/* Color bar skeleton */}
-                          <div className="skeleton w-1 h-12 rounded-full" />
-                          <div className="flex-1 space-y-1.5">
-                            <div className="skeleton h-4 w-40 rounded" />
-                            <div className="skeleton h-3 w-24 rounded" />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="skeleton w-8 h-8 rounded-lg" />
-                            <div className="skeleton w-16 h-8 rounded-lg" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="space-y-5">
-            {/* Business Info skeleton */}
-            <div className="rounded-xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_0_rgb(0_0_0/0.06),0_1px_2px_-1px_rgb(0_0_0/0.06)]">
-              <div className="flex items-center justify-between p-5 sm:p-6 border-b border-[#E2E8F0]">
-                <div className="flex items-center gap-2">
-                  <div className="skeleton w-8 h-8 rounded-lg" />
-                  <div className="skeleton h-4 w-24 rounded" />
-                </div>
-                <div className="skeleton w-8 h-8 rounded-lg" />
-              </div>
-              <div className="p-5 sm:p-6 space-y-4">
-                {/* Business name card skeleton */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/20 border border-slate-100">
-                  <div className="skeleton w-9 h-9 rounded-lg" />
-                  <div className="space-y-1.5 flex-1">
-                    <div className="skeleton h-4 w-28 rounded" />
-                    <div className="skeleton h-3 w-20 rounded" />
-                  </div>
-                </div>
-                {/* Info rows */}
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="skeleton w-4 h-4 mt-0.5 rounded" />
-                    <div className="space-y-1 flex-1">
-                      <div className="skeleton h-3 w-16 rounded" />
-                      <div className="skeleton h-4 w-32 rounded" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Management Links skeleton */}
-            <div className="rounded-xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_0_rgb(0_0_0/0.06),0_1px_2px_-1px_rgb(0_0_0/0.06)]">
-              <div className="flex items-center gap-2 p-5 sm:p-6 border-b border-[#E2E8F0]">
-                <div className="skeleton w-8 h-8 rounded-lg" />
-                <div className="skeleton h-4 w-28 rounded" />
-              </div>
-              <div className="divide-y divide-slate-50">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center justify-between px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="skeleton w-9 h-9 rounded-xl" />
-                      <div className="space-y-1">
-                        <div className="skeleton h-4 w-20 rounded" />
-                        <div className="skeleton h-3 w-28 rounded" />
-                      </div>
-                    </div>
-                    <div className="skeleton w-4 h-4 rounded" />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Templates CTA skeleton */}
-            <div className="rounded-xl border border-[#E2E8F0] bg-white shadow-[0_1px_3px_0_rgb(0_0_0/0.06),0_1px_2px_-1px_rgb(0_0_0/0.06)] p-4">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100">
-                <div className="skeleton w-11 h-11 rounded-xl" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="skeleton h-4 w-32 rounded" />
-                  <div className="skeleton h-3 w-44 rounded" />
-                </div>
-                <div className="skeleton w-4 h-4 rounded" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        <p className="text-sm font-medium text-[#64748B]">Carregando estatísticas do painel...</p>
       </div>
     );
   }
 
   if (!business) {
     return (
-      <div className="text-center py-20 animate-fade-in-up">
-        <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
-          <Store className="w-8 h-8 text-red-400" />
-        </div>
-        <h2 className="text-lg font-bold text-slate-800 mb-1">{t("business.not_found")}</h2>
-        <p className="text-sm text-gray-400 mb-6">{t("errors.not_found")}</p>
-        <Link href="/dashboard">
-          <Button variant="outline">{t("business.back_to_dashboard")}</Button>
+      <div className="text-center py-20">
+        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <h2 className="text-lg font-bold text-[#0F172A]">Negócio Não Encontrado</h2>
+        <Link href="/dashboard" className="text-sm text-indigo-600 mt-2 inline-block font-semibold">
+          Voltar para Home do Dashboard
         </Link>
       </div>
     );
   }
 
+  const originUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const publicPageUrl = `${originUrl}/${business.slug}`;
+  const enabledModules = getModulesForVertical(business.category);
+
   return (
-    <div className="max-w-6xl mx-auto pb-12 space-y-8 animate-fade-in-up">
-      {/* ===== Back Link ===== */}
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-indigo-600 transition-colors group"
-      >
-        <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-        {t("dashboard.title")}
-      </Link>
-
-      {/* ===== Header ===== */}
-      <GlassCard className="relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-indigo-50/60 to-transparent rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-48 h-48 bg-gradient-to-br from-purple-50/40 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-        <GlassCardContent className="relative p-5 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 pb-12 animate-fade-in-up">
+      {/* 1. Header Overview & Branding */}
+      <GlassCard className="relative overflow-hidden border-[#E2E8F0] shadow-sm">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-50/50 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <GlassCardContent className="p-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              {/* Logo */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 flex items-center justify-center shrink-0 shadow-inner">
                 {business.logo_url ? (
-                  <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover" />
+                  <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover rounded-xl" />
                 ) : (
-                  <Store className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-500" />
+                  <Store className="w-8 h-8 text-indigo-600" />
                 )}
               </div>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-800 truncate">{business.name}</h1>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight">{business.name}</h1>
                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                  <Badge variant="indigo">
+                  <Badge variant="indigo" className="text-[10px] font-bold py-0.5 px-2.5 rounded-full capitalize">
                     {business.category.replace(/_/g, " ")}
                   </Badge>
-                  <Badge variant={business.subscription_tier === "free" ? "amber" : "emerald"}>
-                    {business.subscription_tier === "free" ? t("dashboard.free_plan") : business.subscription_tier}
-                  </Badge>
+                  <a 
+                    href={publicPageUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    <span>{publicPageUrl}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {business.slug && (
-                <Link
-                  href={`/${business.slug}`}
-                  target="_blank"
-                  className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600 hover:text-indigo-600 transition-all flex items-center gap-1.5 shadow-sm"
-                >                    <Eye className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{t("public.page")}</span>
-                </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              {business.whatsapp ? (
+                <div className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 rounded-xl border border-emerald-100 text-xs font-bold text-emerald-700 shadow-sm shadow-emerald-50">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  WhatsApp Conectado
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 rounded-xl border border-amber-100 text-xs font-bold text-amber-700 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  Sem WhatsApp
+                </div>
               )}
-              <Link href={`/dashboard/business/${businessId}/setup`}>
-                <Button variant="default" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  {t("business.add_page")}
-                </Button>
-              </Link>
-              <button
-                onClick={deleteBusiness}
-                className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all cursor-pointer"
-                title={t("common.delete")}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </GlassCardContent>
       </GlassCard>
 
-      {/* ===== Main Grid ===== */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      {/* 2. Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <GlassCard className="border-[#E2E8F0] shadow-sm">
+          <GlassCardContent className="p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Acessos à Página</p>
+              <h3 className="text-2xl font-black text-[#0F172A] mt-1">{viewsCount}</h3>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
+              <Eye className="w-5 h-5" />
+            </div>
+          </GlassCardContent>
+        </GlassCard>
 
-        {/* ===== LEFT COLUMN: Pages & QR Codes ===== */}
+        <GlassCard className="border-[#E2E8F0] shadow-sm">
+          <GlassCardContent className="p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Cliques no WhatsApp</p>
+              <h3 className="text-2xl font-black text-[#0F172A] mt-1">{whatsappClicks}</h3>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+              <MessageCircle className="w-5 h-5" />
+            </div>
+          </GlassCardContent>
+        </GlassCard>
+
+        <GlassCard className="border-[#E2E8F0] shadow-sm">
+          <GlassCardContent className="p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Taxa de Conversão</p>
+              <h3 className="text-2xl font-black text-[#0F172A] mt-1">{conversionRate}%</h3>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-inner">
+              <BarChart3 className="w-5 h-5" />
+            </div>
+          </GlassCardContent>
+        </GlassCard>
+      </div>
+
+      {/* 3. Main Dashboard Body: Alerts & Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Side: Dynamic Activity & Alerts */}
         <div className="lg:col-span-2 space-y-6">
-          <PagesTreeView
-            businessId={businessId}
-            businessName={business.name}
-            businessSlug={business.slug}
-            pages={pages}
-            qrCodes={qrCodes}
-            sections={sections}
-            onRefresh={loadBusiness}
-          />
-        </div>
-
-        {/* ===== RIGHT COLUMN ===== */}
-        <div className="space-y-5">
-
-          {/* Business Info */}
-          <EditBusinessInfo
-            businessId={businessId}
-            business={business}
-            onRefresh={loadBusiness}
-          />
-
-          {/* Notification Settings */}
-          {notifSettings && (
-            <NotificationSettings
-              settings={notifSettings}
-              onSave={(updated) => handleSaveNotifSettings(updated)}
-            />
+          
+          {/* Orders Alert Card */}
+          {enabledModules.includes("orders") && (
+            <GlassCard className="border-[#E2E8F0] shadow-sm">
+              <GlassCardHeader className="pb-2 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-[#0F172A]" />
+                  <GlassCardTitle className="text-sm font-bold text-[#0F172A]">Pedidos de Hoje</GlassCardTitle>
+                </div>
+                <Badge variant={todayOrdersCount > 0 ? "indigo" : "muted"}>
+                  {todayOrdersCount} novos
+                </Badge>
+              </GlassCardHeader>
+              <GlassCardContent>
+                {todayOrdersCount > 0 ? (
+                  <p className="text-xs text-[#64748B] leading-relaxed">
+                    Você recebeu novos pedidos hoje pelo cardápio! Vá para o painel de pedidos para gerenciá-los.
+                  </p>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-xs text-[#94A3B8]">Nenhum pedido recebido hoje ainda.</p>
+                  </div>
+                )}
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <Link 
+                    href={`/dashboard/business/${businessId}/orders`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    <span>Ver todos os pedidos</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </GlassCardContent>
+            </GlassCard>
           )}
 
-          {/* Management Links */}
-          <GlassCard>
-            <GlassCardHeader>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center">
-                  <BarChart3 className="w-4 h-4 text-indigo-600" />
+          {/* Quotes Alert Card */}
+          {enabledModules.includes("quote_requests") && (
+            <GlassCard className="border-[#E2E8F0] shadow-sm">
+              <GlassCardHeader className="pb-2 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-[#0F172A]" />
+                  <GlassCardTitle className="text-sm font-bold text-[#0F172A]">Solicitações de Orçamento</GlassCardTitle>
                 </div>
-                <GlassCardTitle>{t("dashboard.title")}</GlassCardTitle>
+                <Badge variant={newQuotesCount > 0 ? "indigo" : "muted"}>
+                  {newQuotesCount} pendentes
+                </Badge>
+              </GlassCardHeader>
+              <GlassCardContent>
+                {newQuotesCount > 0 ? (
+                  <p className="text-xs text-[#64748B] leading-relaxed">
+                    Existem clientes aguardando resposta de orçamento para materiais/serviços.
+                  </p>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-xs text-[#94A3B8]">Nenhum orçamento pendente.</p>
+                  </div>
+                )}
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <Link 
+                    href={`/dashboard/business/${businessId}/quote-requests`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    <span>Gerenciar orçamentos</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </GlassCardContent>
+            </GlassCard>
+          )}
+
+          {/* Appointments Alert Card */}
+          {enabledModules.includes("appointments") && (
+            <GlassCard className="border-[#E2E8F0] shadow-sm">
+              <GlassCardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#0F172A]" />
+                  <GlassCardTitle className="text-sm font-bold text-[#0F172A]">Próximos Agendamentos</GlassCardTitle>
+                </div>
+              </GlassCardHeader>
+              <GlassCardContent className="space-y-3">
+                {upcomingAppointments.length > 0 ? (
+                  <div className="space-y-2">
+                    {upcomingAppointments.map((app) => (
+                      <div key={app.id} className="flex justify-between items-center bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs">
+                        <div>
+                          <p className="font-bold text-[#0F172A]">{app.customer_name}</p>
+                          <p className="text-[10px] text-[#64748B] mt-0.5">{app.appointment_date} às {app.start_time}</p>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-100 capitalize">
+                          {app.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-xs text-[#94A3B8]">Nenhum agendamento agendado.</p>
+                  </div>
+                )}
+                <div className="pt-3 border-t border-slate-100">
+                  <Link 
+                    href={`/dashboard/business/${businessId}/appointments`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    <span>Ver agenda completa</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </GlassCardContent>
+            </GlassCard>
+          )}
+
+          {/* Leads Alert Card */}
+          {enabledModules.includes("leads") && (
+            <GlassCard className="border-[#E2E8F0] shadow-sm">
+              <GlassCardHeader className="pb-2 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="w-4 h-4 text-[#0F172A]" />
+                  <GlassCardTitle className="text-sm font-bold text-[#0F172A]">Novos Leads</GlassCardTitle>
+                </div>
+                <Badge variant={newLeadsCount > 0 ? "indigo" : "muted"}>
+                  {newLeadsCount} contatos
+                </Badge>
+              </GlassCardHeader>
+              <GlassCardContent>
+                {newLeadsCount > 0 ? (
+                  <p className="text-xs text-[#64748B] leading-relaxed">
+                    Você possui novos leads capturados de campanhas ou da sua página pública.
+                  </p>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-xs text-[#94A3B8]">Sem novos leads no momento.</p>
+                  </div>
+                )}
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <Link 
+                    href={`/dashboard/business/${businessId}/leads`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    <span>Visualizar leads</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </GlassCardContent>
+            </GlassCard>
+          )}
+        </div>
+
+        {/* Right Side: QR Code & Quick Actions */}
+        <div className="space-y-6">
+          {/* QR Code Card */}
+          <GlassCard className="border-[#E2E8F0] shadow-sm text-center">
+            <GlassCardHeader className="pb-2">
+              <div className="flex items-center justify-center gap-2">
+                <QrCode className="w-4 h-4 text-[#0F172A]" />
+                <GlassCardTitle className="text-sm font-bold text-[#0F172A]">Código QR do Estabelecimento</GlassCardTitle>
               </div>
             </GlassCardHeader>
-            <GlassCardContent className="p-0">
-              <div className="divide-y divide-slate-50">
-                {getManagementLinks(business.category || "other", businessId).map((link, linkIndex) => {
-                  const IconComponent = link.icon || BarChart3;
-                  const count = link.countKey ? (() => {
-                    switch (link.countKey) {
-                      case "totalOrders": return totalOrders;
-                      case "totalLeads": return totalLeads;
-                      case "totalMembers": return totalMembers;
-                      case "totalQuoteRequests": return totalQuoteRequests;
-                      case "totalClients": return totalClients;
-                      default: return 0;
-                    }
-                  })() : 0;
-
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors group animate-fade-in-up"
-                      style={{ animationDelay: `${linkIndex * 80}ms` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${link.iconBg} flex items-center justify-center`}>
-                          <IconComponent className={`w-4 h-4 ${link.iconColor}`} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{link.label}</p>
-                          <p className="text-xs text-gray-400">{t(link.descKey)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {count > 0 && (
-                          <Badge variant="indigo" className="text-[10px] px-2 py-0.5">
-                            {count}
-                          </Badge>
-                        )}
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
+            <GlassCardContent className="space-y-4">
+              {qrCode ? (
+                <>
+                  <div className="w-36 h-36 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center mx-auto shadow-inner overflow-hidden p-2">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+                        `${originUrl}/r/${qrCode.short_code}`
+                      )}`} 
+                      alt="QR Code" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <p className="text-[10px] text-[#94A3B8] max-w-[200px] mx-auto leading-relaxed">
+                    Escanear este código leva o cliente direto para o seu catálogo ou cardápio.
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-[#94A3B8]">Carregando QR Code principal...</p>
+              )}
             </GlassCardContent>
           </GlassCard>
 
-          {/* Templates CTA */}
-          <GlassCard>
-            <GlassCardContent className="p-4">
-              <Link href={`/dashboard/business/${businessId}/setup`} className="block">
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 hover:border-indigo-200 transition-all hover:shadow-md">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-800">{t("business.use_template")}</p>
-                    <p className="text-xs text-gray-400">{t("business.setup_desc")}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-indigo-400 shrink-0" />
-                </div>
+          {/* Quick Actions Card */}
+          <GlassCard className="border-[#E2E8F0] shadow-sm">
+            <GlassCardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#0F172A]" />
+                <GlassCardTitle className="text-sm font-bold text-[#0F172A]">Ações Rápidas</GlassCardTitle>
+              </div>
+            </GlassCardHeader>
+            <GlassCardContent className="grid grid-cols-1 gap-2.5">
+              <Link href={`/dashboard/business/${businessId}/products`}>
+                <Button variant="outline" className="w-full justify-start gap-3 border-slate-200 hover:bg-slate-50 text-xs font-semibold text-[#475569]">
+                  <Plus className="w-4 h-4 text-indigo-500" />
+                  Adicionar Produto / Serviço
+                </Button>
               </Link>
+
+              <Link href={`/dashboard/business/${businessId}/pages`}>
+                <Button variant="outline" className="w-full justify-start gap-3 border-slate-200 hover:bg-slate-50 text-xs font-semibold text-[#475569]">
+                  <Plus className="w-4 h-4 text-indigo-500" />
+                  Criar Página QR
+                </Button>
+              </Link>
+
+              <a href={publicPageUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="w-full justify-start gap-3 border-slate-200 hover:bg-slate-50 text-xs font-semibold text-[#475569]">
+                  <Eye className="w-4 h-4 text-indigo-500" />
+                  Visualizar Página Pública
+                </Button>
+              </a>
+
+              <button 
+                onClick={handleShareWhatsApp}
+                className="w-full flex items-center gap-3 px-3 h-10 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-[#475569] transition-colors"
+              >
+                <Share2 className="w-4 h-4 text-indigo-500" />
+                Compartilhar Link no WhatsApp
+              </button>
+
+              <button 
+                onClick={handleDownloadQR}
+                className="w-full flex items-center gap-3 px-3 h-10 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-[#475569] transition-colors"
+              >
+                <Download className="w-4 h-4 text-indigo-500" />
+                Baixar Código QR (PDF/Imagem)
+              </button>
             </GlassCardContent>
           </GlassCard>
         </div>
+
       </div>
     </div>
   );

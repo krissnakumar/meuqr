@@ -15,16 +15,14 @@ export async function POST(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll() {
-            // Not setting cookies
-          },
+          setAll() {},
         },
       }
     );
 
     const body = await request.json();
 
-    // Validate request body using orderSchema
+    // Validate request body using orderSchema (with honeypot & phone checks)
     const parsed = orderSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -33,14 +31,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { customerName, customerPhone, customerEmail, items, total, paymentMethod } = parsed.data;
+    const { customerName, customerPhone, customerEmail, items, total, paymentMethod, honeypot } = parsed.data;
     const { businessId, pageId } = body;
 
+    // Spam honeypot detection
+    if (honeypot) {
+      return NextResponse.json({ error: "Spam detectado." }, { status: 400 });
+    }
+
     if (!businessId) {
-      return NextResponse.json(
-        { error: ERR.MISSING_BUSINESS_ID },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: ERR.MISSING_BUSINESS_ID }, { status: 400 });
+    }
+
+    // Check if business exists, is active, and has orders module enabled
+    const { data: business, error: bizError } = await supabaseAdmin
+      .from("businesses")
+      .select("is_active")
+      .eq("id", businessId)
+      .single();
+
+    if (bizError || !business) {
+      return NextResponse.json({ error: "Estabelecimento não encontrado." }, { status: 404 });
+    }
+
+    if (!business.is_active) {
+      return NextResponse.json({ error: "Este estabelecimento está inativo." }, { status: 403 });
+    }
+
+    // Verify orders module is enabled
+    const { data: enabledModules } = await supabaseAdmin
+      .from("business_enabled_modules")
+      .select("modules(slug)")
+      .eq("business_id", businessId)
+      .eq("enabled", true);
+
+    const hasModule = enabledModules?.some((m: any) => m.modules?.slug === "orders");
+    if (!hasModule) {
+      return NextResponse.json({ error: "O módulo de pedidos está desativado para esta empresa." }, { status: 403 });
     }
 
     // 1. Create/Retrieve client profile
@@ -70,7 +97,7 @@ export async function POST(request: NextRequest) {
       console.error("Failed to link client to order:", clientErr);
     }
 
-    // 2. Insert order into Supabase (using admin client to bypass select RLS constraint for anonymous guest)
+    // 2. Insert order
     const { data: order, error } = await supabaseAdmin
       .from("orders")
       .insert({

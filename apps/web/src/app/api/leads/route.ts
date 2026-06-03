@@ -15,9 +15,7 @@ export async function POST(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll() {
-            // Not setting cookies
-          },
+          setAll() {},
         },
       }
     );
@@ -33,14 +31,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, phone, message } = parsed.data;
+    const { name, email, phone, message, honeypot } = parsed.data;
     const { businessId, pageId, source } = body;
+
+    // Spam honeypot detection
+    if (honeypot) {
+      return NextResponse.json({ error: "Spam detectado." }, { status: 400 });
+    }
 
     if (!businessId) {
       return NextResponse.json(
         { error: ERR.MISSING_BUSINESS_ID },
         { status: 400 }
       );
+    }
+
+    // Check if business exists, is active, and has leads module enabled
+    const { data: business, error: bizError } = await supabaseAdmin
+      .from("businesses")
+      .select("is_active")
+      .eq("id", businessId)
+      .single();
+
+    if (bizError || !business) {
+      return NextResponse.json({ error: "Estabelecimento não encontrado." }, { status: 404 });
+    }
+
+    if (!business.is_active) {
+      return NextResponse.json({ error: "Este estabelecimento está inativo." }, { status: 403 });
+    }
+
+    // Verify leads module is enabled
+    const { data: enabledModules } = await supabaseAdmin
+      .from("business_enabled_modules")
+      .select("modules(slug)")
+      .eq("business_id", businessId)
+      .eq("enabled", true);
+
+    const hasModule = enabledModules?.some((m: any) => m.modules?.slug === "leads");
+    if (!hasModule) {
+      return NextResponse.json({ error: "O módulo de leads está desativado para esta empresa." }, { status: 403 });
     }
 
     // 1. Create/Retrieve client profile if phone is supplied
@@ -71,7 +101,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Insert lead into Supabase (using admin client to bypass select RLS constraint for anonymous guest)
+    // 2. Insert lead
     const { data: lead, error } = await supabaseAdmin
       .from("leads")
       .insert({

@@ -5,27 +5,28 @@ export interface BusinessDTO {
   name: string;
   slug: string;
   category: string;
-  description?: string;
-  logo_url?: string;
-  cover_url?: string;
-  whatsapp?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  instagram?: string;
-  facebook?: string;
-  website?: string;
-  brand_color?: string;
-  pix_key?: string;
-  opening_hours?: Record<string, string>;
+  description: string | null;
+  logo_url: string | null;
+  cover_url: string | null;
+  whatsapp: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  website: string | null;
+  brand_color: string | null;
+  pix_key: string | null;
+  opening_hours: Record<string, string> | null;
   is_active: boolean;
   created_at: string;
   vertical_id?: string;
   subvertical_id?: string;
   onboarding_completed: boolean;
   setup_step: number;
+  subscription_tier: string;
 }
 
 export interface PageDTO {
@@ -42,12 +43,13 @@ export interface PageDTO {
 export interface QrCodeDTO {
   id: string;
   short_code: string;
-  title?: string;
-  destination_url?: string;
+  title: string | null;
+  destination_url: string | null;
   scan_count: number;
   is_active: boolean;
   qr_type?: string;
-  page?: { id: string; title: string; slug: string };
+  page: { id: string; title: string; slug: string } | null;
+  pages: { title: string } | null;
   created_at: string;
 }
 
@@ -61,66 +63,71 @@ export interface AnalyticsSummaryDTO {
   totalQrScans: number;
 }
 
+const toStr = (val: string | string[] | undefined): string => {
+  if (!val) return "";
+  return Array.isArray(val) ? val[0] : val;
+};
+
 export const businessApi = {
   list: () => api.get<BusinessDTO[]>("/api/businesses"),
-  getById: (id: string) => api.get<BusinessDTO>(`/api/businesses/${id}`),
+  getById: (id: string | string[]) => api.get<BusinessDTO>(`/api/businesses/${toStr(id)}`),
   create: (data: any) => api.post<BusinessDTO>("/api/businesses", data),
-  update: (id: string, data: any) => api.patch<BusinessDTO>(`/api/businesses/${id}`, data),
-  remove: (id: string) => api.del(`/api/businesses/${id}`),
-  getPages: (businessId: string) => api.get<PageDTO[]>("/api/pages", { params: { businessId } }),
-  getQrCodes: (businessId: string) => api.get<QrCodeDTO[]>("/api/qr-codes", { params: { businessId } }),
-  getAnalytics: (businessId: string) => api.get<AnalyticsSummaryDTO>("/api/analytics/summary", { params: { businessId } }),
-  getEnabledModules: (businessId: string) => api.get("/api/modules/enabled/" + businessId),
+  update: (id: string | string[], data: any) => api.patch<BusinessDTO>(`/api/businesses/${toStr(id)}`, data),
+  remove: (id: string | string[]) => api.del(`/api/businesses/${toStr(id)}`),
+  getPages: (businessId: string | string[]) => api.get<PageDTO[]>("/api/pages", { params: { businessId: toStr(businessId) } }),
+  getQrCodes: (businessId: string | string[]) => api.get<QrCodeDTO[]>("/api/qr-codes", { params: { businessId: toStr(businessId) } }),
+  getAnalytics: (businessId: string | string[]) => api.get<AnalyticsSummaryDTO>("/api/analytics/summary", { params: { businessId: toStr(businessId) } }),
+  getEnabledModules: (businessId: string | string[]) => api.get("/api/modules/enabled/" + toStr(businessId)),
 };
 
 export const qrApi = {
   listAll: () => api.get<QrCodeDTO[]>("/api/qr-codes"),
-  getById: (id: string) => api.get<QrCodeDTO>(`/api/qr-codes/${id}`),
+  getById: (id: string | string[]) => api.get<QrCodeDTO>(`/api/qr-codes/${toStr(id)}`),
   create: (data: any) => api.post<QrCodeDTO>("/api/qr-codes", data),
-  update: (id: string, data: any) => api.patch<QrCodeDTO>(`/api/qr-codes/${id}`, data),
-  remove: (id: string) => api.del(`/api/qr-codes/${id}`),
-  recordScan: (id: string) => api.post(`/api/qr-codes/${id}/scan`),
+  update: (id: string | string[], data: any) => api.patch<QrCodeDTO>(`/api/qr-codes/${toStr(id)}`, data),
+  remove: (id: string | string[]) => api.del(`/api/qr-codes/${toStr(id)}`),
+  recordScan: (id: string | string[]) => api.post(`/api/qr-codes/${toStr(id)}/scan`),
 };
 
 export const pageApi = {
-  list: (businessId: string) => api.get<PageDTO[]>("/api/pages", { params: { businessId } }),
-  getById: (id: string) => api.get(`/api/pages/${id}`),
+  list: (businessId: string | string[]) => api.get<PageDTO[]>("/api/pages", { params: { businessId: toStr(businessId) } }),
+  getById: (id: string | string[]) => api.get(`/api/pages/${toStr(id)}`),
   create: (data: any) => api.post("/api/pages", data),
-  update: (id: string, data: any) => api.patch(`/api/pages/${id}`, data),
-  remove: (id: string) => api.del(`/api/pages/${id}`),
-  duplicate: (id: string) => api.post(`/api/pages/${id}/duplicate`),
-  publish: (id: string) => api.post(`/api/pages/${id}/publish`),
-  unpublish: (id: string) => api.post(`/api/pages/${id}/unpublish`),
+  update: (id: string | string[], data: any) => api.patch(`/api/pages/${toStr(id)}`, data),
+  remove: (id: string | string[]) => api.del(`/api/pages/${toStr(id)}`),
+  duplicate: (id: string | string[]) => api.post(`/api/pages/${toStr(id)}/duplicate`),
+  publish: (id: string | string[]) => api.post(`/api/pages/${toStr(id)}/publish`),
+  unpublish: (id: string | string[]) => api.post(`/api/pages/${toStr(id)}/unpublish`),
   addSection: (data: any) => api.post("/api/pages/sections", data),
-  updateSection: (sectionId: string, data: any) => api.patch(`/api/pages/sections/${sectionId}`, data),
-  removeSection: (sectionId: string) => api.del(`/api/pages/sections/${sectionId}`),
+  updateSection: (sectionId: string | string[], data: any) => api.patch(`/api/pages/sections/${toStr(sectionId)}`, data),
+  removeSection: (sectionId: string | string[]) => api.del(`/api/pages/sections/${toStr(sectionId)}`),
 };
 
 export const analyticsApi = {
-  getSummary: (businessId: string) => api.get<AnalyticsSummaryDTO>("/api/analytics/summary", { params: { businessId } }),
+  getSummary: (businessId: string | string[]) => api.get<AnalyticsSummaryDTO>("/api/analytics/summary", { params: { businessId: toStr(businessId) } }),
   trackEvent: (data: any) => api.post("/api/analytics/event", data),
 };
 
 export const leadApi = {
-  list: (businessId: string) => api.get("/api/leads", { params: { businessId } }),
-  remove: (id: string) => api.del(`/api/leads/${id}`),
+  list: (businessId: string | string[]) => api.get("/api/leads", { params: { businessId: toStr(businessId) } }),
+  remove: (id: string | string[]) => api.del(`/api/leads/${toStr(id)}`),
 };
 
 export const orderApi = {
-  list: (businessId: string) => api.get("/api/orders", { params: { businessId } }),
-  update: (id: string, data: any) => api.patch(`/api/orders/${id}`, data),
+  list: (businessId: string | string[]) => api.get("/api/orders", { params: { businessId: toStr(businessId) } }),
+  update: (id: string | string[], data: any) => api.patch(`/api/orders/${toStr(id)}`, data),
 };
 
 export const quoteApi = {
-  list: (businessId: string) => api.get("/api/quote-requests", { params: { businessId } }),
-  update: (id: string, data: any) => api.patch(`/api/quote-requests/${id}`, data),
-  remove: (id: string) => api.del(`/api/quote-requests/${id}`),
+  list: (businessId: string | string[]) => api.get("/api/quote-requests", { params: { businessId: toStr(businessId) } }),
+  update: (id: string | string[], data: any) => api.patch(`/api/quote-requests/${toStr(id)}`, data),
+  remove: (id: string | string[]) => api.del(`/api/quote-requests/${toStr(id)}`),
 };
 
 export const memberApi = {
-  list: (businessId: string) => api.get("/api/members", { params: { businessId } }),
+  list: (businessId: string | string[]) => api.get("/api/members", { params: { businessId: toStr(businessId) } }),
   invite: (data: any) => api.post("/api/members", data),
-  remove: (id: string) => api.del(`/api/members/${id}`),
+  remove: (id: string | string[]) => api.del(`/api/members/${toStr(id)}`),
 };
 
 export const profileApi = {
@@ -135,7 +142,7 @@ export const verticalApi = {
 
 export const moduleApi = {
   list: () => api.get("/api/modules"),
-  getEnabled: (businessId: string) => api.get(`/api/modules/enabled/${businessId}`),
+  getEnabled: (businessId: string | string[]) => api.get(`/api/modules/enabled/${toStr(businessId)}`),
   enable: (data: any) => api.post("/api/modules/enable", data),
   disable: (data: any) => api.post("/api/modules/disable", data),
 };

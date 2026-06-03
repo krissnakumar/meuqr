@@ -1,11 +1,9 @@
 import { Tabs } from "expo-router";
 import {
-  QrCode,
   LayoutDashboard,
-  Store,
-  BarChart3,
   Settings,
   Scan,
+  ShoppingCart,
 } from "lucide-react-native";
 import { View, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
@@ -46,15 +44,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      
+      {/* Hide administrative businesses tab */}
       <Tabs.Screen
         name="businesses"
         options={{
-          title: "Negócios",
-          tabBarIcon: ({ color, size }) => (
-            <Store size={size} color={color} />
-          ),
+          href: null, // Hides tab from UI
         }}
       />
+
       <Tabs.Screen
         name="scanner-tab"
         options={{
@@ -78,28 +76,30 @@ export default function TabLayout() {
           },
         }}
       />
+
+      {/* Repurpose qr-codes tab as Pedidos (Orders/Quotes) */}
       <Tabs.Screen
         name="qr-codes"
         options={{
-          title: "QR Codes",
+          title: "Pedidos",
           tabBarIcon: ({ color, size }) => (
-            <QrCode size={size} color={color} />
+            <ShoppingCart size={size} color={color} />
           ),
         }}
       />
+
+      {/* Hide administrative analytics tab */}
       <Tabs.Screen
         name="analytics"
         options={{
-          title: "Analytics",
-          tabBarIcon: ({ color, size }) => (
-            <BarChart3 size={size} color={color} />
-          ),
+          href: null, // Hides tab from UI
         }}
       />
+
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Config",
+          title: "Ajustes",
           tabBarIcon: ({ color, size }) => (
             <Settings size={size} color={color} />
           ),

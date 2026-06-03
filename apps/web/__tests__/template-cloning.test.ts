@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { TEMPLATES, BUSINESS_TEMPLATES, type TemplateDefinition, type BusinessTemplate } from "@meuqr/shared";
+import { TEMPLATES, BUSINESS_TEMPLATES, resolveLocalized, type TemplateDefinition, type BusinessTemplate } from "@meuqr/shared";
 
 describe("Template Definitions (Legacy)", () => {
-  it("should have all 52 templates", () => {
-    expect(TEMPLATES.length).toBe(52);
+  it("should have all 55 templates", () => {
+    expect(TEMPLATES.length).toBe(55);
   });
 
   it("each template should have a name, slug, category, sections", () => {
@@ -37,8 +37,8 @@ describe("Template Definitions (Legacy)", () => {
 });
 
 describe("Business Template System (v2)", () => {
-  it("should have exactly 52 templates", () => {
-    expect(BUSINESS_TEMPLATES.length).toBe(52);
+  it("should have exactly 55 templates", () => {
+    expect(BUSINESS_TEMPLATES.length).toBe(55);
   });
 
   it("each template should have required fields", () => {
@@ -100,17 +100,17 @@ describe("Business Template System (v2)", () => {
   it("restaurant template should have combos, meals, drinks", () => {
     const restaurant = BUSINESS_TEMPLATES.find((t) => t.businessType === "restaurant");
     expect(restaurant).toBeDefined();
-    expect(restaurant!.sections.some((s) => s.title === "Combos")).toBe(true);
-    expect(restaurant!.sections.some((s) => s.title === "Pratos Feitos")).toBe(true);
-    expect(restaurant!.sections.some((s) => s.title === "Lanches")).toBe(true);
-    expect(restaurant!.sections.some((s) => s.title === "Bebidas")).toBe(true);
-    expect(restaurant!.sections.some((s) => s.title === "Sobremesas")).toBe(true);
+    expect(restaurant!.sections.some((s) => resolveLocalized(s.title, "pt-BR") === "Combos")).toBe(true);
+    expect(restaurant!.sections.some((s) => resolveLocalized(s.title, "pt-BR") === "Pratos Feitos")).toBe(true);
+    expect(restaurant!.sections.some((s) => resolveLocalized(s.title, "pt-BR") === "Lanches")).toBe(true);
+    expect(restaurant!.sections.some((s) => resolveLocalized(s.title, "pt-BR") === "Bebidas")).toBe(true);
+    expect(restaurant!.sections.some((s) => resolveLocalized(s.title, "pt-BR") === "Sobremesas")).toBe(true);
   });
 
   it("construction materials template should have many sections", () => {
     const construction = BUSINESS_TEMPLATES.find((t) => t.businessType === "construction_materials");
     expect(construction).toBeDefined();
-    expect(construction!.sections.some((s) => s.title === "Cimento e Argamassa")).toBe(true);
-    expect(construction!.sections.some((s) => s.title === "Tintas")).toBe(true);
+    expect(construction!.sections.some((s) => resolveLocalized(s.title, "pt-BR") === "Cimento e Argamassa")).toBe(true);
+    expect(construction!.sections.some((s) => resolveLocalized(s.title, "pt-BR") === "Tintas")).toBe(true);
   });
 });

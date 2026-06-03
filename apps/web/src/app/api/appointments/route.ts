@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { ERR } from "@meuqr/shared";
+import { ERR, appointmentSchema } from "@meuqr/shared";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,37 +15,74 @@ export async function POST(req: NextRequest) {
           getAll() {
             return req.cookies.getAll();
           },
-          setAll() {
-            // Not setting cookies
-          },
+          setAll() {},
         },
       }
     );
 
-    const {
-      businessId,
-      serviceId,
-      staffId,
-      customerName,
-      customerPhone,
-      customerEmail,
-      appointmentDate,
-      appointmentTime,
-      notes,
-      customFields,
-    } = await req.json();
+    const body = await req.json();
 
-    if (!businessId || !customerName || !customerPhone || !appointmentDate || !appointmentTime) {
+    // Validate request body using appointmentSchema
+    const parsed = appointmentSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: ERR.MISSING_APPOINTMENT_DATA },
+        { error: parsed.error.errors[0]?.message || ERR.INVALID_INPUT },
         { status: 400 }
       );
     }
 
-    // Calcular end_time (simplesmente +30 mins se não houver lógica complexa de serviços)
-    // Uma implementação real buscaria a duration_minutes do serviço no BD
-    let endTime = appointmentTime;
-    if (serviceId) {
+    const {
+      customerName,
+      customerPhone,
+      customerEmail,
+      serviceId,
+      appointmentDate,
+      startTime,
+      endTime,
+      notes,
+      honeypot,
+    } = parsed.data;
+    const { businessId, staffId, customFields } = body;
+
+    // Spam honeypot detection
+    if (honeypot) {
+      return NextResponse.json({ error: "Spam detectado." }, { status: 400 });
+    }
+
+    if (!businessId) {
+      return NextResponse.json({ error: "Faltando o ID da empresa." }, { status: 400 });
+    }
+
+    // Check if business exists, is active, and has appointments module enabled
+    const { data: business, error: bizError } = await supabaseAdmin
+      .from("businesses")
+      .select("is_active")
+      .eq("id", businessId)
+      .single();
+
+    if (bizError || !business) {
+      return NextResponse.json({ error: "Estabelecimento não encontrado." }, { status: 404 });
+    }
+
+    if (!business.is_active) {
+      return NextResponse.json({ error: "Este estabelecimento está inativo." }, { status: 403 });
+    }
+
+    // Verify appointments module is enabled
+    const { data: enabledModules } = await supabaseAdmin
+      .from("business_enabled_modules")
+      .select("modules(slug)")
+      .eq("business_id", businessId)
+      .eq("enabled", true);
+
+    const hasModule = enabledModules?.some((m: any) => m.modules?.slug === "appointments");
+    if (!hasModule) {
+      return NextResponse.json({ error: "O módulo de agendamentos está desativado para esta empresa." }, { status: 403 });
+    }
+
+    // Calculate end time
+    let calculatedEndTime = endTime || startTime;
+    if (serviceId && !endTime) {
       const { data: svc } = await supabase
         .from("appointment_services")
         .select("duration_minutes")
@@ -51,27 +90,27 @@ export async function POST(req: NextRequest) {
         .single();
         
       if (svc?.duration_minutes) {
-        const [hours, mins] = appointmentTime.split(":");
-        const date = new Date();
-        date.setHours(parseInt(hours), parseInt(mins));
-        date.setMinutes(date.getMinutes() + svc.duration_minutes);
-        endTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:00`;
+        const [hours, mins] = startTime.split(":");
+        const dateObj = new Date();
+        dateObj.setHours(parseInt(hours), parseInt(mins));
+        dateObj.setMinutes(dateObj.getMinutes() + svc.duration_minutes);
+        calculatedEndTime = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
       }
     }
 
-    // Insert appointment using admin client to bypass select RLS constraint for anonymous guest
+    // Insert appointment
     const { data, error } = await supabaseAdmin
       .from("appointments")
       .insert({
         business_id: businessId,
-        service_id: serviceId || null,
+        service_id: serviceId === "default" ? null : (serviceId || null),
         staff_id: staffId || null,
         customer_name: customerName,
         customer_phone: customerPhone,
         customer_email: customerEmail || null,
         appointment_date: appointmentDate,
-        start_time: appointmentTime,
-        end_time: endTime,
+        start_time: startTime,
+        end_time: calculatedEndTime,
         notes: notes || null,
         custom_fields: customFields || {},
         status: "pending"
@@ -88,7 +127,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("API Error (Appointments):", error);
     return NextResponse.json(
-      { error: ERR.INTERNAL_SERVER_ERROR_EN },
+      { error: ERR.INTERNAL_SERVER_ERROR },
       { status: 500 }
     );
   }

@@ -31,7 +31,8 @@ import { useTranslation } from "../../../../src/lib/i18n-provider";
 
 export default function QRCodeDetailScreen() {
   const router = useRouter();
-  const { id: businessId, qrId } = useLocalSearchParams();
+  const { id: businessId, qrId: rawQrId } = useLocalSearchParams();
+  const qrId = rawQrId as string;
   const { t } = useTranslation();
 
   const [qrCode, setQrCode] = useState<any>(null);

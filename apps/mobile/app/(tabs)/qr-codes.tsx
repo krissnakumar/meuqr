@@ -15,7 +15,7 @@ import { useTranslation } from "../../src/lib/i18n-provider";
 interface QRCode {
   id: string;
   short_code: string;
-  title?: string;
+  title?: string | null;
   scan_count: number;
   created_at: string;
 }

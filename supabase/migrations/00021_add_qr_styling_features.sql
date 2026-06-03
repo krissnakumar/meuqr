@@ -1,0 +1,7 @@
+-- Add advanced styling columns to qr_styles table
+ALTER TABLE qr_styles 
+ADD COLUMN IF NOT EXISTS gradient_type TEXT NOT NULL DEFAULT 'linear',
+ADD COLUMN IF NOT EXISTS gradient_angle INTEGER NOT NULL DEFAULT 45,
+ADD COLUMN IF NOT EXISTS cta_text TEXT,
+ADD COLUMN IF NOT EXISTS cta_background_color TEXT NOT NULL DEFAULT '#111827',
+ADD COLUMN IF NOT EXISTS cta_text_color TEXT NOT NULL DEFAULT '#FFFFFF';

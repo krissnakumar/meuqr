@@ -45,8 +45,8 @@ describe("BUSINESS_CATEGORIES", () => {
 });
 
 describe("PLANS", () => {
-  it("should have three tiers", () => {
-    expect(Object.keys(PLANS)).toEqual(["free", "pro", "business"]);
+  it("should have all tiers", () => {
+    expect(Object.keys(PLANS)).toEqual(["free", "pro", "business", "past_due"]);
   });
 
   it("free plan should have no custom QR, analytics, or staff", () => {

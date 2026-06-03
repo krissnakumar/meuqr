@@ -18,7 +18,7 @@ interface Business {
   id: string;
   name: string;
   category: string;
-  logo_url: string | null;
+  logo_url?: string | null;
   created_at: string;
 }
 

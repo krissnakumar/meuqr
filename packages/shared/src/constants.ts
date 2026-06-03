@@ -1,4 +1,3 @@
-import type { PlanConfig } from "./types";
 
 // ===== App Info =====
 
@@ -78,62 +77,6 @@ export const BUSINESS_CATEGORIES = [
 
 export type BusinessCategoryInfo = (typeof BUSINESS_CATEGORIES)[number];
 
-// ===== Subscription Plans =====
-
-export const PLANS: PlanConfig = {
-  free: {
-    name: "Free",
-    namePt: "Grátis",
-    max_businesses: 1,
-    max_qrs: 1,
-    max_items: 20,
-    custom_qr: false,
-    analytics: false,
-    staff_members: false,
-    api_access: false,
-    price_monthly: 0,
-    price_yearly: 0,
-  },
-  pro: {
-    name: "Pro",
-    namePt: "Profissional",
-    max_businesses: 3,
-    max_qrs: -1, // unlimited
-    max_items: 500,
-    custom_qr: true,
-    analytics: true,
-    staff_members: false,
-    api_access: false,
-    price_monthly: 29.9,
-    price_yearly: 299,
-  },
-  business: {
-    name: "Business",
-    namePt: "Empresarial",
-    max_businesses: -1, // unlimited
-    max_qrs: -1,
-    max_items: -1,
-    custom_qr: true,
-    analytics: true,
-    staff_members: true,
-    api_access: true,
-    price_monthly: 79.9,
-    price_yearly: 799,
-  },
-  past_due: {
-    name: "Past Due",
-    namePt: "Atrasado",
-    max_businesses: 1,
-    max_qrs: 1,
-    max_items: 20,
-    custom_qr: false,
-    analytics: false,
-    staff_members: false,
-    api_access: false,
-    price_monthly: 0,
-    price_yearly: 0,
-  },
-};
 
 // ===== QR Defaults =====
 

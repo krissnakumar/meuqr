@@ -16,6 +16,7 @@ import { useTranslation } from "../src/lib/i18n-provider";
 
 export default function ScannerScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning, setScanning] = useState(true);
   const [loading, setLoading] = useState(false);

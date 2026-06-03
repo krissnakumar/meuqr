@@ -17,7 +17,7 @@ export function invalidateToken() {
 }
 
 supabase.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+  if ((event as string) === "SIGNED_OUT" || (event as string) === "USER_DELETED") {
     cachedToken = null;
   } else if (session?.access_token) {
     cachedToken = session.access_token;

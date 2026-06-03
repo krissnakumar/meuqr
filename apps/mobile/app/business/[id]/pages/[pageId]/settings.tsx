@@ -25,7 +25,8 @@ import * as Linking from "expo-linking";
 
 export default function PageSettingsScreen() {
   const router = useRouter();
-  const { id: businessId, pageId } = useLocalSearchParams();
+  const { id: businessId, pageId: rawPageId } = useLocalSearchParams();
+  const pageId = rawPageId as string;
 
   const [page, setPage] = useState<any>(null);
   const [loading, setLoading] = useState(true);

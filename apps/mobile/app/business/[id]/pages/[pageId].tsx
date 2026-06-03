@@ -45,7 +45,8 @@ interface SectionData {
 
 export default function PageEditorScreen() {
   const router = useRouter();
-  const { id: businessId, pageId } = useLocalSearchParams();
+  const { id: businessId, pageId: rawPageId } = useLocalSearchParams();
+  const pageId = rawPageId as string;
 
   const [page, setPage] = useState<any>(null);
   const [sections, setSections] = useState<SectionData[]>([]);

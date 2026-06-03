@@ -267,6 +267,11 @@ export interface QRStyle {
   logo_url: string | null;
   margin: number;
   error_correction_level: "L" | "M" | "Q" | "H";
+  gradient_type: "linear" | "radial";
+  gradient_angle: number;
+  cta_text: string | null;
+  cta_background_color: string;
+  cta_text_color: string;
   created_at: string;
   updated_at: string;
 }
@@ -463,21 +468,3 @@ export interface DashboardStats {
   clicks_today: number;
 }
 
-export interface SubscriptionLimits {
-  max_businesses: number;
-  max_qrs: number;
-  max_items: number;
-  custom_qr: boolean;
-  analytics: boolean;
-  staff_members: boolean;
-  api_access: boolean;
-}
-
-export type PlanConfig = {
-  [key in SubscriptionTier]: SubscriptionLimits & {
-    name: string;
-    namePt: string;
-    price_monthly: number;
-    price_yearly: number;
-  };
-};

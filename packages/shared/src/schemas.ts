@@ -159,44 +159,7 @@ export const qrStyleSchema = z.object({
   errorCorrectionLevel: z.enum(["L", "M", "Q", "H"]).default("M"),
 });
 
-// ===== Public Page Schemas =====
 
-export const leadSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
-  phone: z.string().optional(),
-  message: z.string().optional(),
-});
-
-export const quoteRequestSchema = z.object({
-  customerName: z.string().min(1, "Nome é obrigatório"),
-  customerPhone: z.string().min(1, "Telefone é obrigatório"),
-  customerEmail: z.string().email().optional().or(z.literal("")),
-  items: z.array(
-    z.object({
-      name: z.string(),
-      quantity: z.number().int().min(1),
-    })
-  ),
-  message: z.string().optional(),
-});
-
-export const orderSchema = z.object({
-  customerName: z.string().min(1, "Nome é obrigatório"),
-  customerPhone: z.string().min(1, "Telefone é obrigatório"),
-  customerEmail: z.string().email().optional().or(z.literal("")),
-  items: z.array(
-    z.object({
-      id: z.string().optional(),
-      name: z.string(),
-      quantity: z.number().int().min(1),
-      price: z.number().min(0),
-      quality: z.string().optional(),
-    })
-  ),
-  total: z.number().min(0),
-  paymentMethod: z.string().optional(),
-});
 
 // ===== Scan/Click Schemas =====
 
